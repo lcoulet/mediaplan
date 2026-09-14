@@ -8,7 +8,7 @@ import/export data in Excel format.
 
 The application is **frontend-only** (no backend). Data is stored in the
 browser's `localStorage`. A future evolution to a server-based architecture is
-planned.
+planned. The UI is in **French** by default.
 
 ## Features
 

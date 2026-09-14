@@ -88,6 +88,7 @@ files).
 
 ### User Interface
 
+- **Default language: French** — the application UI is in French
 - Responsive design (desktop-first, tablet-secondary)
 - Main calendar view (week / month)
 - Secondary views: mediator list, offer list
