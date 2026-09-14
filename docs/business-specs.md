@@ -35,6 +35,7 @@ MediaPlan is the tool used to manage these schedules.
 - `startDate`: period start date
 - `endDate`: period end date
 - `status`: `draft` | `published` | `archived`
+- `locked`: boolean — when true, slots cannot be added, edited, or deleted without unlocking first
 
 ### Reservation (Slot)
 
@@ -42,12 +43,16 @@ MediaPlan is the tool used to manage these schedules.
 - `scheduleId`: reference to the schedule
 - `offerId`: reference to the mediation offer
 - `mediatorId`: reference to the assigned mediator
-- `date`: slot date
-- `startTime`: start time
-- `endTime`: end time
+- `date`: slot date (ISO 8601, e.g. `2026-09-15`)
+- `startTime`: start time (ISO 8601, e.g. `09:00`)
+- `endTime`: end time (ISO 8601, e.g. `10:30`)
 - `participantCount`: number of participants (optional)
 - `status`: `planned` | `confirmed` | `cancelled` | `completed`
 - `notes`: free-form notes (optional)
+- `origin`: `manual` (created or edited by hand) | `imported` (came from an external import)
+- `importSource`: source label for imported slots (e.g. `"Secutix"`, `"Coordination"`) — empty for manual slots
+- `importedAt`: import timestamp (ISO 8601, e.g. `2026-09-14T19:30:00.000Z`) — empty for manual slots
+- `modifiedAfterImport`: boolean — true if an imported slot was later edited by hand
 
 ### Mediator Unavailability (Absence)
 
@@ -85,6 +90,13 @@ MediaPlan is the tool used to manage these schedules.
 - Edit slots (drag & drop or selection)
 - Assign a mediator to each slot
 - Change schedule status
+- Lock/unlock schedule editing (with warning confirmation on unlock)
+- Visual distinction between imported and manually created/edited slots:
+  - Imported slots: badge showing source, read-only feel
+  - Manual slots: distinct visual style
+  - Modified imported slots: badge showing "imported (modified)"
+- Detailed slot view: show origin (manual/imported), import source label,
+  and import date (human-friendly French format, e.g. "14 sept. 2026 à 19:30")
 
 ### Excel Import/Export
 - Export the schedule in .xlsx format (one tab per entity or per week)

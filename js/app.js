@@ -1,7 +1,7 @@
 // app.js — Main application logic
 
 import { load, save, exportJSON } from './store.js';
-import { createMediator, createOffer, createSlot, createAbsence, isMediatorAvailable, STATUS_LABELS, ABSENCE_TYPE_LABELS } from './models.js';
+import { createMediator, createOffer, createSlot, createAbsence, isMediatorAvailable, STATUS_LABELS, ABSENCE_TYPE_LABELS, ORIGIN_LABELS, formatImportDate } from './models.js';
 import { exportExcel, importExcel } from './excel.js';
 
 // ===== State =====
@@ -11,6 +11,7 @@ let state = {
     currentWeekStart: getWeekStart(new Date()),
     filters: { mediatorId: '', offerId: '' },
     absenceFilter: { mediatorId: '' },
+    locked: false,
 };
 
 // ===== Demo data (for first run) =====
@@ -33,12 +34,12 @@ function seedDemoData() {
     const offsetDay = n => { const d = new Date(today); d.setDate(d.getDate() + n); return fmt(d); };
 
     const slots = [
-        createSlot({ offerId: o1.id, mediatorId: m1.id, date: offsetDay(0), startTime: '09:00', endTime: '10:30', status: 'confirmed', participantCount: 22 }),
-        createSlot({ offerId: o2.id, mediatorId: m3.id, date: offsetDay(0), startTime: '14:00', endTime: '16:00', status: 'planned', participantCount: 12 }),
-        createSlot({ offerId: o1.id, mediatorId: m2.id, date: offsetDay(1), startTime: '10:00', endTime: '11:30', status: 'planned', participantCount: 18 }),
-        createSlot({ offerId: o3.id, mediatorId: m2.id, date: offsetDay(2), startTime: '18:00', endTime: '19:00', status: 'planned', participantCount: 0 }),
-        createSlot({ offerId: o2.id, mediatorId: m1.id, date: offsetDay(3), startTime: '09:30', endTime: '11:30', status: 'confirmed', participantCount: 15 }),
-        createSlot({ offerId: o1.id, mediatorId: m1.id, date: offsetDay(4), startTime: '11:00', endTime: '12:30', status: 'planned', participantCount: 0 }),
+        createSlot({ offerId: o1.id, mediatorId: m1.id, date: offsetDay(0), startTime: '09:00', endTime: '10:30', status: 'confirmed', participantCount: 22, origin: 'imported', importSource: 'Secutix', importedAt: '2026-09-10T14:00:00.000Z' }),
+        createSlot({ offerId: o2.id, mediatorId: m3.id, date: offsetDay(0), startTime: '14:00', endTime: '16:00', status: 'planned', participantCount: 12, origin: 'imported', importSource: 'Secutix', importedAt: '2026-09-10T14:00:00.000Z' }),
+        createSlot({ offerId: o1.id, mediatorId: m2.id, date: offsetDay(1), startTime: '10:00', endTime: '11:30', status: 'planned', participantCount: 18, origin: 'manual' }),
+        createSlot({ offerId: o3.id, mediatorId: m2.id, date: offsetDay(2), startTime: '18:00', endTime: '19:00', status: 'planned', participantCount: 0, origin: 'manual' }),
+        createSlot({ offerId: o2.id, mediatorId: m1.id, date: offsetDay(3), startTime: '09:30', endTime: '11:30', status: 'confirmed', participantCount: 15, origin: 'imported', importSource: 'Coordination', importedAt: '2026-09-08T10:30:00.000Z', modifiedAfterImport: true }),
+        createSlot({ offerId: o1.id, mediatorId: m1.id, date: offsetDay(4), startTime: '11:00', endTime: '12:30', status: 'planned', participantCount: 0, origin: 'manual' }),
     ];
 
     const absences = [
@@ -57,6 +58,9 @@ function init() {
     if (state.data.mediators.length === 0 && state.data.offers.length === 0) {
         seedDemoData();
     }
+    // Default: planning is locked
+    state.locked = true;
+    updateLockButton();
     bindEvents();
     renderAll();
 }
@@ -73,6 +77,35 @@ function switchView(view) {
     if (view === 'mediators') renderMediators();
     if (view === 'offers') renderOffers();
     if (view === 'absences') renderAbsences();
+}
+
+// ===== Lock / Unlock =====
+function toggleLock() {
+    if (!state.locked) {
+        // Locking — no confirmation needed
+        state.locked = true;
+    } else {
+        // Unlocking — warn the user
+        if (!confirm('⚠️ Déverrouiller le planning permet de modifier les créneaux.\n\nLes offres importées pourront être éditées et seront marquées comme "modifiées après import".\n\nContinuer ?')) {
+            return;
+        }
+        state.locked = false;
+    }
+    updateLockButton();
+    renderCalendar();
+}
+
+function updateLockButton() {
+    const btn = document.getElementById('btn-lock');
+    if (state.locked) {
+        btn.textContent = '🔒 Verrouillé';
+        btn.classList.remove('btn-secondary');
+        btn.classList.add('btn-primary');
+    } else {
+        btn.textContent = '🔓 Déverrouillé';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+    }
 }
 
 // ===== Calendar =====
@@ -154,11 +187,12 @@ function renderCalendar() {
             const conflictIcon = available ? '' : ' ⚠️';
             const conflictClass = available ? '' : ' slot-conflict';
             const unassignedClass = unassigned ? ' slot-unassigned' : '';
+            const originIcon = slot.origin === 'imported' ? (slot.modifiedAfterImport ? ' 📥✏' : ' 📥') : ' ✋';
             const top = (parseInt(slot.startTime) - 8) * 40 + (parseInt(slot.startTime.split(':')[1]) / 60) * 40;
             const height = ((parseInt(slot.endTime) - parseInt(slot.startTime)) * 40) + ((parseInt(slot.endTime.split(':')[1]) - parseInt(slot.startTime.split(':')[1])) / 60) * 40;
-            html += `<div class="cal-slot status-${slot.status}${conflictClass}${unassignedClass}" style="top:${top}px;height:${height - 2}px" data-slot-id="${slot.id}">
+            html += `<div class="cal-slot status-${slot.status}${conflictClass}${unassignedClass} origin-${slot.origin}" style="top:${top}px;height:${height - 2}px" data-slot-id="${slot.id}">
                 <div class="slot-time">${slot.startTime} – ${slot.endTime}</div>
-                <div class="slot-title">${offer ? offer.name : '—'}</div>
+                <div class="slot-title">${offer ? offer.name : '—'}${originIcon}</div>
                 <div class="slot-mediator">${mediator ? mediator.firstName + ' ' + mediator.lastName : 'Non assigné'}${conflictIcon}</div>
             </div>`;
         });
@@ -176,9 +210,22 @@ function renderCalendar() {
     // Bind slot clicks
     grid.querySelectorAll('.cal-slot').forEach(el => {
         el.addEventListener('click', () => {
+            if (state.locked) {
+                alert('🔒 Le planning est verrouillé. Déverrouillez-le pour modifier les créneaux.');
+                return;
+            }
             const slotId = el.dataset.slotId;
             const slot = state.data.slots.find(s => s.id === slotId);
             if (slot) openSlotModal(slot);
+        });
+    });
+
+    // Bind absence clicks
+    grid.querySelectorAll('.cal-absence').forEach(el => {
+        el.addEventListener('click', () => {
+            const absId = el.dataset.absenceId;
+            const abs = state.data.absences.find(a => a.id === absId);
+            if (abs && !state.locked) openAbsenceModal(abs);
         });
     });
 
@@ -494,6 +541,18 @@ function openSlotModal(slot = null) {
                 </div>
             </div>
             <div class="form-group">
+                <label>Origine</label>
+                <div class="origin-info">
+                    ${s.origin === 'imported'
+                        ? `<span class="badge origin-badge-imported">📥 ${ORIGIN_LABELS.imported}</span>
+                           ${s.modifiedAfterImport ? '<span class="badge origin-badge-modified">✏ Modifié après import</span>' : ''}
+                           ${s.importSource ? `<div class="origin-detail">Source : <strong>${s.importSource}</strong></div>` : ''}
+                           ${s.importedAt ? `<div class="origin-detail">Importé le : ${formatImportDate(s.importedAt)}</div>` : ''}`
+                        : `<span class="badge origin-badge-manual">✋ ${ORIGIN_LABELS.manual}</span>`
+                    }
+                </div>
+            </div>
+            <div class="form-group">
                 <label>Notes</label>
                 <textarea id="s-notes">${s.notes}</textarea>
             </div>
@@ -525,7 +584,15 @@ function openSlotModal(slot = null) {
         s.status = document.getElementById('s-status').value;
         s.notes = document.getElementById('s-notes').value.trim();
 
-        if (!isEdit) state.data.slots.push(s);
+        // Mark imported slots as modified after import when edited
+        if (isEdit && s.origin === 'imported') {
+            s.modifiedAfterImport = true;
+        }
+
+        if (!isEdit) {
+            s.origin = 'manual';
+            state.data.slots.push(s);
+        }
         save(state.data);
         closeModal();
         renderCalendar();
@@ -551,6 +618,7 @@ function bindEvents() {
         state.filters.offerId = e.target.value;
         renderCalendar();
     });
+    document.getElementById('btn-lock').addEventListener('click', () => toggleLock());
 
     // Mediators
     document.getElementById('btn-add-mediator').addEventListener('click', () => openMediatorModal());

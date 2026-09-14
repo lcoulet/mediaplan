@@ -41,6 +41,7 @@ export function createSchedule(data = {}) {
         startDate: data.startDate || '',
         endDate: data.endDate || '',
         status: data.status || 'draft',
+        locked: data.locked !== undefined ? data.locked : false,
     };
 }
 
@@ -57,6 +58,10 @@ export function createSlot(data = {}) {
         participantCount: data.participantCount || 0,
         status: data.status || 'planned',
         notes: data.notes || '',
+        origin: data.origin || 'manual',
+        importSource: data.importSource || '',
+        importedAt: data.importedAt || '',
+        modifiedAfterImport: data.modifiedAfterImport !== undefined ? data.modifiedAfterImport : false,
     };
 }
 
@@ -117,3 +122,24 @@ export const ABSENCE_TYPE_LABELS = {
     sick: 'Maladie',
     other: 'Autre',
 };
+
+// Origin labels (FR)
+export const ORIGIN_LABELS = {
+    manual: 'Saisie manuelle',
+    imported: 'Importé',
+};
+
+// Format an ISO 8601 timestamp to a French human-friendly string
+// e.g. "2026-09-14T19:30:00.000Z" → "14 sept. 2026 à 19:30"
+export function formatImportDate(isoString) {
+    if (!isoString) return '';
+    try {
+        const d = new Date(isoString);
+        if (isNaN(d.getTime())) return '';
+        const dateStr = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+        const timeStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        return `${dateStr} à ${timeStr}`;
+    } catch (e) {
+        return '';
+    }
+}
