@@ -204,6 +204,14 @@
     border: 2px dashed #f0ad4e;
 }
 
+/* Clickable day columns in edit mode */
+body.edit-mode .cal-day-col {
+    cursor: crosshair;
+}
+body.edit-mode .cal-day-col:hover {
+    background: rgba(44, 110, 73, 0.03);
+}
+
 /* Absence badges in table */
 .badge.absence-badge-leave { background: #fdecea; color: #c0392b; }
 .badge.absence-badge-mission { background: #ebf5fb; color: #2980b9; }

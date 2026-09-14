@@ -192,15 +192,15 @@ function switchView(view) {
 // ===== Lock / Unlock =====
 function toggleEditMode(checked) {
     if (checked) {
-        // Enabling edit mode — warn the user
         if (!confirm('⚠️ Activer le mode modification permet de modifier les créneaux.\n\nLes offres importées pourront être éditées et seront marquées comme "modifiées après import".\n\nContinuer ?')) {
-            // Revert toggle
             document.getElementById('toggle-edit-mode').checked = false;
             return;
         }
         state.locked = false;
+        document.body.classList.add('edit-mode');
     } else {
         state.locked = true;
+        document.body.classList.remove('edit-mode');
     }
     renderCalendar();
 }
@@ -255,7 +255,7 @@ function renderCalendar() {
         const ds = d.toISOString().slice(0, 10);
         const daySlots = slots.filter(s => s.date === ds).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-        html += '<div class="cal-day-col">';
+        html += `<div class="cal-day-col" data-date="${ds}">`;
 
         // Absence banners for this day
         if (state.showAbsences) {
@@ -318,6 +318,17 @@ function renderCalendar() {
                     openSlotModal(slot);
                 }
             }
+        });
+    });
+
+    // Bind day column clicks (add new slot in edit mode)
+    grid.querySelectorAll('.cal-day-col').forEach(col => {
+        col.addEventListener('click', e => {
+            // Only trigger if clicking the column itself, not a slot
+            if (e.target.closest('.cal-slot')) return;
+            if (state.locked) return;
+            const date = col.dataset.date;
+            openSlotModal(null, { defaultDate: date });
         });
     });
 
@@ -648,7 +659,8 @@ function openSlotDetailModal(slot) {
 function openSlotModal(slot = null, options = {}) {
     const isEdit = !!slot;
     const mediatorOnly = options.mediatorOnly || false;
-    const s = slot || createSlot({ date: new Date().toISOString().slice(0, 10) });
+    const defaultDate = options.defaultDate || new Date().toISOString().slice(0, 10);
+    const s = slot || createSlot({ date: defaultDate });
 
     // Build mediator options with overlap/absence indicators
     function buildMediatorOptions(selectedId) {
