@@ -38,7 +38,8 @@ mediaplan/
 │   ├── models.js           # Data models
 │   └── excel.js            # Excel import/export
 ├── docs/
-│   └── specs.md            # Detailed specifications
+│   ├── business-specs.md    # Business specifications (domain, entities, features)
+│   └── architecture.md      # Architecture & deployment
 ├── LICENSE                 # MIT License
 └── README.md               # This file
 ```

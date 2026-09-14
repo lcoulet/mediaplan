@@ -1,4 +1,4 @@
-# Specifications — MediaPlan
+# Business Specifications — MediaPlan
 
 ## Background
 
@@ -6,18 +6,9 @@ The Museum of Toulouse offers mediation programs (guided tours, workshops,
 special events, etc.) that require scheduling the mediators who lead them.
 MediaPlan is the tool used to manage these schedules.
 
-## Current Scope (v1)
+## Entities
 
-### Goal
-
-A frontend-only web application running in the browser, with no backend.
-Data is persisted in `localStorage`. Excel import/export is used to exchange
-data with existing tools (Secutix ticketing system, internal coordination
-files).
-
-### Entities
-
-#### Mediator
+### Mediator
 
 - `id`: unique identifier
 - `lastName`: last name
@@ -28,7 +19,7 @@ files).
 - `active`: boolean (active mediator or not)
 - `notes`: free-form notes (optional)
 
-#### Mediation Offer
+### Mediation Offer
 
 - `id`: unique identifier
 - `name`: offer name (e.g. "Dinosauria guided tour")
@@ -37,7 +28,7 @@ files).
 - `capacity`: maximum number of participants
 - `location`: intervention location (optional)
 
-#### Schedule (Planning)
+### Schedule (Planning)
 
 - `id`: unique identifier
 - `title`: schedule title (e.g. "September 2026 schedule")
@@ -45,7 +36,7 @@ files).
 - `endDate`: period end date
 - `status`: `draft` | `published` | `archived`
 
-#### Reservation (Slot)
+### Reservation (Slot)
 
 - `id`: unique identifier
 - `scheduleId`: reference to the schedule
@@ -58,35 +49,35 @@ files).
 - `status`: `planned` | `confirmed` | `cancelled` | `completed`
 - `notes`: free-form notes (optional)
 
-### Features
+## Features
 
-#### Mediator Management
+### Mediator Management
 - List, add, edit, delete a mediator
 - Filter by skill / active status
 - Search by name
 
-#### Mediation Offer Management
+### Mediation Offer Management
 - List, add, edit, delete an offer
 - Associate offers with mediators (skills)
 
-#### Schedule Management
+### Schedule Management
 - Create a schedule for a given period
 - Visualize the schedule as a calendar/grid
 - Edit slots (drag & drop or selection)
 - Assign a mediator to each slot
 - Change schedule status
 
-#### Excel Import/Export
+### Excel Import/Export
 - Export the schedule in .xlsx format (one tab per entity or per week)
 - Export the mediator list and their assignments
 - Import data from existing files (Secutix, coordination files)
 - Configurable import format (column mapping)
 
-#### Persistence
+### Data Persistence
 - All data in `localStorage`
 - Full JSON export/import (backup/restore)
 
-### User Interface
+## User Interface
 
 - **Default language: French** — the application UI is in French
 - Responsive design (desktop-first, tablet-secondary)
@@ -94,24 +85,6 @@ files).
 - Secondary views: mediator list, offer list
 - Navigation bar / main menu
 - Filters: by mediator, by offer, by date
-
-### Technical Constraints
-
-- No backend, no database server
-- No build tool, vanilla JavaScript (ES modules)
-- Compatibility: modern browsers (Chrome, Firefox, Edge, Safari)
-- Data in `localStorage` (~5-10 MB limit per origin)
-- Application must work offline once loaded
-
-## Future Evolution (v2+)
-
-- Migration to a server-based architecture (REST API)
-- Persistent database (PostgreSQL or similar)
-- User authentication (roles: admin, coordinator, mediator)
-- Real-time multi-device synchronization
-- Notifications (email, push) for assignments
-- Leave and availability management for mediators
-- Statistics and dashboards
 
 ## External Data Sources
 
