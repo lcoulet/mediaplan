@@ -12,6 +12,7 @@ let state = {
     filters: { mediatorId: '', offerId: '' },
     absenceFilter: { mediatorId: '' },
     locked: false,
+    showAbsences: true,
 };
 
 // ===== Demo data (for first run) =====
@@ -154,23 +155,23 @@ function renderCalendar() {
         html += '<div class="cal-day-col">';
 
         // Absence banners for this day
-        const dayAbsences = state.data.absences.filter(a => {
-            if (state.filters.mediatorId && a.mediatorId !== state.filters.mediatorId) return false;
-            return ds >= a.startDate && ds <= a.endDate;
-        });
-        let absTop = 0;
-        dayAbsences.forEach(abs => {
-            const mediator = state.data.mediators.find(m => m.id === abs.mediatorId);
-            const label = ABSENCE_TYPE_LABELS[abs.type] || abs.type;
-            const medName = mediator ? `${mediator.firstName} ${mediator.lastName}` : '—';
-            const halfLabel = abs.halfDay === 'morning' ? ' (AM)' : abs.halfDay === 'afternoon' ? ' (PM)' : '';
-            const top = abs.halfDay === 'afternoon' ? 200 : 0; // afternoon starts at 12:00 = 200px
-            const height = abs.halfDay === 'none' ? 440 : 200; // full day = 440px, half = 200px
-            html += `<div class="cal-absence absence-${abs.type}" style="top:${top}px;height:${height - 4}px" data-absence-id="${abs.id}" title="${medName} — ${label}${halfLabel}">
-                <span class="absence-label">🚫 ${medName} — ${label}${halfLabel}</span>
-            </div>`;
-            absTop += height;
-        });
+        if (state.showAbsences) {
+            const dayAbsences = state.data.absences.filter(a => {
+                if (state.filters.mediatorId && a.mediatorId !== state.filters.mediatorId) return false;
+                return ds >= a.startDate && ds <= a.endDate;
+            });
+            dayAbsences.forEach(abs => {
+                const mediator = state.data.mediators.find(m => m.id === abs.mediatorId);
+                const label = ABSENCE_TYPE_LABELS[abs.type] || abs.type;
+                const medName = mediator ? `${mediator.firstName} ${mediator.lastName}` : '—';
+                const halfLabel = abs.halfDay === 'morning' ? ' (AM)' : abs.halfDay === 'afternoon' ? ' (PM)' : '';
+                const top = abs.halfDay === 'afternoon' ? 200 : 0;
+                const height = abs.halfDay === 'none' ? 440 : 200;
+                html += `<div class="cal-absence absence-${abs.type}" style="top:${top}px;height:${height - 4}px" data-absence-id="${abs.id}" title="${medName} — ${label}${halfLabel}">
+                    <span class="absence-label">🚫 ${medName} — ${label}${halfLabel}</span>
+                </div>`;
+            });
+        }
 
         daySlots.forEach(slot => {
             const offer = state.data.offers.find(o => o.id === slot.offerId);
@@ -664,6 +665,10 @@ function bindEvents() {
         renderCalendar();
     });
     document.getElementById('toggle-edit-mode').addEventListener('change', e => toggleEditMode(e.target.checked));
+    document.getElementById('toggle-absences').addEventListener('change', e => {
+        state.showAbsences = e.target.checked;
+        renderCalendar();
+    });
 
     // Mediators
     document.getElementById('btn-add-mediator').addEventListener('click', () => openMediatorModal());
