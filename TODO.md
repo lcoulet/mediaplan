@@ -35,6 +35,7 @@
 
 ## Features (Future)
 
+- [ ] Calendar views: day / week / month toggle in the planning view
 - [ ] Drag & drop on calendar to move slots
 - [ ] Schedule entity management (create/edit/delete schedules as distinct objects)
 - [ ] Conflict detection: warn when assigning a mediator to overlapping slots
