@@ -564,6 +564,16 @@ function bindEvents() {
         renderAbsences();
     });
 
+    // Reset demo data
+    document.getElementById('btn-reset-data').addEventListener('click', () => {
+        if (confirm('⚠️ Cela va supprimer TOUTES les données actuelles et les remplacer par les données de démonstration.\n\nContinuer ?')) {
+            localStorage.removeItem('mediaplan_data_v1');
+            state.data = { mediators: [], offers: [], schedules: [], slots: [], absences: [] };
+            seedDemoData();
+            renderAll();
+        }
+    });
+
     // Import/Export
     document.getElementById('btn-export-json').addEventListener('click', () => exportJSON());
     document.getElementById('btn-export-schedule').addEventListener('click', () => exportExcel(state.data, 'schedule'));
