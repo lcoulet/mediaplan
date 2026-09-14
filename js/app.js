@@ -55,6 +55,12 @@ function seedDemoData() {
 // ===== Init =====
 function init() {
     state.data = load();
+    // Migrate: assign colors to mediators that don't have one
+    state.data.mediators.forEach(m => {
+        if (!m.color) {
+            m.color = createMediator().color;
+        }
+    });
     if (state.data.mediators.length === 0 && state.data.offers.length === 0) {
         seedDemoData();
     }
@@ -175,7 +181,7 @@ function renderCalendar() {
             const conflictClass = available ? '' : ' slot-conflict';
             const unassignedClass = unassigned ? ' slot-unassigned' : '';
             const originIcon = slot.origin === 'imported' ? (slot.modifiedAfterImport ? ' 📥✏' : ' 📥') : ' ✋';
-            const mediatorColor = mediator ? mediator.color : '#ccc';
+            const mediatorColor = mediator ? (mediator.color || '#ccc') : '#ccc';
             const mediatorBadge = mediator ? `<span class="slot-mediator-dot" style="background:${mediatorColor}"></span>` : '';
             const top = (parseInt(slot.startTime) - 8) * 40 + (parseInt(slot.startTime.split(':')[1]) / 60) * 40;
             const height = ((parseInt(slot.endTime) - parseInt(slot.startTime)) * 40) + ((parseInt(slot.endTime.split(':')[1]) - parseInt(slot.startTime.split(':')[1])) / 60) * 40;
@@ -507,7 +513,7 @@ function openSlotDetailModal(slot) {
             ${offer ? `<div class="detail-row"><span class="detail-label">Capacité</span><span class="detail-value">${offer.capacity}</span></div>` : ''}
             ${offer?.location ? `<div class="detail-row"><span class="detail-label">Lieu</span><span class="detail-value">${offer.location}</span></div>` : ''}
             <hr>
-            <div class="detail-row"><span class="detail-label">Médiateur</span><span class="detail-value">${mediator ? `<span class="slot-mediator-dot" style="background:${mediator.color}"></span>${mediator.firstName} ${mediator.lastName}` : 'Non assigné'}</span></div>
+            <div class="detail-row"><span class="detail-label">Médiateur</span><span class="detail-value">${mediator ? `<span class="slot-mediator-dot" style="background:${mediator.color || '#ccc'}"></span>${mediator.firstName} ${mediator.lastName}` : 'Non assigné'}</span></div>
             <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${new Date(slot.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
             <div class="detail-row"><span class="detail-label">Horaire</span><span class="detail-value">${slot.startTime} – ${slot.endTime}</span></div>
             <div class="detail-row"><span class="detail-label">Participants</span><span class="detail-value">${slot.participantCount}</span></div>
