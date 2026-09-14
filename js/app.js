@@ -276,24 +276,51 @@ function renderCalendar() {
             });
         }
 
+        // Compute parallel lanes for overlapping slots
+        const lanes = []; // each lane is an array of slots
         daySlots.forEach(slot => {
-            const offer = state.data.offers.find(o => o.id === slot.offerId);
-            const mediator = state.data.mediators.find(m => m.id === slot.mediatorId);
-            const unassigned = !slot.mediatorId;
-            const available = mediator ? isMediatorAvailable(slot.mediatorId, slot.date, slot.startTime, slot.endTime, state.data.absences) : true;
-            const conflictIcon = available ? '' : ' ⚠️';
-            const conflictClass = available ? '' : ' slot-conflict';
-            const unassignedClass = unassigned ? ' slot-unassigned' : '';
-            const originIcon = slot.origin === 'imported' ? (slot.modifiedAfterImport ? ' 📥✏' : ' 📥') : ' ✋';
-            const mediatorColor = mediator ? (mediator.color || '#ccc') : '#ccc';
-            const mediatorBadge = mediator ? `<span class="slot-mediator-dot" style="background:${mediatorColor}"></span>` : '';
-            const top = (parseInt(slot.startTime) - 8) * 40 + (parseInt(slot.startTime.split(':')[1]) / 60) * 40;
-            const height = ((parseInt(slot.endTime) - parseInt(slot.startTime)) * 40) + ((parseInt(slot.endTime.split(':')[1]) - parseInt(slot.startTime.split(':')[1])) / 60) * 40;
-            html += `<div class="cal-slot status-${slot.status}${conflictClass}${unassignedClass} origin-${slot.origin}" style="top:${top}px;height:${height - 2}px;border-left-color:${mediatorColor}" data-slot-id="${slot.id}">
-                <div class="slot-time">${slot.startTime} – ${slot.endTime}</div>
-                <div class="slot-title">${offer ? offer.name : '—'}${originIcon}</div>
-                <div class="slot-mediator">${mediatorBadge}${mediator ? mediator.firstName + ' ' + mediator.lastName : 'Non assigné'}${conflictIcon}</div>
-            </div>`;
+            const startMin = parseInt(slot.startTime) * 60 + parseInt(slot.startTime.split(':')[1]);
+            const endMin = parseInt(slot.endTime) * 60 + parseInt(slot.endTime.split(':')[1]);
+            // Find a lane where the last slot ends before this one starts
+            let placed = false;
+            for (let l = 0; l < lanes.length; l++) {
+                const last = lanes[l][lanes[l].length - 1];
+                const lastEnd = parseInt(last.endTime) * 60 + parseInt(last.endTime.split(':')[1]);
+                if (lastEnd <= startMin) {
+                    lanes[l].push(slot);
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) {
+                lanes.push([slot]);
+            }
+        });
+        const laneCount = lanes.length;
+
+        // Render slots in lanes
+        lanes.forEach((laneSlots, laneIdx) => {
+            laneSlots.forEach(slot => {
+                const offer = state.data.offers.find(o => o.id === slot.offerId);
+                const mediator = state.data.mediators.find(m => m.id === slot.mediatorId);
+                const unassigned = !slot.mediatorId;
+                const available = mediator ? isMediatorAvailable(slot.mediatorId, slot.date, slot.startTime, slot.endTime, state.data.absences) : true;
+                const conflictIcon = available ? '' : ' ⚠️';
+                const conflictClass = available ? '' : ' slot-conflict';
+                const unassignedClass = unassigned ? ' slot-unassigned' : '';
+                const originIcon = slot.origin === 'imported' ? (slot.modifiedAfterImport ? ' 📥✏' : ' 📥') : ' ✋';
+                const mediatorColor = mediator ? (mediator.color || '#ccc') : '#ccc';
+                const mediatorBadge = mediator ? `<span class="slot-mediator-dot" style="background:${mediatorColor}"></span>` : '';
+                const top = (parseInt(slot.startTime) - 8) * 40 + (parseInt(slot.startTime.split(':')[1]) / 60) * 40;
+                const height = ((parseInt(slot.endTime) - parseInt(slot.startTime)) * 40) + ((parseInt(slot.endTime.split(':')[1]) - parseInt(slot.startTime.split(':')[1])) / 60) * 40;
+                const widthPct = laneCount > 1 ? (100 / laneCount) : 100;
+                const leftPct = laneIdx * widthPct;
+                html += `<div class="cal-slot status-${slot.status}${conflictClass}${unassignedClass} origin-${slot.origin}" style="top:${top}px;height:${height - 2}px;width:calc(${widthPct}% - 4px);left:calc(${leftPct}% + 2px);border-left-color:${mediatorColor}" data-slot-id="${slot.id}">
+                    <div class="slot-time">${slot.startTime} – ${slot.endTime}</div>
+                    <div class="slot-title">${offer ? offer.name : '—'}${originIcon}</div>
+                    <div class="slot-mediator">${mediatorBadge}${mediator ? mediator.firstName + ' ' + mediator.lastName : 'Non assigné'}${conflictIcon}</div>
+                </div>`;
+            });
         });
         html += '</div>';
     }

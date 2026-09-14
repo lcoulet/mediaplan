@@ -90,6 +90,10 @@
     border-left: 3px solid;
 }
 
+.cal-slot[style*="width:"] {
+    right: auto;
+}
+
 .cal-slot:hover {
     box-shadow: var(--shadow-md);
     z-index: 10;
