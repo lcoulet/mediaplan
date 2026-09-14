@@ -481,6 +481,10 @@ body {
     margin-top: 20px;
 }
 
+/* ===== Form hint ===== */
+.form-hint { margin-top: 4px; }
+.warning-text { color: var(--color-danger); font-size: 12px; font-weight: 600; }
+
 /* ===== Empty state ===== */
 .empty-state {
     text-align: center;

@@ -1,7 +1,7 @@
 // app.js — Main application logic
 
 import { load, save, exportJSON } from './store.js';
-import { createMediator, createOffer, createSlot, createAbsence, isMediatorAvailable, STATUS_LABELS, ABSENCE_TYPE_LABELS, ORIGIN_LABELS, formatImportDate } from './models.js';
+import { createMediator, createOffer, createSlot, createAbsence, isMediatorAvailable, hasMediatorOverlap, STATUS_LABELS, ABSENCE_TYPE_LABELS, ORIGIN_LABELS, formatImportDate } from './models.js';
 import { exportExcel, importExcel } from './excel.js';
 
 // ===== State =====
@@ -591,6 +591,25 @@ function openOfferModal(offer = null) {
     });
 }
 
+function updateMediatorWarning(mediatorId, slot) {
+    const el = document.getElementById('mediator-warning');
+    if (!el) return;
+    if (!mediatorId) { el.innerHTML = ''; return; }
+
+    // Check absence
+    const absent = !isMediatorAvailable(mediatorId, slot.date, slot.startTime, slot.endTime, state.data.absences);
+    // Check overlap with other slots
+    const overlap = hasMediatorOverlap(mediatorId, slot.date, slot.startTime, slot.endTime, state.data.slots, slot.id);
+
+    if (overlap) {
+        el.innerHTML = '<span class="warning-text">⚠️ Ce médiateur a déjà un créneau à cet horaire</span>';
+    } else if (absent) {
+        el.innerHTML = '<span class="warning-text">🚫 Ce médiateur est absent à ce créneau</span>';
+    } else {
+        el.innerHTML = '';
+    }
+}
+
 function openSlotDetailModal(slot) {
     const offer = state.data.offers.find(o => o.id === slot.offerId);
     const mediator = state.data.mediators.find(m => m.id === slot.mediatorId);
@@ -631,9 +650,18 @@ function openSlotModal(slot = null, options = {}) {
     const mediatorOnly = options.mediatorOnly || false;
     const s = slot || createSlot({ date: new Date().toISOString().slice(0, 10) });
 
-    const mediatorOptions = state.data.mediators.map(m =>
-        `<option value="${m.id}" ${s.mediatorId === m.id ? 'selected' : ''}>${m.firstName} ${m.lastName}</option>`
-    ).join('');
+    // Build mediator options with overlap/absence indicators
+    function buildMediatorOptions(selectedId) {
+        return state.data.mediators.map(m => {
+            const overlap = hasMediatorOverlap(m.id, s.date, s.startTime, s.endTime, state.data.slots, s.id);
+            const absent = !isMediatorAvailable(m.id, s.date, s.startTime, s.endTime, state.data.absences);
+            let label = `${m.firstName} ${m.lastName}`;
+            if (overlap) label += ' ⚠️ Conflit horaire';
+            else if (absent) label += ' 🚫 Absent';
+            return `<option value="${m.id}" ${m.id === selectedId ? 'selected' : ''} ${overlap ? 'disabled' : ''}>${label}</option>`;
+        }).join('');
+    }
+    const mediatorOptions = buildMediatorOptions(s.mediatorId);
     const offerOptions = state.data.offers.map(o =>
         `<option value="${o.id}" ${s.offerId === o.id ? 'selected' : ''}>${o.name}</option>`
     ).join('');
@@ -665,6 +693,7 @@ function openSlotModal(slot = null, options = {}) {
                         <option value="">— Non assigné —</option>
                         ${mediatorOptions}
                     </select>
+                    <div class="form-hint" id="mediator-warning"></div>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" id="modal-cancel">Annuler</button>
@@ -674,6 +703,8 @@ function openSlotModal(slot = null, options = {}) {
         `);
 
         document.getElementById('modal-cancel').addEventListener('click', closeModal);
+        document.getElementById('s-mediatorId').addEventListener('change', e => updateMediatorWarning(e.target.value, s));
+        updateMediatorWarning(s.mediatorId, s);
         document.getElementById('form-slot').addEventListener('submit', e => {
             e.preventDefault();
             s.mediatorId = document.getElementById('s-mediatorId').value;
@@ -702,6 +733,7 @@ function openSlotModal(slot = null, options = {}) {
                     <option value="">— Non assigné —</option>
                     ${mediatorOptions}
                 </select>
+                <div class="form-hint" id="mediator-warning"></div>
             </div>
             <div class="form-group">
                 <label>Date *</label>
@@ -752,6 +784,7 @@ function openSlotModal(slot = null, options = {}) {
     `);
 
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    document.getElementById('s-mediatorId').addEventListener('change', e => updateMediatorWarning(e.target.value, s));
     if (isEdit) {
         document.getElementById('slot-delete').addEventListener('click', () => {
             state.data.slots = state.data.slots.filter(x => x.id !== s.id);

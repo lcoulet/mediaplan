@@ -136,6 +136,22 @@ export const ORIGIN_LABELS = {
     imported: 'Importé',
 };
 
+// Check if assigning a mediator to a time slot overlaps with their existing slots
+// excludeSlotId: the slot being edited (to ignore itself)
+export function hasMediatorOverlap(mediatorId, date, startTime, endTime, slots, excludeSlotId) {
+    if (!mediatorId) return false;
+    for (const s of slots) {
+        if (s.id === excludeSlotId) continue;
+        if (s.mediatorId !== mediatorId) continue;
+        if (s.date !== date) continue;
+        // Overlap: startA < endB && startB < endA
+        if (startTime < s.endTime && s.startTime < endTime) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // Format an ISO 8601 timestamp to a French human-friendly string
 // e.g. "2026-09-14T19:30:00.000Z" → "14 sept. 2026 à 19:30"
 export function formatImportDate(isoString) {
