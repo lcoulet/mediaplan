@@ -210,7 +210,7 @@ function renderCalendar() {
             const slot = state.data.slots.find(s => s.id === slotId);
             if (slot) {
                 if (state.locked) {
-                    openSlotDetailModal(slot);
+                    openSlotModal(slot, { mediatorOnly: true });
                 } else {
                     openSlotModal(slot);
                 }
@@ -532,8 +532,9 @@ function openSlotDetailModal(slot) {
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
 }
 
-function openSlotModal(slot = null) {
+function openSlotModal(slot = null, options = {}) {
     const isEdit = !!slot;
+    const mediatorOnly = options.mediatorOnly || false;
     const s = slot || createSlot({ date: new Date().toISOString().slice(0, 10) });
 
     const mediatorOptions = state.data.mediators.map(m =>
@@ -545,6 +546,52 @@ function openSlotModal(slot = null) {
     const statusOptions = Object.entries(STATUS_LABELS.slot).map(([val, label]) =>
         `<option value="${val}" ${s.status === val ? 'selected' : ''}>${label}</option>`
     ).join('');
+
+    const offer = state.data.offers.find(o => o.id === s.offerId);
+
+    if (mediatorOnly) {
+        // Read-only details + editable mediator only
+        const originBadge = s.origin === 'imported'
+            ? `<span class="badge origin-badge-imported">📥 ${ORIGIN_LABELS.imported}</span>${s.modifiedAfterImport ? ' <span class="badge origin-badge-modified">✏ Modifié après import</span>' : ''}`
+            : `<span class="badge origin-badge-manual">✋ ${ORIGIN_LABELS.manual}</span>`;
+
+        openModal('Assigner un médiateur', `
+            <form id="form-slot">
+                <div class="detail-view">
+                    <div class="detail-row"><span class="detail-label">Offre</span><span class="detail-value">${offer ? offer.name : '—'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${new Date(s.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
+                    <div class="detail-row"><span class="detail-label">Horaire</span><span class="detail-value">${s.startTime} – ${s.endTime}</span></div>
+                    <div class="detail-row"><span class="detail-label">Statut</span><span class="detail-value"><span class="badge badge-${s.status}">${STATUS_LABELS.slot[s.status] || s.status}</span></span></div>
+                    <div class="detail-row"><span class="detail-label">Origine</span><span class="detail-value">${originBadge}</span></div>
+                </div>
+                <hr>
+                <div class="form-group">
+                    <label>Médiateur</label>
+                    <select id="s-mediatorId">
+                        <option value="">— Non assigné —</option>
+                        ${mediatorOptions}
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="modal-cancel">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        `);
+
+        document.getElementById('modal-cancel').addEventListener('click', closeModal);
+        document.getElementById('form-slot').addEventListener('submit', e => {
+            e.preventDefault();
+            s.mediatorId = document.getElementById('s-mediatorId').value;
+            if (s.origin === 'imported') {
+                s.modifiedAfterImport = true;
+            }
+            save(state.data);
+            closeModal();
+            renderCalendar();
+        });
+        return;
+    }
 
     openModal(isEdit ? 'Modifier le créneau' : 'Nouveau créneau', `
         <form id="form-slot">
