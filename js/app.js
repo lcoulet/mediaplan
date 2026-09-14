@@ -60,7 +60,7 @@ function init() {
     }
     // Default: planning is locked
     state.locked = true;
-    updateLockButton();
+    document.getElementById('toggle-edit-mode').checked = false;
     bindEvents();
     renderAll();
 }
@@ -80,32 +80,19 @@ function switchView(view) {
 }
 
 // ===== Lock / Unlock =====
-function toggleLock() {
-    if (!state.locked) {
-        // Locking — no confirmation needed
-        state.locked = true;
-    } else {
-        // Unlocking — warn the user
-        if (!confirm('⚠️ Déverrouiller le planning permet de modifier les créneaux.\n\nLes offres importées pourront être éditées et seront marquées comme "modifiées après import".\n\nContinuer ?')) {
+function toggleEditMode(checked) {
+    if (checked) {
+        // Enabling edit mode — warn the user
+        if (!confirm('⚠️ Activer le mode modification permet de modifier les créneaux.\n\nLes offres importées pourront être éditées et seront marquées comme "modifiées après import".\n\nContinuer ?')) {
+            // Revert toggle
+            document.getElementById('toggle-edit-mode').checked = false;
             return;
         }
         state.locked = false;
-    }
-    updateLockButton();
-    renderCalendar();
-}
-
-function updateLockButton() {
-    const btn = document.getElementById('btn-lock');
-    if (state.locked) {
-        btn.textContent = '🔒 Verrouillé';
-        btn.classList.remove('btn-secondary');
-        btn.classList.add('btn-primary');
     } else {
-        btn.textContent = '🔓 Déverrouillé';
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-secondary');
+        state.locked = true;
     }
+    renderCalendar();
 }
 
 // ===== Calendar =====
@@ -188,12 +175,14 @@ function renderCalendar() {
             const conflictClass = available ? '' : ' slot-conflict';
             const unassignedClass = unassigned ? ' slot-unassigned' : '';
             const originIcon = slot.origin === 'imported' ? (slot.modifiedAfterImport ? ' 📥✏' : ' 📥') : ' ✋';
+            const mediatorColor = mediator ? mediator.color : '#ccc';
+            const mediatorBadge = mediator ? `<span class="slot-mediator-dot" style="background:${mediatorColor}"></span>` : '';
             const top = (parseInt(slot.startTime) - 8) * 40 + (parseInt(slot.startTime.split(':')[1]) / 60) * 40;
             const height = ((parseInt(slot.endTime) - parseInt(slot.startTime)) * 40) + ((parseInt(slot.endTime.split(':')[1]) - parseInt(slot.startTime.split(':')[1])) / 60) * 40;
-            html += `<div class="cal-slot status-${slot.status}${conflictClass}${unassignedClass} origin-${slot.origin}" style="top:${top}px;height:${height - 2}px" data-slot-id="${slot.id}">
+            html += `<div class="cal-slot status-${slot.status}${conflictClass}${unassignedClass} origin-${slot.origin}" style="top:${top}px;height:${height - 2}px;border-left-color:${mediatorColor}" data-slot-id="${slot.id}">
                 <div class="slot-time">${slot.startTime} – ${slot.endTime}</div>
                 <div class="slot-title">${offer ? offer.name : '—'}${originIcon}</div>
-                <div class="slot-mediator">${mediator ? mediator.firstName + ' ' + mediator.lastName : 'Non assigné'}${conflictIcon}</div>
+                <div class="slot-mediator">${mediatorBadge}${mediator ? mediator.firstName + ' ' + mediator.lastName : 'Non assigné'}${conflictIcon}</div>
             </div>`;
         });
         html += '</div>';
@@ -210,13 +199,15 @@ function renderCalendar() {
     // Bind slot clicks
     grid.querySelectorAll('.cal-slot').forEach(el => {
         el.addEventListener('click', () => {
-            if (state.locked) {
-                alert('🔒 Le planning est verrouillé. Déverrouillez-le pour modifier les créneaux.');
-                return;
-            }
             const slotId = el.dataset.slotId;
             const slot = state.data.slots.find(s => s.id === slotId);
-            if (slot) openSlotModal(slot);
+            if (slot) {
+                if (state.locked) {
+                    openSlotDetailModal(slot);
+                } else {
+                    openSlotModal(slot);
+                }
+            }
         });
     });
 
@@ -281,7 +272,7 @@ function renderMediators() {
     tbody.innerHTML = mediators.map(m => {
         const skills = m.skills.map(sid => state.data.offers.find(o => o.id === sid)?.name).filter(Boolean).join(', ');
         return `<tr>
-            <td>${m.lastName}</td>
+            <td><span class="mediator-color-dot" style="background:${m.color || '#ccc'}"></span> ${m.lastName}</td>
             <td>${m.firstName}</td>
             <td>${m.email || '—'}</td>
             <td>${m.phone || '—'}</td>
@@ -368,7 +359,7 @@ function openMediatorModal(mediator = null) {
     const isEdit = !!mediator;
     const m = mediator || createMediator();
     const offersCheckboxes = state.data.offers.map(o => `
-        <label style="display:flex;gap:6px;align-items:center;font-weight:normal;font-size:13px;">
+        <label class="checkbox-line">
             <input type="checkbox" value="${o.id}" ${m.skills.includes(o.id) ? 'checked' : ''}>
             ${o.name}
         </label>`).join('');
@@ -395,16 +386,25 @@ function openMediatorModal(mediator = null) {
                     <input type="tel" id="m-phone" value="${m.phone}">
                 </div>
             </div>
-            <div class="form-group">
-                <label>Compétences</label>
-                <div style="display:flex;flex-direction:column;gap:6px;">${offersCheckboxes || '<span style="color:var(--color-text-muted)">Aucune offre définie</span>'}</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Couleur</label>
+                    <div class="color-picker">
+                        <input type="color" id="m-color" value="${m.color}">
+                        <span class="color-preview" id="m-color-preview" style="background:${m.color}"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Statut</label>
+                    <select id="m-active">
+                        <option value="true" ${m.active ? 'selected' : ''}>Actif</option>
+                        <option value="false" ${!m.active ? 'selected' : ''}>Inactif</option>
+                    </select>
+                </div>
             </div>
             <div class="form-group">
-                <label>Statut</label>
-                <select id="m-active">
-                    <option value="true" ${m.active ? 'selected' : ''}>Actif</option>
-                    <option value="false" ${!m.active ? 'selected' : ''}>Inactif</option>
-                </select>
+                <label>Compétences</label>
+                <div class="checkbox-group">${offersCheckboxes || '<span style="color:var(--color-text-muted)">Aucune offre définie</span>'}</div>
             </div>
             <div class="form-group">
                 <label>Notes</label>
@@ -418,12 +418,16 @@ function openMediatorModal(mediator = null) {
     `);
 
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    const colorInput = document.getElementById('m-color');
+    const colorPreview = document.getElementById('m-color-preview');
+    colorInput.addEventListener('input', e => { colorPreview.style.background = e.target.value; });
     document.getElementById('form-mediator').addEventListener('submit', e => {
         e.preventDefault();
         m.lastName = document.getElementById('m-lastName').value.trim();
         m.firstName = document.getElementById('m-firstName').value.trim();
         m.email = document.getElementById('m-email').value.trim();
         m.phone = document.getElementById('m-phone').value.trim();
+        m.color = document.getElementById('m-color').value;
         m.active = document.getElementById('m-active').value === 'true';
         m.notes = document.getElementById('m-notes').value.trim();
         m.skills = Array.from(document.querySelectorAll('#form-mediator input[type=checkbox]:checked')).map(cb => cb.value);
@@ -484,6 +488,41 @@ function openOfferModal(offer = null) {
         closeModal();
         renderOffers();
     });
+}
+
+function openSlotDetailModal(slot) {
+    const offer = state.data.offers.find(o => o.id === slot.offerId);
+    const mediator = state.data.mediators.find(m => m.id === slot.mediatorId);
+    const available = mediator ? isMediatorAvailable(slot.mediatorId, slot.date, slot.startTime, slot.endTime, state.data.absences) : true;
+    const originBadge = slot.origin === 'imported'
+        ? `<span class="badge origin-badge-imported">📥 ${ORIGIN_LABELS.imported}</span>${slot.modifiedAfterImport ? ' <span class="badge origin-badge-modified">✏ Modifié après import</span>' : ''}`
+        : `<span class="badge origin-badge-manual">✋ ${ORIGIN_LABELS.manual}</span>`;
+    const conflictWarning = available ? '' : '<div class="detail-warning">⚠️ Médiateur absent à ce créneau</div>';
+
+    openModal('Détails du créneau', `
+        <div class="detail-view">
+            <div class="detail-row"><span class="detail-label">Offre</span><span class="detail-value">${offer ? offer.name : '—'}</span></div>
+            ${offer?.description ? `<div class="detail-row"><span class="detail-label">Description</span><span class="detail-value">${offer.description}</span></div>` : ''}
+            ${offer ? `<div class="detail-row"><span class="detail-label">Durée</span><span class="detail-value">${offer.duration} min</span></div>` : ''}
+            ${offer ? `<div class="detail-row"><span class="detail-label">Capacité</span><span class="detail-value">${offer.capacity}</span></div>` : ''}
+            ${offer?.location ? `<div class="detail-row"><span class="detail-label">Lieu</span><span class="detail-value">${offer.location}</span></div>` : ''}
+            <hr>
+            <div class="detail-row"><span class="detail-label">Médiateur</span><span class="detail-value">${mediator ? `<span class="slot-mediator-dot" style="background:${mediator.color}"></span>${mediator.firstName} ${mediator.lastName}` : 'Non assigné'}</span></div>
+            <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${new Date(slot.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
+            <div class="detail-row"><span class="detail-label">Horaire</span><span class="detail-value">${slot.startTime} – ${slot.endTime}</span></div>
+            <div class="detail-row"><span class="detail-label">Participants</span><span class="detail-value">${slot.participantCount}</span></div>
+            <div class="detail-row"><span class="detail-label">Statut</span><span class="detail-value"><span class="badge badge-${slot.status}">${STATUS_LABELS.slot[slot.status] || slot.status}</span></span></div>
+            <div class="detail-row"><span class="detail-label">Origine</span><span class="detail-value">${originBadge}</span></div>
+            ${slot.importSource ? `<div class="detail-row"><span class="detail-label">Source</span><span class="detail-value">${slot.importSource}</span></div>` : ''}
+            ${slot.importedAt ? `<div class="detail-row"><span class="detail-label">Importé le</span><span class="detail-value">${formatImportDate(slot.importedAt)}</span></div>` : ''}
+            ${slot.notes ? `<div class="detail-row"><span class="detail-label">Notes</span><span class="detail-value">${slot.notes}</span></div>` : ''}
+            ${conflictWarning}
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="modal-cancel">Fermer</button>
+            </div>
+        </div>
+    `);
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
 }
 
 function openSlotModal(slot = null) {
@@ -618,7 +657,7 @@ function bindEvents() {
         state.filters.offerId = e.target.value;
         renderCalendar();
     });
-    document.getElementById('btn-lock').addEventListener('click', () => toggleLock());
+    document.getElementById('toggle-edit-mode').addEventListener('change', e => toggleEditMode(e.target.checked));
 
     // Mediators
     document.getElementById('btn-add-mediator').addEventListener('click', () => openMediatorModal());

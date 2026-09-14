@@ -8,6 +8,12 @@ export function generateId(prefix = 'id') {
 }
 
 // Mediator
+const MEDIATOR_COLORS = [
+    '#2c6e49', '#d68c45', '#2980b9', '#8e44ad',
+    '#c0392b', '#16a085', '#d35400', '#34495e',
+];
+let colorIndex = 0;
+
 export function createMediator(data = {}) {
     return {
         id: data.id || generateId('med'),
@@ -17,6 +23,7 @@ export function createMediator(data = {}) {
         phone: data.phone || '',
         skills: data.skills || [],
         active: data.active !== undefined ? data.active : true,
+        color: data.color || MEDIATOR_COLORS[colorIndex++ % MEDIATOR_COLORS.length],
         notes: data.notes || '',
     };
 }
