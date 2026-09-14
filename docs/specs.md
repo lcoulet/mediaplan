@@ -1,130 +1,129 @@
-# Spécifications — MediPlan
+# Specifications — MediPlan
 
-## Contexte
+## Background
 
-Le Muséum de Toulouse propose des offres de médiation (visites guidées, ateliers,
-événements, etc.) qui nécessitent de planifier les médiateurs intervenants.
-MediPlan est l'outil de gestion de ces plannings.
+The Museum of Toulouse offers mediation programs (guided tours, workshops,
+special events, etc.) that require scheduling the mediators who lead them.
+MediPlan is the tool used to manage these schedules.
 
-## Périmètre actuel (v1)
+## Current Scope (v1)
 
-### Objectif
+### Goal
 
-Application web frontend-only, fonctionnant dans le navigateur, sans backend.
-Les données sont persistées en `localStorage`. Import/export Excel pour
-l'échange de données avec les outils existants (Secutix, fichiers de
-coordination).
+A frontend-only web application running in the browser, with no backend.
+Data is persisted in `localStorage`. Excel import/export is used to exchange
+data with existing tools (Secutix ticketing system, internal coordination
+files).
 
-### Entités
+### Entities
 
-#### Médiateur
+#### Mediator
 
-- `id` : identifiant unique
-- `nom` : nom de famille
-- `prenom` : prénom
-- `email` : adresse email (optionnel)
-- `telephone` : numéro de téléphone (optionnel)
-- `competences` : liste des offres de médiation maîtrisées
-- `actif` : booléen (médiateur actif ou non)
-- `notes` : notes libres (optionnel)
+- `id`: unique identifier
+- `lastName`: last name
+- `firstName`: first name
+- `email`: email address (optional)
+- `phone`: phone number (optional)
+- `skills`: list of mediation offers the mediator is qualified to lead
+- `active`: boolean (active mediator or not)
+- `notes`: free-form notes (optional)
 
-#### Offre de médiation
+#### Mediation Offer
 
-- `id` : identifiant unique
-- `nom` : nom de l'offre (ex: "Visite guidée dinosauria")
-- `description` : description (optionnel)
-- `duree` : durée en minutes
-- `capacite` : nombre maximum de participants
-- `lieu` : lieu d'intervention (optionnel)
+- `id`: unique identifier
+- `name`: offer name (e.g. "Dinosauria guided tour")
+- `description`: description (optional)
+- `duration`: duration in minutes
+- `capacity`: maximum number of participants
+- `location`: intervention location (optional)
 
-#### Planning
+#### Schedule (Planning)
 
-- `id` : identifiant unique
-- `titre` : titre du planning (ex: "Planning septembre 2026")
-- `dateDebut` : date de début de la période
-- `dateFin` : date de fin de la période
-- `statut` : `brouillon` | `publié` | `archivé`
+- `id`: unique identifier
+- `title`: schedule title (e.g. "September 2026 schedule")
+- `startDate`: period start date
+- `endDate`: period end date
+- `status`: `draft` | `published` | `archived`
 
-#### Réservation / Créneau
+#### Reservation (Slot)
 
-- `id` : identifiant unique
-- `planningId` : référence vers le planning
-- `offreId` : référence vers l'offre de médiation
-- `mediateurId` : référence vers le médiateur assigné
-- `date` : date du créneau
-- `heureDebut` : heure de début
-- `heureFin` : heure de fin
-- `nbParticipants` : nombre de participants (optionnel)
-- `statut` : `planifie` | `confirme` | `annule` | `termine`
-- `notes` : notes libres (optionnel)
+- `id`: unique identifier
+- `scheduleId`: reference to the schedule
+- `offerId`: reference to the mediation offer
+- `mediatorId`: reference to the assigned mediator
+- `date`: slot date
+- `startTime`: start time
+- `endTime`: end time
+- `participantCount`: number of participants (optional)
+- `status`: `planned` | `confirmed` | `cancelled` | `completed`
+- `notes`: free-form notes (optional)
 
-### Fonctionnalités
+### Features
 
-#### Gestion des médiateurs
-- Lister, ajouter, modifier, supprimer un médiateur
-- Filtrer par compétence / statut actif
-- Rechercher par nom
+#### Mediator Management
+- List, add, edit, delete a mediator
+- Filter by skill / active status
+- Search by name
 
-#### Gestion des offres de médiation
-- Lister, ajouter, modifier, supprimer une offre
-- Associer des offres à des médiateurs (compétences)
+#### Mediation Offer Management
+- List, add, edit, delete an offer
+- Associate offers with mediators (skills)
 
-#### Gestion des plannings
-- Créer un planning pour une période donnée
-- Visualiser le planning sous forme de calendrier/grille
-- Éditer les créneaux (drag & drop ou sélection)
-- Assigner un médiateur à chaque créneau
-- Changer le statut du planning
+#### Schedule Management
+- Create a schedule for a given period
+- Visualize the schedule as a calendar/grid
+- Edit slots (drag & drop or selection)
+- Assign a mediator to each slot
+- Change schedule status
 
-#### Import / Export Excel
-- Exporter le planning au format .xlsx (un onglet par entité ou par semaine)
-- Exporter la liste des médiateurs et leurs assignations
-- Importer des données depuis les fichiers existants (Secutix, coordination)
-- Format d'import configurable (mapping des colonnes)
+#### Excel Import/Export
+- Export the schedule in .xlsx format (one tab per entity or per week)
+- Export the mediator list and their assignments
+- Import data from existing files (Secutix, coordination files)
+- Configurable import format (column mapping)
 
-#### Persistance
-- Toutes les données en `localStorage`
-- Export/import JSON complet (backup/restauration)
+#### Persistence
+- All data in `localStorage`
+- Full JSON export/import (backup/restore)
 
-### Interface
+### User Interface
 
-- Design responsive (desktop prioritaire, tablette secondaire)
-- Vue calendrier principale (semaine / mois)
-- Vues annexes : liste des médiateurs, liste des offres
-- Barre de navigation / menu principal
-- Filtres : par médiateur, par offre, par date
+- Responsive design (desktop-first, tablet-secondary)
+- Main calendar view (week / month)
+- Secondary views: mediator list, offer list
+- Navigation bar / main menu
+- Filters: by mediator, by offer, by date
 
-### Contraintes techniques
+### Technical Constraints
 
-- Pas de backend, pas de serveur de base de données
-- Pas de build tool, JavaScript vanilla (ES modules)
-- Compatibilité : navigateurs modernes (Chrome, Firefox, Edge, Safari)
-- Données en `localStorage` (limite ~5-10 MB par origine)
-- L'application doit fonctionner hors-ligne une fois chargée
+- No backend, no database server
+- No build tool, vanilla JavaScript (ES modules)
+- Compatibility: modern browsers (Chrome, Firefox, Edge, Safari)
+- Data in `localStorage` (~5-10 MB limit per origin)
+- Application must work offline once loaded
 
-## Évolution future (v2+)
+## Future Evolution (v2+)
 
-- Migration vers une architecture avec serveur web (API REST)
-- Base de données persistante (PostgreSQL ou similaire)
-- Authentification des utilisateurs (rôles : admin, coordinateur, médiateur)
-- Synchronisation multi-postes en temps réel
-- Notifications (email, push) pour les assignations
-- Gestion des congés et disponibilités des médiateurs
-- Statistiques et tableaux de bord
+- Migration to a server-based architecture (REST API)
+- Persistent database (PostgreSQL or similar)
+- User authentication (roles: admin, coordinator, mediator)
+- Real-time multi-device synchronization
+- Notifications (email, push) for assignments
+- Leave and availability management for mediators
+- Statistics and dashboards
 
-## Sources de données externes
+## External Data Sources
 
-- **Secutix** : système de billetterie/réservation du Muséum — fichier Excel
-  exporté, à importer dans MediPlan pour récupérer les réservations existantes.
-- **Fichiers de coordination** : fichiers Excel internes de l'équipe de
-  médiation, à importer pour initialiser les plannings et les médiateurs.
+- **Secutix**: the Museum's ticketing/reservation system — Excel file exported
+  from Secutix, imported into MediPlan to retrieve existing reservations.
+- **Coordination files**: internal Excel files from the mediation team,
+  imported to initialize schedules and mediators.
 
-## Glossaire
+## Glossary
 
-- **Médiateur** : personnel intervenant lors des offres de médiation
-  (visites, ateliers, etc.)
-- **Offre de médiation** : activité proposée par le Muséum (visite guidée,
-  atelier pédagogique, événement spécial, etc.)
-- **Planning** : ensemble de créneaux sur une période donnée
-- **Créneau / Réservation** : assignation d'un médiateur à une offre à une
-  date et heure données
+- **Mediator**: staff member leading mediation offers (tours, workshops, etc.)
+- **Mediation offer**: activity offered by the Museum (guided tour, educational
+  workshop, special event, etc.)
+- **Schedule**: a set of slots over a given period
+- **Slot / Reservation**: assignment of a mediator to an offer at a given date
+  and time

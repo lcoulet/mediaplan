@@ -1,60 +1,60 @@
-# MediPlan — Gestion des plannings de médiation du Muséum de Toulouse
+# MediPlan — Mediation Scheduling for the Museum of Toulouse
 
-## Présentation
+## Overview
 
-MediPlan est une application web de gestion des plannings pour les offres de
-médiation du Muséum de Toulouse. Elle permet de planifier les médiateurs,
-gérer les réservations et d'importer/exporter les données au format Excel.
+MediPlan is a web application for managing mediation schedules at the Museum of
+Toulouse. It allows coordinators to plan mediators, manage reservations, and
+import/export data in Excel format.
 
-L'application est **frontend uniquement** (pas de backend). Les données sont
-stockées dans le `localStorage` du navigateur. Une évolution future vers une
-architecture avec serveur web est prévue.
+The application is **frontend-only** (no backend). Data is stored in the
+browser's `localStorage`. A future evolution to a server-based architecture is
+planned.
 
-## Fonctionnalités
+## Features
 
-- Gestion des médiateurs (ajout, modification, suppression)
-- Création et édition de plannings
-- Gestion des réservations
-- Import/export de données au format Excel (.xlsx)
-- Persistance des données via `localStorage`
+- Manage mediators (add, edit, delete)
+- Create and edit schedules
+- Manage reservations
+- Import/export data in Excel format (.xlsx)
+- Data persistence via `localStorage`
 
-## Stack technique
+## Tech Stack
 
 - HTML5 / CSS3 / JavaScript (ES modules)
-- [SheetJS](https://sheetjs.com/) pour l'import/export Excel
-- Pas de framework, pas de build tool — application vanilla
-- Données en `localStorage`
+- [SheetJS](https://sheetjs.com/) for Excel import/export
+- No framework, no build tool — vanilla application
+- Data in `localStorage`
 
-## Structure du projet
+## Project Structure
 
 ```
 mediaplan/
-├── index.html              # Point d'entrée
+├── index.html              # Entry point
 ├── css/
 │   └── style.css           # Styles
 ├── js/
-│   ├── app.js              # Logique principale
-│   ├── store.js            # Gestion du localStorage
-│   ├── models.js           # Modèles de données
-│   └── excel.js            # Import/export Excel
+│   ├── app.js              # Main logic
+│   ├── store.js            # localStorage management
+│   ├── models.js           # Data models
+│   └── excel.js            # Excel import/export
 ├── docs/
-│   └── specs.md            # Spécifications détaillées
-├── LICENSE                 # Licence MIT
-└── README.md               # Ce fichier
+│   └── specs.md            # Detailed specifications
+├── LICENSE                 # MIT License
+└── README.md               # This file
 ```
 
-## Démarrage
+## Getting Started
 
-Ouvrir `index.html` dans un navigateur. Aucune installation requise.
+Open `index.html` in a browser. No installation required.
 
-Pour servir en local (optionnel) :
+To serve locally (optional):
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Puis ouvrir `http://localhost:8000`.
+Then open `http://localhost:8000`.
 
-## Licence
+## License
 
 [MIT](LICENSE) — © 2026 Loic Coulet
