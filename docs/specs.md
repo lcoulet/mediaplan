@@ -1,10 +1,10 @@
-# Specifications — MediPlan
+# Specifications — MediaPlan
 
 ## Background
 
 The Museum of Toulouse offers mediation programs (guided tours, workshops,
 special events, etc.) that require scheduling the mediators who lead them.
-MediPlan is the tool used to manage these schedules.
+MediaPlan is the tool used to manage these schedules.
 
 ## Current Scope (v1)
 
@@ -116,7 +116,7 @@ files).
 ## External Data Sources
 
 - **Secutix**: the Museum's ticketing/reservation system — Excel file exported
-  from Secutix, imported into MediPlan to retrieve existing reservations.
+  from Secutix, imported into MediaPlan to retrieve existing reservations.
 - **Coordination files**: internal Excel files from the mediation team,
   imported to initialize schedules and mediators.
 

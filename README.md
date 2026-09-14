@@ -1,8 +1,8 @@
-# MediPlan — Mediation Scheduling for the Museum of Toulouse
+# MediaPlan — Mediation Scheduling for the Museum of Toulouse
 
 ## Overview
 
-MediPlan is a web application for managing mediation schedules at the Museum of
+MediaPlan is a web application for managing mediation schedules at the Museum of
 Toulouse. It allows coordinators to plan mediators, manage reservations, and
 import/export data in Excel format.
 
