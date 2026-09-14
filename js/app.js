@@ -17,39 +17,142 @@ let state = {
 
 // ===== Demo data (for first run) =====
 function seedDemoData() {
-    const m1 = createMediator({ lastName: 'Dupont', firstName: 'Marie', email: 'marie.dupont@museum.fr', skills: ['off_1', 'off_2'], active: true });
-    const m2 = createMediator({ lastName: 'Martin', firstName: 'Paul', email: 'paul.martin@museum.fr', skills: ['off_1', 'off_3'], active: true });
-    const m3 = createMediator({ lastName: 'Bernard', firstName: 'Sophie', email: 'sophie.bernard@museum.fr', skills: ['off_2'], active: true });
+    const m1 = createMediator({ lastName: 'Dupont', firstName: 'Marie', email: 'marie.dupont@museum.fr', color: '#2c6e49' });
+    const m2 = createMediator({ lastName: 'Martin', firstName: 'Paul', email: 'paul.martin@museum.fr', color: '#d68c45' });
+    const m3 = createMediator({ lastName: 'Bernard', firstName: 'Sophie', email: 'sophie.bernard@museum.fr', color: '#2980b9' });
+    const m4 = createMediator({ lastName: 'Lefebvre', firstName: 'Thomas', email: 'thomas.lefebvre@museum.fr', color: '#8e44ad' });
+    const m5 = createMediator({ lastName: 'Moreau', firstName: 'Claire', email: 'claire.moreau@museum.fr', color: '#c0392b' });
 
     const o1 = createOffer({ name: 'Visite guidée Dinosauria', description: 'Visite de la galerie des dinosaures', duration: 90, capacity: 25, location: 'Galerie Dinosauria' });
     const o2 = createOffer({ name: 'Atelier paléontologie', description: 'Atelier pratique pour enfants', duration: 120, capacity: 15, location: 'Salle pédagogique' });
     const o3 = createOffer({ name: 'Visite nocturne', description: 'Visite exceptionnelle en soirée', duration: 60, capacity: 20, location: 'Musée entier' });
+    const o4 = createOffer({ name: 'Visite Jardin botanique', description: 'Découverte des plantes', duration: 75, capacity: 20, location: 'Jardin botanique' });
 
     // Fix skills references
-    m1.skills = [o1.id, o2.id];
+    m1.skills = [o1.id, o2.id, o4.id];
     m2.skills = [o1.id, o3.id];
-    m3.skills = [o2.id];
+    m3.skills = [o2.id, o4.id];
+    m4.skills = [o1.id, o3.id, o4.id];
+    m5.skills = [o2.id, o3.id];
 
-    const today = new Date();
+    const mediators = [m1, m2, m3, m4, m5];
+    const offers = [o1, o2, o3, o4];
+
+    // Reference date: start of previous month
+    // e.g. if today is Sep 14, 2026 → reference = Aug 1, 2026
+    // Data spans from reference (Aug 1) to end of next month (Oct 31)
+    const now = new Date();
+    const refDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const fmt = d => d.toISOString().slice(0, 10);
-    const offsetDay = n => { const d = new Date(today); d.setDate(d.getDate() + n); return fmt(d); };
+    const dayFromRef = n => { const d = new Date(refDate); d.setDate(d.getDate() + n); return fmt(d); };
 
-    const slots = [
-        createSlot({ offerId: o1.id, mediatorId: m1.id, date: offsetDay(0), startTime: '09:00', endTime: '10:30', status: 'confirmed', participantCount: 22, origin: 'imported', importSource: 'Secutix', importedAt: '2026-09-10T14:00:00.000Z' }),
-        createSlot({ offerId: o2.id, mediatorId: m3.id, date: offsetDay(0), startTime: '14:00', endTime: '16:00', status: 'planned', participantCount: 12, origin: 'imported', importSource: 'Secutix', importedAt: '2026-09-10T14:00:00.000Z' }),
-        createSlot({ offerId: o1.id, mediatorId: m2.id, date: offsetDay(1), startTime: '10:00', endTime: '11:30', status: 'planned', participantCount: 18, origin: 'manual' }),
-        createSlot({ offerId: o3.id, mediatorId: m2.id, date: offsetDay(2), startTime: '18:00', endTime: '19:00', status: 'planned', participantCount: 0, origin: 'manual' }),
-        createSlot({ offerId: o2.id, mediatorId: m1.id, date: offsetDay(3), startTime: '09:30', endTime: '11:30', status: 'confirmed', participantCount: 15, origin: 'imported', importSource: 'Coordination', importedAt: '2026-09-08T10:30:00.000Z', modifiedAfterImport: true }),
-        createSlot({ offerId: o1.id, mediatorId: m1.id, date: offsetDay(4), startTime: '11:00', endTime: '12:30', status: 'planned', participantCount: 0, origin: 'manual' }),
+    // 3 months ≈ 90 days
+    const totalDays = 90;
+
+    const slots = [];
+    const absences = [];
+
+    // Import timestamps (relative to ref date)
+    const secutixImport = new Date(refDate).toISOString();
+    const coordinationImport = new Date(refDate.getTime() + 7 * 86400000).toISOString();
+
+    // Predefined slot patterns for weekdays (Mon=1..Fri=5)
+    // Each entry: [offerIdx, mediatorIdx, start, end, status, participants, origin, source?, modifiedAfterImport?]
+    const weekdayPatterns = [
+        [0, 0, '09:00', '10:30', 'confirmed', 22, 'imported', 'Secutix'],
+        [1, 2, '10:00', '12:00', 'confirmed', 15, 'imported', 'Secutix'],
+        [0, 1, '11:00', '12:30', 'planned', 18, 'imported', 'Secutix'],
+        [2, 1, '18:00', '19:00', 'planned', 0, 'imported', 'Secutix'],
+        [3, 2, '14:00', '15:15', 'confirmed', 18, 'imported', 'Secutix'],
+        [0, 3, '10:00', '11:30', 'planned', 0, 'manual'],
+        [1, 0, '09:30', '11:30', 'confirmed', 15, 'imported', 'Coordination', false],
+        [0, 3, '15:00', '16:30', 'planned', 12, 'imported', 'Secutix'],
+        [3, 2, '11:00', '12:15', 'confirmed', 20, 'imported', 'Secutix'],
+        [0, 4, '10:00', '11:30', 'planned', 0, 'manual'],
+        [2, 3, '18:00', '19:00', 'confirmed', 20, 'imported', 'Secutix'],
+        [1, 4, '14:00', '16:00', 'planned', 10, 'imported', 'Secutix'],
+        [0, 0, '14:30', '16:00', 'confirmed', 25, 'imported', 'Secutix'],
+        [3, 3, '10:00', '11:15', 'planned', 15, 'manual'],
     ];
 
-    const absences = [
-        createAbsence({ mediatorId: m1.id, startDate: offsetDay(2), endDate: offsetDay(2), halfDay: 'morning', type: 'leave', notes: 'RTT' }),
-        createAbsence({ mediatorId: m2.id, startDate: offsetDay(3), endDate: offsetDay(4), halfDay: 'none', type: 'mission', notes: 'Déplacement Lyon' }),
-        createAbsence({ mediatorId: m3.id, startDate: offsetDay(1), endDate: offsetDay(1), halfDay: 'afternoon', type: 'training', notes: 'Formation first aid' }),
+    // Generate slots across all 3 months
+    for (let day = 0; day < totalDays; day++) {
+        const date = new Date(refDate);
+        date.setDate(date.getDate() + day);
+        const dow = date.getDay(); // 0=Sun, 6=Sat
+        if (dow === 0 || dow === 6) continue; // Skip weekends
+
+        // Use day index to pick patterns deterministically
+        const patternIdx = day % weekdayPatterns.length;
+        const pattern = weekdayPatterns[patternIdx];
+
+        // Vary which mediators get assigned based on week number
+        const weekNum = Math.floor(day / 7);
+        const medOffset = weekNum % mediators.length;
+
+        const [offIdx, medIdx, start, end, status, participants, origin, source, modified] = pattern;
+        const mediatorId = origin === 'manual' && participants === 0 ? '' : mediators[(medIdx + medOffset) % mediators.length].id;
+
+        const slotData = {
+            offerId: offers[offIdx].id,
+            mediatorId,
+            date: dayFromRef(day),
+            startTime: start,
+            endTime: end,
+            status,
+            participantCount: participants,
+            origin,
+        };
+        if (source) {
+            slotData.importSource = source;
+            slotData.importedAt = source === 'Secutix' ? secutixImport : coordinationImport;
+        }
+        if (modified) slotData.modifiedAfterImport = true;
+
+        slots.push(createSlot(slotData));
+    }
+
+    // Mark a few slots as modified after import (scattered across the timeline)
+    [10, 25, 45, 60].forEach(idx => {
+        if (slots[idx] && slots[idx].origin === 'imported') {
+            slots[idx].modifiedAfterImport = true;
+        }
+    });
+
+    // Add some unassigned slots
+    [5, 20, 35, 55, 75].forEach(idx => {
+        if (slots[idx]) {
+            slots[idx].mediatorId = '';
+        }
+    });
+
+    // Generate absences spread across the 3 months
+    const absencePatterns = [
+        { mediator: 0, startDay: 7, duration: 1, halfDay: 'morning', type: 'leave', notes: 'RTT' },
+        { mediator: 1, startDay: 12, duration: 2, halfDay: 'none', type: 'mission', notes: 'Déplacement Lyon' },
+        { mediator: 2, startDay: 5, duration: 1, halfDay: 'afternoon', type: 'training', notes: 'Formation first aid' },
+        { mediator: 3, startDay: 20, duration: 3, halfDay: 'none', type: 'leave', notes: 'Congés payés' },
+        { mediator: 4, startDay: 35, duration: 1, halfDay: 'morning', type: 'sick', notes: 'Maladie' },
+        { mediator: 0, startDay: 45, duration: 2, halfDay: 'none', type: 'mission', notes: 'Salon professionnel' },
+        { mediator: 1, startDay: 60, duration: 1, halfDay: 'afternoon', type: 'training', notes: 'Formation accueil' },
+        { mediator: 2, startDay: 70, duration: 4, halfDay: 'none', type: 'leave', notes: 'Congés été' },
+        { mediator: 3, startDay: 80, duration: 1, halfDay: 'morning', type: 'other', notes: 'Rendez-vous médical' },
     ];
 
-    state.data = { mediators: [m1, m2, m3], offers: [o1, o2, o3], schedules: [], slots, absences };
+    absencePatterns.forEach(p => {
+        const start = dayFromRef(p.startDay);
+        const end = dayFromRef(p.startDay + p.duration - 1);
+        absences.push(createAbsence({
+            mediatorId: mediators[p.mediator].id,
+            startDate: start,
+            endDate: end,
+            halfDay: p.halfDay,
+            type: p.type,
+            notes: p.notes,
+        }));
+    });
+
+    state.data = { mediators, offers, schedules: [], slots, absences };
     save(state.data);
 }
 
