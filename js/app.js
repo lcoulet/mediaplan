@@ -1,15 +1,16 @@
 // app.js — Main application logic
 
 import { load, save, exportJSON } from './store.js';
-import { createMediator, createOffer, createSlot, STATUS_LABELS } from './models.js';
+import { createMediator, createOffer, createSlot, createAbsence, isMediatorAvailable, STATUS_LABELS, ABSENCE_TYPE_LABELS } from './models.js';
 import { exportExcel, importExcel } from './excel.js';
 
 // ===== State =====
 let state = {
-    data: { mediators: [], offers: [], schedules: [], slots: [] },
+    data: { mediators: [], offers: [], schedules: [], slots: [], absences: [] },
     currentView: 'calendar',
     currentWeekStart: getWeekStart(new Date()),
     filters: { mediatorId: '', offerId: '' },
+    absenceFilter: { mediatorId: '' },
 };
 
 // ===== Demo data (for first run) =====
@@ -40,7 +41,13 @@ function seedDemoData() {
         createSlot({ offerId: o1.id, mediatorId: m1.id, date: offsetDay(4), startTime: '11:00', endTime: '12:30', status: 'planned', participantCount: 0 }),
     ];
 
-    state.data = { mediators: [m1, m2, m3], offers: [o1, o2, o3], schedules: [], slots };
+    const absences = [
+        createAbsence({ mediatorId: m1.id, startDate: offsetDay(2), endDate: offsetDay(2), halfDay: 'morning', type: 'leave', notes: 'RTT' }),
+        createAbsence({ mediatorId: m2.id, startDate: offsetDay(3), endDate: offsetDay(4), halfDay: 'none', type: 'mission', notes: 'Déplacement Lyon' }),
+        createAbsence({ mediatorId: m3.id, startDate: offsetDay(1), endDate: offsetDay(1), halfDay: 'afternoon', type: 'training', notes: 'Formation first aid' }),
+    ];
+
+    state.data = { mediators: [m1, m2, m3], offers: [o1, o2, o3], schedules: [], slots, absences };
     save(state.data);
 }
 
@@ -65,6 +72,7 @@ function switchView(view) {
     if (view === 'calendar') renderCalendar();
     if (view === 'mediators') renderMediators();
     if (view === 'offers') renderOffers();
+    if (view === 'absences') renderAbsences();
 }
 
 // ===== Calendar =====
@@ -118,15 +126,38 @@ function renderCalendar() {
         const daySlots = slots.filter(s => s.date === ds).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
         html += '<div class="cal-day-col">';
+
+        // Absence banners for this day
+        const dayAbsences = state.data.absences.filter(a => {
+            if (state.filters.mediatorId && a.mediatorId !== state.filters.mediatorId) return false;
+            return ds >= a.startDate && ds <= a.endDate;
+        });
+        let absTop = 0;
+        dayAbsences.forEach(abs => {
+            const mediator = state.data.mediators.find(m => m.id === abs.mediatorId);
+            const label = ABSENCE_TYPE_LABELS[abs.type] || abs.type;
+            const medName = mediator ? `${mediator.firstName} ${mediator.lastName}` : '—';
+            const halfLabel = abs.halfDay === 'morning' ? ' (AM)' : abs.halfDay === 'afternoon' ? ' (PM)' : '';
+            const top = abs.halfDay === 'afternoon' ? 200 : 0; // afternoon starts at 12:00 = 200px
+            const height = abs.halfDay === 'none' ? 440 : 200; // full day = 440px, half = 200px
+            html += `<div class="cal-absence absence-${abs.type}" style="top:${top}px;height:${height - 4}px" data-absence-id="${abs.id}" title="${medName} — ${label}${halfLabel}">
+                <span class="absence-label">🚫 ${medName} — ${label}${halfLabel}</span>
+            </div>`;
+            absTop += height;
+        });
+
         daySlots.forEach(slot => {
             const offer = state.data.offers.find(o => o.id === slot.offerId);
             const mediator = state.data.mediators.find(m => m.id === slot.mediatorId);
+            const available = mediator ? isMediatorAvailable(slot.mediatorId, slot.date, slot.startTime, slot.endTime, state.data.absences) : true;
+            const conflictIcon = available ? '' : ' ⚠️';
+            const conflictClass = available ? '' : ' slot-conflict';
             const top = (parseInt(slot.startTime) - 8) * 40 + (parseInt(slot.startTime.split(':')[1]) / 60) * 40;
             const height = ((parseInt(slot.endTime) - parseInt(slot.startTime)) * 40) + ((parseInt(slot.endTime.split(':')[1]) - parseInt(slot.startTime.split(':')[1])) / 60) * 40;
-            html += `<div class="cal-slot status-${slot.status}" style="top:${top}px;height:${height - 2}px" data-slot-id="${slot.id}">
+            html += `<div class="cal-slot status-${slot.status}${conflictClass}" style="top:${top}px;height:${height - 2}px" data-slot-id="${slot.id}">
                 <div class="slot-time">${slot.startTime} – ${slot.endTime}</div>
                 <div class="slot-title">${offer ? offer.name : '—'}</div>
-                <div class="slot-mediator">${mediator ? mediator.firstName + ' ' + mediator.lastName : 'Non assigné'}</div>
+                <div class="slot-mediator">${mediator ? mediator.firstName + ' ' + mediator.lastName : 'Non assigné'}${conflictIcon}</div>
             </div>`;
         });
         html += '</div>';
@@ -526,6 +557,13 @@ function bindEvents() {
     // Offers
     document.getElementById('btn-add-offer').addEventListener('click', () => openOfferModal());
 
+    // Absences
+    document.getElementById('btn-add-absence').addEventListener('click', () => openAbsenceModal());
+    document.getElementById('filter-absence-mediator').addEventListener('change', e => {
+        state.absenceFilter.mediatorId = e.target.value;
+        renderAbsences();
+    });
+
     // Import/Export
     document.getElementById('btn-export-json').addEventListener('click', () => exportJSON());
     document.getElementById('btn-export-schedule').addEventListener('click', () => exportExcel(state.data, 'schedule'));
@@ -556,11 +594,150 @@ function bindEvents() {
     });
 }
 
+// ===== Absences view =====
+function renderAbsences() {
+    const tbody = document.getElementById('absences-tbody');
+    const filterMed = state.absenceFilter.mediatorId;
+    let absences = state.data.absences || [];
+    if (filterMed) absences = absences.filter(a => a.mediatorId === filterMed);
+
+    // Update filter dropdown
+    const medFilter = document.getElementById('filter-absence-mediator');
+    medFilter.innerHTML = '<option value="">Tous les médiateurs</option>';
+    state.data.mediators.forEach(m => {
+        medFilter.innerHTML += `<option value="${m.id}" ${m.id === filterMed ? 'selected' : ''}>${m.firstName} ${m.lastName}</option>`;
+    });
+
+    if (absences.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>Aucune absence enregistrée</p><button class="btn btn-primary" onclick="document.getElementById('btn-add-absence').click()">+ Ajouter une absence</button></div></td></tr>`;
+        return;
+    }
+
+    const halfDayLabels = { none: 'Journée complète', morning: 'Matin', afternoon: 'Après-midi' };
+
+    tbody.innerHTML = absences.map(a => {
+        const mediator = state.data.mediators.find(m => m.id === a.mediatorId);
+        const medName = mediator ? `${mediator.firstName} ${mediator.lastName}` : '—';
+        return `<tr>
+            <td>${medName}</td>
+            <td><span class="badge absence-badge-${a.type}">${ABSENCE_TYPE_LABELS[a.type] || a.type}</span></td>
+            <td>${a.startDate}</td>
+            <td>${a.endDate}</td>
+            <td>${halfDayLabels[a.halfDay] || a.halfDay}</td>
+            <td>${a.notes || '—'}</td>
+            <td class="actions-cell">
+                <button class="action-btn" title="Modifier" data-edit-absence="${a.id}">✏</button>
+                <button class="action-btn" title="Supprimer" data-del-absence="${a.id}">🗑</button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    tbody.querySelectorAll('[data-edit-absence]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const a = state.data.absences.find(a => a.id === btn.dataset.editAbsence);
+            if (a) openAbsenceModal(a);
+        });
+    });
+    tbody.querySelectorAll('[data-del-absence]').forEach(btn => {
+        btn.addEventListener('click', () => deleteAbsence(btn.dataset.delAbsence));
+    });
+}
+
+function deleteAbsence(id) {
+    if (!confirm('Supprimer cette absence ?')) return;
+    state.data.absences = state.data.absences.filter(a => a.id !== id);
+    save(state.data);
+    renderAbsences();
+}
+
+function openAbsenceModal(absence = null) {
+    const isEdit = !!absence;
+    const a = absence || createAbsence({ startDate: new Date().toISOString().slice(0, 10), endDate: new Date().toISOString().slice(0, 10) });
+
+    const mediatorOptions = state.data.mediators.map(m =>
+        `<option value="${m.id}" ${a.mediatorId === m.id ? 'selected' : ''}>${m.firstName} ${m.lastName}</option>`
+    ).join('');
+    const typeOptions = Object.entries(ABSENCE_TYPE_LABELS).map(([val, label]) =>
+        `<option value="${val}" ${a.type === val ? 'selected' : ''}>${label}</option>`
+    ).join('');
+    const halfDayOptions = [
+        { val: 'none', label: 'Journée complète' },
+        { val: 'morning', label: 'Matin' },
+        { val: 'afternoon', label: 'Après-midi' },
+    ].map(o => `<option value="${o.val}" ${a.halfDay === o.val ? 'selected' : ''}>${o.label}</option>`).join('');
+
+    openModal(isEdit ? "Modifier l'absence" : 'Nouvelle absence', `
+        <form id="form-absence">
+            <div class="form-group">
+                <label>Médiateur *</label>
+                <select id="a-mediatorId" required>
+                    <option value="">— Choisir —</option>
+                    ${mediatorOptions}
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Du *</label>
+                    <input type="date" id="a-startDate" value="${a.startDate}" required>
+                </div>
+                <div class="form-group">
+                    <label>Au *</label>
+                    <input type="date" id="a-endDate" value="${a.endDate}" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="a-type">${typeOptions}</select>
+                </div>
+                <div class="form-group">
+                    <label>Demi-journée</label>
+                    <select id="a-halfDay">${halfDayOptions}</select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="a-notes">${a.notes}</textarea>
+            </div>
+            <div class="form-actions">
+                ${isEdit ? '<button type="button" class="btn btn-danger" id="absence-delete">Supprimer</button>' : ''}
+                <button type="button" class="btn btn-secondary" id="modal-cancel">Annuler</button>
+                <button type="submit" class="btn btn-primary">${isEdit ? 'Enregistrer' : 'Ajouter'}</button>
+            </div>
+        </form>
+    `);
+
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    if (isEdit) {
+        document.getElementById('absence-delete').addEventListener('click', () => {
+            state.data.absences = state.data.absences.filter(x => x.id !== a.id);
+            save(state.data);
+            closeModal();
+            renderAbsences();
+        });
+    }
+    document.getElementById('form-absence').addEventListener('submit', e => {
+        e.preventDefault();
+        a.mediatorId = document.getElementById('a-mediatorId').value;
+        a.startDate = document.getElementById('a-startDate').value;
+        a.endDate = document.getElementById('a-endDate').value;
+        a.type = document.getElementById('a-type').value;
+        a.halfDay = document.getElementById('a-halfDay').value;
+        a.notes = document.getElementById('a-notes').value.trim();
+
+        if (!isEdit) state.data.absences.push(a);
+        save(state.data);
+        closeModal();
+        renderAbsences();
+    });
+}
+
 // ===== Render all =====
 function renderAll() {
     renderCalendar();
     renderMediators();
     renderOffers();
+    renderAbsences();
 }
 
 // ===== Start =====

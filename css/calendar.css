@@ -147,3 +147,53 @@
     text-align: center;
     color: var(--color-text-muted);
 }
+
+/* ===== Absence banners on calendar ===== */
+.cal-absence {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    border-radius: 4px;
+    opacity: 0.15;
+    z-index: 1;
+    pointer-events: auto;
+    cursor: pointer;
+    border-left: 3px solid;
+}
+
+.cal-absence:hover {
+    opacity: 0.25;
+}
+
+.absence-label {
+    position: absolute;
+    top: 4px;
+    left: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-text);
+}
+
+/* Absence colors by type */
+.cal-absence.absence-leave { background: #e74c3c; border-color: #c0392b; }
+.cal-absence.absence-mission { background: #3498db; border-color: #2980b9; }
+.cal-absence.absence-training { background: #9b59b6; border-color: #8e44ad; }
+.cal-absence.absence-sick { background: #e67e22; border-color: #d35400; }
+.cal-absence.absence-other { background: #95a5a6; border-color: #7f8c8d; }
+
+/* Conflict indicator on slots */
+.cal-slot.slot-conflict {
+    outline: 2px dashed var(--color-danger);
+    outline-offset: -2px;
+}
+
+/* Absence badges in table */
+.badge.absence-badge-leave { background: #fdecea; color: #c0392b; }
+.badge.absence-badge-mission { background: #ebf5fb; color: #2980b9; }
+.badge.absence-badge-training { background: #f5eef8; color: #8e44ad; }
+.badge.absence-badge-sick { background: #fef5e7; color: #d35400; }
+.badge.absence-badge-other { background: #f4f6f6; color: #7f8c8d; }

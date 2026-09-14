@@ -60,6 +60,40 @@ export function createSlot(data = {}) {
     };
 }
 
+// Mediator Unavailability (Absence)
+export function createAbsence(data = {}) {
+    return {
+        id: data.id || generateId('abs'),
+        mediatorId: data.mediatorId || '',
+        startDate: data.startDate || '',
+        endDate: data.endDate || '',
+        halfDay: data.halfDay || 'none',
+        type: data.type || 'other',
+        notes: data.notes || '',
+    };
+}
+
+// Check if a mediator is available for a given date/time, given a list of absences
+export function isMediatorAvailable(mediatorId, date, startTime, endTime, absences) {
+    const noon = '12:00';
+    for (const abs of absences) {
+        if (abs.mediatorId !== mediatorId) continue;
+        // Check if date falls within the absence range (inclusive)
+        if (date < abs.startDate || date > abs.endDate) continue;
+
+        if (abs.halfDay === 'none') {
+            return false; // full-day absence
+        }
+        if (abs.halfDay === 'morning' && startTime < noon) {
+            return false;
+        }
+        if (abs.halfDay === 'afternoon' && endTime > noon) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // Status labels (FR)
 export const STATUS_LABELS = {
     schedule: {
@@ -73,4 +107,13 @@ export const STATUS_LABELS = {
         cancelled: 'Annulé',
         completed: 'Terminé',
     },
+};
+
+// Absence type labels (FR)
+export const ABSENCE_TYPE_LABELS = {
+    leave: 'Congés (CP/RTT)',
+    mission: 'Mission',
+    training: 'Formation',
+    sick: 'Maladie',
+    other: 'Autre',
 };

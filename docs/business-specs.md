@@ -49,6 +49,16 @@ MediaPlan is the tool used to manage these schedules.
 - `status`: `planned` | `confirmed` | `cancelled` | `completed`
 - `notes`: free-form notes (optional)
 
+### Mediator Unavailability (Absence)
+
+- `id`: unique identifier
+- `mediatorId`: reference to the mediator
+- `startDate`: absence start date
+- `endDate`: absence end date (inclusive)
+- `halfDay`: `none` (full day) | `morning` | `afternoon` (applies to start and end dates for single-day absences; for multi-day, applies to start date only)
+- `type`: `leave` (congés CP/RTT) | `mission` (déplacement professionnel) | `training` (formation) | `sick` (maladie) | `other`
+- `notes`: free-form notes (optional)
+
 ## Features
 
 ### Mediator Management
@@ -59,6 +69,15 @@ MediaPlan is the tool used to manage these schedules.
 ### Mediation Offer Management
 - List, add, edit, delete an offer
 - Associate offers with mediators (skills)
+
+### Mediator Unavailability Management
+- List, add, edit, delete an absence for a mediator
+- Absence types: leave (CP/RTT), mission, training, sick, other
+- Granularity: full day or half-day (morning/afternoon)
+- Detect conflicts: warn when assigning a mediator to a slot during an absence
+- Calendar: colored banner on affected days
+- Slot display: badge/icon next to mediator name when absent
+- Dedicated view: list absences per mediator with filters
 
 ### Schedule Management
 - Create a schedule for a given period

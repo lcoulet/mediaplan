@@ -40,6 +40,7 @@ describe('store.load', () => {
             offers: [],
             schedules: [],
             slots: [],
+            absences: [],
         });
     });
 

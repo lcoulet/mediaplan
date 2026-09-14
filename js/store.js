@@ -7,6 +7,7 @@ const defaultData = {
     offers: [],
     schedules: [],
     slots: [],
+    absences: [],
 };
 
 export function load() {
@@ -19,6 +20,7 @@ export function load() {
             offers: parsed.offers || [],
             schedules: parsed.schedules || [],
             slots: parsed.slots || [],
+            absences: parsed.absences || [],
         };
     } catch (e) {
         console.error('Failed to load data:', e);
