@@ -191,6 +191,20 @@
     outline-offset: -2px;
 }
 
+/* Unassigned slots — hatched pattern */
+.cal-slot.slot-unassigned {
+    background-color: #fff3cd !important;
+    border-left-color: #f0ad4e !important;
+    background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 4px,
+        rgba(240, 173, 78, 0.15) 4px,
+        rgba(240, 173, 78, 0.15) 8px
+    );
+    border: 2px dashed #f0ad4e;
+}
+
 /* Absence badges in table */
 .badge.absence-badge-leave { background: #fdecea; color: #c0392b; }
 .badge.absence-badge-mission { background: #ebf5fb; color: #2980b9; }

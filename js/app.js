@@ -149,12 +149,14 @@ function renderCalendar() {
         daySlots.forEach(slot => {
             const offer = state.data.offers.find(o => o.id === slot.offerId);
             const mediator = state.data.mediators.find(m => m.id === slot.mediatorId);
+            const unassigned = !slot.mediatorId;
             const available = mediator ? isMediatorAvailable(slot.mediatorId, slot.date, slot.startTime, slot.endTime, state.data.absences) : true;
             const conflictIcon = available ? '' : ' ⚠️';
             const conflictClass = available ? '' : ' slot-conflict';
+            const unassignedClass = unassigned ? ' slot-unassigned' : '';
             const top = (parseInt(slot.startTime) - 8) * 40 + (parseInt(slot.startTime.split(':')[1]) / 60) * 40;
             const height = ((parseInt(slot.endTime) - parseInt(slot.startTime)) * 40) + ((parseInt(slot.endTime.split(':')[1]) - parseInt(slot.startTime.split(':')[1])) / 60) * 40;
-            html += `<div class="cal-slot status-${slot.status}${conflictClass}" style="top:${top}px;height:${height - 2}px" data-slot-id="${slot.id}">
+            html += `<div class="cal-slot status-${slot.status}${conflictClass}${unassignedClass}" style="top:${top}px;height:${height - 2}px" data-slot-id="${slot.id}">
                 <div class="slot-time">${slot.startTime} – ${slot.endTime}</div>
                 <div class="slot-title">${offer ? offer.name : '—'}</div>
                 <div class="slot-mediator">${mediator ? mediator.firstName + ' ' + mediator.lastName : 'Non assigné'}${conflictIcon}</div>
