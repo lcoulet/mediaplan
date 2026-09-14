@@ -270,7 +270,7 @@ function renderCalendar() {
                 const halfLabel = abs.halfDay === 'morning' ? ' (AM)' : abs.halfDay === 'afternoon' ? ' (PM)' : '';
                 const top = abs.halfDay === 'afternoon' ? 200 : 0;
                 const height = abs.halfDay === 'none' ? 440 : 200;
-                html += `<div class="cal-absence absence-${abs.type}" style="top:${top}px;height:${height - 4}px" data-absence-id="${abs.id}" title="${medName} — ${label}${halfLabel}">
+                html += `<div class="cal-absence absence-${abs.type}" style="top:${top}px;height:${height - 4}px" title="${medName} — ${label}${halfLabel}">
                     <span class="absence-label">🚫 ${medName} — ${label}${halfLabel}</span>
                 </div>`;
             });
@@ -318,15 +318,6 @@ function renderCalendar() {
                     openSlotModal(slot);
                 }
             }
-        });
-    });
-
-    // Bind absence clicks
-    grid.querySelectorAll('.cal-absence').forEach(el => {
-        el.addEventListener('click', () => {
-            const absId = el.dataset.absenceId;
-            const abs = state.data.absences.find(a => a.id === absId);
-            if (abs && !state.locked) openAbsenceModal(abs);
         });
     });
 
