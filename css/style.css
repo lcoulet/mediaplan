@@ -110,6 +110,16 @@ body {
     background: rgba(255,255,255,0.12);
 }
 
+.icon-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.icon-btn:disabled:hover {
+    opacity: 0.3;
+    background: transparent;
+}
+
 /* ===== Main ===== */
 .app-main {
     max-width: 1400px;

@@ -3,6 +3,10 @@
 import { load, save, exportJSON } from './store.js';
 import { createMediator, createOffer, createSlot, createAbsence, isMediatorAvailable, hasMediatorOverlap, STATUS_LABELS, ABSENCE_TYPE_LABELS, ORIGIN_LABELS, formatImportDate } from './models.js';
 import { exportExcel, importExcel } from './excel.js';
+import { createHistory, DEFAULT_HISTORY_SIZE } from './history.js';
+
+// ===== Undo/Redo History =====
+const history = createHistory(DEFAULT_HISTORY_SIZE);
 
 // ===== State =====
 let state = {
@@ -156,6 +160,38 @@ function seedDemoData() {
     save(state.data);
 }
 
+// ===== State commit / undo / redo =====
+function commitState() {
+    save(state.data);
+    history.push(state.data);
+    updateUndoRedoButtons();
+}
+
+function undoState() {
+    const prev = history.undo();
+    if (!prev) return;
+    state.data = prev;
+    save(state.data);
+    updateUndoRedoButtons();
+    renderAll();
+}
+
+function redoState() {
+    const next = history.redo();
+    if (!next) return;
+    state.data = next;
+    save(state.data);
+    updateUndoRedoButtons();
+    renderAll();
+}
+
+function updateUndoRedoButtons() {
+    const btnUndo = document.getElementById('btn-undo');
+    const btnRedo = document.getElementById('btn-redo');
+    if (btnUndo) btnUndo.disabled = !history.canUndo();
+    if (btnRedo) btnRedo.disabled = !history.canRedo();
+}
+
 // ===== Init =====
 function init() {
     state.data = load();
@@ -168,6 +204,9 @@ function init() {
     if (state.data.mediators.length === 0 && state.data.offers.length === 0) {
         seedDemoData();
     }
+    // Initialize history with current state
+    history.init(state.data);
+    updateUndoRedoButtons();
     // Default: planning is locked
     state.locked = true;
     document.getElementById('toggle-edit-mode').checked = false;
@@ -439,7 +478,7 @@ function deleteMediator(id) {
     if (!confirm('Supprimer ce médiateur ?')) return;
     state.data.mediators = state.data.mediators.filter(m => m.id !== id);
     state.data.slots = state.data.slots.filter(s => s.mediatorId !== id);
-    save(state.data);
+    commitState();
     renderMediators();
 }
 
@@ -479,7 +518,7 @@ function deleteOffer(id) {
     state.data.offers = state.data.offers.filter(o => o.id !== id);
     state.data.slots = state.data.slots.filter(s => s.offerId !== id);
     state.data.mediators.forEach(m => { m.skills = m.skills.filter(sid => sid !== id); });
-    save(state.data);
+    commitState();
     renderOffers();
 }
 
@@ -572,7 +611,7 @@ function openMediatorModal(mediator = null) {
         m.skills = Array.from(document.querySelectorAll('#form-mediator input[type=checkbox]:checked')).map(cb => cb.value);
 
         if (!isEdit) state.data.mediators.push(m);
-        save(state.data);
+        commitState();
         closeModal();
         renderMediators();
     });
@@ -623,7 +662,7 @@ function openOfferModal(offer = null) {
         o.location = document.getElementById('o-location').value.trim();
 
         if (!isEdit) state.data.offers.push(o);
-        save(state.data);
+        commitState();
         closeModal();
         renderOffers();
     });
@@ -750,7 +789,7 @@ function openSlotModal(slot = null, options = {}) {
             if (s.origin === 'imported') {
                 s.modifiedAfterImport = true;
             }
-            save(state.data);
+            commitState();
             closeModal();
             renderCalendar();
         });
@@ -827,7 +866,7 @@ function openSlotModal(slot = null, options = {}) {
     if (isEdit) {
         document.getElementById('slot-delete').addEventListener('click', () => {
             state.data.slots = state.data.slots.filter(x => x.id !== s.id);
-            save(state.data);
+            commitState();
             closeModal();
             renderCalendar();
         });
@@ -852,7 +891,7 @@ function openSlotModal(slot = null, options = {}) {
             s.origin = 'manual';
             state.data.slots.push(s);
         }
-        save(state.data);
+        commitState();
         closeModal();
         renderCalendar();
     });
@@ -903,6 +942,8 @@ function bindEvents() {
             localStorage.removeItem('mediaplan_data_v1');
             state.data = { mediators: [], offers: [], schedules: [], slots: [], absences: [] };
             seedDemoData();
+            history.init(state.data);
+            updateUndoRedoButtons();
             renderAll();
         }
     });
@@ -924,6 +965,8 @@ function bindEvents() {
         try {
             await importExcel(file);
             state.data = load();
+            history.init(state.data);
+            updateUndoRedoButtons();
             renderAll();
         } catch (e) {
             alert('Erreur import: ' + e.message);
@@ -934,6 +977,20 @@ function bindEvents() {
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('modal-overlay').addEventListener('click', e => {
         if (e.target === e.currentTarget) closeModal();
+    });
+
+    // Undo/Redo
+    document.getElementById('btn-undo').addEventListener('click', undoState);
+    document.getElementById('btn-redo').addEventListener('click', redoState);
+    document.addEventListener('keydown', e => {
+        // Ctrl+Z = undo, Ctrl+Shift+Z or Ctrl+Y = redo
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+            e.preventDefault();
+            undoState();
+        } else if ((e.ctrlKey || e.metaKey) && (e.key === 'Z' || (e.key === 'z' && e.shiftKey) || e.key === 'y')) {
+            e.preventDefault();
+            redoState();
+        }
     });
 }
 
@@ -989,7 +1046,7 @@ function renderAbsences() {
 function deleteAbsence(id) {
     if (!confirm('Supprimer cette absence ?')) return;
     state.data.absences = state.data.absences.filter(a => a.id !== id);
-    save(state.data);
+    commitState();
     renderAbsences();
 }
 
@@ -1054,7 +1111,7 @@ function openAbsenceModal(absence = null) {
     if (isEdit) {
         document.getElementById('absence-delete').addEventListener('click', () => {
             state.data.absences = state.data.absences.filter(x => x.id !== a.id);
-            save(state.data);
+            commitState();
             closeModal();
             renderAbsences();
         });
@@ -1069,7 +1126,7 @@ function openAbsenceModal(absence = null) {
         a.notes = document.getElementById('a-notes').value.trim();
 
         if (!isEdit) state.data.absences.push(a);
-        save(state.data);
+        commitState();
         closeModal();
         renderAbsences();
     });
