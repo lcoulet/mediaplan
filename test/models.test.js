@@ -114,7 +114,7 @@ describe('createSlot', () => {
         assert.ok(s.id.startsWith('slot_'));
         assert.equal(s.scheduleId, '');
         assert.equal(s.offerId, '');
-        assert.equal(s.mediatorId, '');
+        assert.deepEqual(s.mediatorIds, []);
         assert.equal(s.date, '');
         assert.equal(s.startTime, '09:00');
         assert.equal(s.endTime, '10:00');
@@ -126,7 +126,7 @@ describe('createSlot', () => {
     it('should create a slot from provided data', () => {
         const s = createSlot({
             offerId: 'off_1',
-            mediatorId: 'med_1',
+            mediatorIds: ['med_1'],
             date: '2026-09-15',
             startTime: '14:00',
             endTime: '16:00',
@@ -135,6 +135,7 @@ describe('createSlot', () => {
             notes: 'Groupe scolaire',
         });
         assert.equal(s.offerId, 'off_1');
+        assert.deepEqual(s.mediatorIds, ['med_1']);
         assert.equal(s.date, '2026-09-15');
         assert.equal(s.startTime, '14:00');
         assert.equal(s.endTime, '16:00');

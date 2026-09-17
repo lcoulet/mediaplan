@@ -907,17 +907,18 @@ function openSlotModal(slot = null, options = {}) {
     const s = slot || createSlot({ date: defaultDate });
 
     // Build mediator options with overlap/absence indicators
-    function buildMediatorOptions(selectedId) {
+    function buildMediatorOptions(selectedIds) {
+        const ids = Array.isArray(selectedIds) ? selectedIds : (selectedIds ? [selectedIds] : []);
         return state.data.mediators.map(m => {
             const overlap = hasMediatorOverlap(m.id, s.date, s.startTime, s.endTime, state.data.slots, s.id);
             const absent = !isMediatorAvailable(m.id, s.date, s.startTime, s.endTime, state.data.absences);
             let label = `${m.firstName} ${m.lastName}`;
             if (overlap) label += ' ⚠️ Conflit horaire';
             else if (absent) label += ' 🚫 Absent';
-            return `<option value="${m.id}" ${m.id === selectedId ? 'selected' : ''} ${overlap ? 'disabled' : ''}>${label}</option>`;
+            return `<option value="${m.id}" ${ids.includes(m.id) ? 'selected' : ''} ${overlap ? 'disabled' : ''}>${label}</option>`;
         }).join('');
     }
-    const mediatorOptions = buildMediatorOptions(s.mediatorIds[0] || '');
+    const mediatorOptions = buildMediatorOptions(s.mediatorIds);
     const offerOptions = state.data.offers.map(o =>
         `<option value="${o.id}" ${s.offerId === o.id ? 'selected' : ''}>${o.name}</option>`
     ).join('');
@@ -944,12 +945,11 @@ function openSlotModal(slot = null, options = {}) {
                 </div>
                 <hr>
                 <div class="form-group">
-                    <label>Médiateur</label>
-                    <select id="s-mediatorId">
-                        <option value="">— Non assigné —</option>
+                    <label>Médiateurs</label>
+                    <select id="s-mediatorId" multiple size="5">
                         ${mediatorOptions}
                     </select>
-                    <div class="form-hint" id="mediator-warning"></div>
+                    <div class="form-hint" id="mediator-warning">Ctrl+clic pour sélectionner plusieurs</div>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" id="modal-cancel">Annuler</button>
@@ -959,11 +959,14 @@ function openSlotModal(slot = null, options = {}) {
         `);
 
         document.getElementById('modal-cancel').addEventListener('click', closeModal);
-        document.getElementById('s-mediatorId').addEventListener('change', e => updateMediatorWarning(e.target.value, s));
+        document.getElementById('s-mediatorId').addEventListener('change', e => {
+            const selected = Array.from(e.target.selectedOptions).map(o => o.value);
+            updateMediatorWarning(selected[0] || '', s);
+        });
         updateMediatorWarning(s.mediatorIds[0] || '', s);
         document.getElementById('form-slot').addEventListener('submit', e => {
             e.preventDefault();
-            s.mediatorIds = [document.getElementById('s-mediatorId').value].filter(Boolean);
+            s.mediatorIds = Array.from(document.getElementById('s-mediatorId').selectedOptions).map(o => o.value).filter(Boolean);
             if (s.origin === 'imported') {
                 s.modifiedAfterImport = true;
             }
@@ -984,12 +987,11 @@ function openSlotModal(slot = null, options = {}) {
                 </select>
             </div>
             <div class="form-group">
-                <label>Médiateur</label>
-                <select id="s-mediatorId">
-                    <option value="">— Non assigné —</option>
+                <label>Médiateurs</label>
+                <select id="s-mediatorId" multiple size="5">
                     ${mediatorOptions}
                 </select>
-                <div class="form-hint" id="mediator-warning"></div>
+                <div class="form-hint" id="mediator-warning">Ctrl+clic pour sélectionner plusieurs</div>
             </div>
             <div class="form-group">
                 <label>Date *</label>
@@ -1040,7 +1042,10 @@ function openSlotModal(slot = null, options = {}) {
     `);
 
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
-    document.getElementById('s-mediatorId').addEventListener('change', e => updateMediatorWarning(e.target.value, s));
+    document.getElementById('s-mediatorId').addEventListener('change', e => {
+        const selected = Array.from(e.target.selectedOptions).map(o => o.value);
+        updateMediatorWarning(selected[0] || '', s);
+    });
     if (isEdit) {
         document.getElementById('slot-delete').addEventListener('click', () => {
             state.data.slots = state.data.slots.filter(x => x.id !== s.id);
@@ -1052,7 +1057,7 @@ function openSlotModal(slot = null, options = {}) {
     document.getElementById('form-slot').addEventListener('submit', e => {
         e.preventDefault();
         s.offerId = document.getElementById('s-offerId').value;
-        s.mediatorIds = [document.getElementById('s-mediatorId').value].filter(Boolean);
+        s.mediatorIds = Array.from(document.getElementById('s-mediatorId').selectedOptions).map(o => o.value).filter(Boolean);
         s.date = document.getElementById('s-date').value;
         s.startTime = document.getElementById('s-startTime').value;
         s.endTime = document.getElementById('s-endTime').value;

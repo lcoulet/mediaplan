@@ -54,11 +54,21 @@ export function createSchedule(data = {}) {
 
 // Reservation / Slot
 export function createSlot(data = {}) {
+    // Migrate from mediatorId (singular) to mediatorIds (array)
+    // If mediatorIds is provided, use it. Otherwise convert mediatorId.
+    let mediatorIds;
+    if (data.mediatorIds !== undefined) {
+        mediatorIds = data.mediatorIds;
+    } else if (data.mediatorId) {
+        mediatorIds = [data.mediatorId];
+    } else {
+        mediatorIds = [];
+    }
     return {
         id: data.id || generateId('slot'),
         scheduleId: data.scheduleId || '',
         offerId: data.offerId || '',
-        mediatorId: data.mediatorId || '',
+        mediatorIds,
         date: data.date || '',
         startTime: data.startTime || '09:00',
         endTime: data.endTime || '10:00',
@@ -138,12 +148,15 @@ export const ORIGIN_LABELS = {
 
 // Check if assigning a mediator to a time slot overlaps with their existing slots
 // excludeSlotId: the slot being edited (to ignore itself)
+// Supports both mediatorIds (array) and legacy mediatorId (string)
 export function hasMediatorOverlap(mediatorId, date, startTime, endTime, slots, excludeSlotId) {
     if (!mediatorId) return false;
     for (const s of slots) {
         if (s.id === excludeSlotId) continue;
-        if (s.mediatorId !== mediatorId) continue;
         if (s.date !== date) continue;
+        // Check if mediator is assigned to this slot (mediatorIds or legacy mediatorId)
+        const slotMediators = s.mediatorIds || (s.mediatorId ? [s.mediatorId] : []);
+        if (!slotMediators.includes(mediatorId)) continue;
         // Overlap: startA < endB && startB < endA
         if (startTime < s.endTime && s.startTime < endTime) {
             return true;
