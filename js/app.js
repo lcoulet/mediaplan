@@ -949,7 +949,9 @@ function bindEvents() {
     });
 
     // Import/Export
-    document.getElementById('btn-export-json').addEventListener('click', () => exportJSON());
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+        exportJSON().catch(err => alert('Erreur lors de l\'export : ' + err.message));
+    });
     document.getElementById('btn-export-schedule').addEventListener('click', () => exportExcel(state.data, 'schedule'));
     document.getElementById('btn-export-mediators').addEventListener('click', () => exportExcel(state.data, 'mediators'));
 
