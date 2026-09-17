@@ -81,9 +81,16 @@
 
 - [ ] Calendar views: day / week / month toggle in the planning view
   - Day view: mediators as rows, time as columns, 10min grid lines
-  - Unassigned zone for offers awaiting assignment
-  - Drag-and-drop assignment, slot resize, slot duplication
+  - Unassigned lane for imported offers awaiting assignment
+  - Standard offers lane: drag onto mediator+time to create manual slot
+  - Drag-and-drop assignment, slot resize, slot move (same day only)
+  - Slot duplication onto other mediators (multi-mediator assignment)
+  - Overlap: red hatching/highlight + warning confirmation
   - Day navigation tabs (prev/next/today)
+- [ ] Migrate slot model from `mediatorId` to `mediatorIds` (array)
+  - Update models.js, store.js, app.js, overlap detection
+  - Update demo data generation
+  - Update tests
 - [ ] Drag & drop on calendar to move slots
 - [ ] Schedule entity management (create/edit/delete schedules as distinct objects)
 - [ ] Statistics and dashboards

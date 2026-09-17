@@ -39,10 +39,13 @@ An instance of an offer assigned to a date, time, and one or more
 mediators. This is the atomic unit of the planning. Time granularity is
 10-minute increments (e.g. 14:00, 14:10, 14:20). Sub-10-minute precision
 is not needed. Tracks:
+- `mediatorIds`: array of assigned mediator IDs (multiple for training
+  or parallel assignment). Replaces the singular `mediatorId` field.
 - `origin`: "manual" or "imported"
 - `importSource`: e.g. "Secutix"
 - `importedAt`: timestamp of import
 - `modifiedAfterImport`: boolean, true if edited after import
+- `contractNumber`: unique identifier from Secutix (reserved slots only)
 
 ### Absence
 A mediator's unavailability. Has: type (leave, mission, training, sick,
@@ -104,17 +107,27 @@ instant, unlocking requires a confirmation warning.
 ### Day Planning View (Vue planning du jour)
 A calendar view focused on a single day. Layout:
 - Rows: mediators (with their current cycle week label, e.g. "S1", "S2")
-  plus an "unassigned" zone (non-mediator rows) for offers awaiting
-  assignment
+  plus two types of non-mediator lanes:
+  - **Unassigned lane**: imported offers not yet allocated to a mediator
+  - **Standard offers lane**: catalog of standard offers that can be
+    dragged onto a mediator row + time slot to create a manual slot
+    (virtual reservation). The offer stays in the lane for reuse.
 - Columns: time axis with thin lines every 10 minutes, thick lines every
   hour
 - Display: mediator availability/unavailability (from work cycle + absences)
   as background, assigned offers as blocks
+- Slot overlap on the same mediator row: overlapping slots shown on top
+  of each other with red hatching and/or red highlight to indicate conflict
 - Interactions:
-  - Drag-and-drop offers from unassigned zone to a mediator row to assign
-  - Drag a slot edge to modify start/end time
-  - Duplicate a slot onto one or more other mediators (for training or
-    parallel assignment)
+  - Drag-and-drop offers from unassigned lane to a mediator row to assign
+  - Drag standard offer onto a mediator row + time position to create a
+    manual slot (origin: manual)
+  - Drag a slot edge to modify start/end time (same day only, no day change)
+  - Drag a slot body to move it within the same day (no day change)
+  - Duplicate a slot onto one or more other mediators — adds mediator to
+    the same slot (multi-mediator assignment), not an independent copy
+- Conflict on overlap: warning shown, user must confirm to proceed.
+  Conflict is visually highlighted (red hatching and/or red overlay).
 - Navigation: day tabs with prev/next/today buttons
 
 ### Competence (Compétence)

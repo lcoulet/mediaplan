@@ -78,7 +78,8 @@ Excel export or paper printout).
 - `id`: unique identifier
 - `scheduleId`: reference to the schedule
 - `offerId`: reference to the mediation offer
-- `mediatorIds`: list of assigned mediator IDs (multiple for training)
+- `mediatorIds`: array of assigned mediator IDs (multiple for training or
+  parallel assignment). Replaces the singular `mediatorId` field.
 - `date`: slot date (ISO 8601, e.g. `2026-09-15`)
 - `startTime`: start time (10-minute increments, e.g. `09:00`, `09:10`)
 - `endTime`: end time (10-minute increments)
@@ -150,10 +151,19 @@ Excel export or paper printout).
 - Layout: mediators as rows (with cycle week label), time as columns
 - Time grid: thin lines every 10 minutes, thick lines every hour
 - Background: mediator availability (work cycle) + unavailability (absences)
-- Unassigned zone: rows below mediators for offers awaiting assignment
-- Drag-and-drop offers from unassigned zone to a mediator row to assign
-- Drag slot edge to modify start/end time
-- Duplicate a slot onto one or more other mediators (training/parallel)
+- Two non-mediator lanes:
+  - Unassigned lane: imported offers not yet allocated to a mediator
+  - Standard offers lane: catalog of standard offers, draggable onto a
+    mediator row + time position to create a manual slot. Offer stays in
+    the lane for reuse.
+- Drag-and-drop offers from unassigned lane to a mediator row to assign
+- Drag standard offer onto mediator row + time to create manual slot
+- Drag slot edge to modify start/end time (same day only)
+- Drag slot body to move within same day (no day change)
+- Duplicate slot onto other mediators — adds mediator to same slot
+  (multi-mediator assignment, not independent copy)
+- Slot overlap on same mediator: red hatching and/or red highlight,
+  warning confirmation required
 - Navigation: day tabs with prev/next/today buttons
 - Toggle between day / week / month views
 - Overlap detection uses extended time range (start - setup, end + teardown)
