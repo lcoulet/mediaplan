@@ -76,11 +76,24 @@ MediaPlan project. Updated inline during grilling sessions.
 - Domain: mediaplan.coulet.me
 - Caddy configured with reverse proxy to localhost:8000
 - Python http.server is a dev server, not production-grade
+- App cannot be deployed on the museum's internal IT system (SI)
+- Must be hosted externally (Loic's VPS)
+- Server must not see data in clear text — client-side encryption
+- Mediator names should not be stored server-side, only IDs (RGPD)
+- Multiple coordinators on different workstations, intermittent connections
+- Conflict resolution: versioning + conflict alert
+  - V1: on sync, if server has a newer version than the one being pushed,
+    alert the coordinator with timestamps and let them choose which to keep
+  - V2: visual diff comparison between conflicting versions
 
 **Open questions:**
 - [ ] Should Caddy serve static files directly (no Python) in production?
 - [ ] Is a systemd service needed for the Python server, or do we migrate to static serving?
 - [ ] Who are the end users? How many concurrent users expected?
+- [ ] What encryption scheme for client-side encryption? (AES-GCM with client-held key? Per-user key? Shared key?)
+- [ ] How is the encryption key distributed to coordinators? (Shared via out-of-band channel? Per-account key management?)
+- [ ] What granularity for versioning? (Entire data model per push, or per-entity?)
+- [ ] How does the server know which entity to compare versions for if data is encrypted? (Metadata in clear: entity ID + version + timestamp)
 
 ## User access
 
