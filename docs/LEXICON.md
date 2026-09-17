@@ -66,6 +66,11 @@ managed directly in MediaPlan — their data comes via Secutix import.
 The museum team that manages the Excel tool for planning. Their file
 format may differ from Secutix and may include VBA macros.
 
+### Coordinator (Coordinateur/Coordonnatrice)
+The primary user of MediaPlan. Builds and maintains the planning,
+assigns mediators to offers, manages absences. Shares the planning at
+the daily briefing with mediators via Excel export or paper printout.
+
 ## External Systems
 
 ### Secutix

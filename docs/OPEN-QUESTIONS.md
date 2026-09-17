@@ -73,13 +73,16 @@ MediaPlan project. Updated inline during grilling sessions.
 ## User access
 
 **Established so far:**
-- The app is for museum staff (mediators and/or coordination)
-- No authentication in the current prototype
+- The app is used by coordinators (coordinateurs/coordinatrices)
+- Coordinators share the planning at the daily briefing with mediators
+- Sharing is done via Excel export or paper printout
+- No authentication in V1
+- Mediators may get a read-only view in a future version, not V1
 
 **Open questions:**
-- [ ] Who exactly uses the app? Only the planning manager, or do mediators consult it too?
-- [ ] If multiple users, do they need separate views or permissions?
-- [ ] Is authentication needed in the first version, or only when backend is added?
+- [x] Who exactly uses the app? Only the planning manager, or do mediators consult it too? → Coordinators only in V1. Mediators see exported planning.
+- [x] If multiple users, do they need separate views or permissions? → Not in V1. Future: read-only mediator view.
+- [x] Is authentication needed in the first version, or only when backend is added? → Not in V1. Only when backend is added.
 
 ## Stack migration
 
