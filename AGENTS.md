@@ -150,6 +150,9 @@ The orchestrator handles context passing and phase sequencing.
 Architectural decisions are documented in `docs/adr/`. Any change that
 reverses or supersedes an existing decision must update or add an ADR.
 
+Domain vocabulary is defined in `docs/LEXICON.md`. All agents must use
+these terms consistently in code, documentation, and discussion.
+
 ## User Preferences
 
 - Communication: direct and concise, French or English
