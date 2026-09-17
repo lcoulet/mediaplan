@@ -251,7 +251,7 @@ function seedDemoData() {
 
             const slotData = {
                 offerId: offers[offIdx].id,
-                mediatorId,
+                mediatorIds: [mediatorId].filter(Boolean),
                 date: dayFromRef(day),
                 startTime: start,
                 endTime: end,
@@ -273,7 +273,7 @@ function seedDemoData() {
                 if (traineeId !== mediatorId) {
                     const traineeSlot = createSlot({
                         ...slotData,
-                        mediatorId: traineeId,
+                        mediatorIds: [traineeId],
                         notes: 'Tutorat — formation en situation',
                     });
                     if (traineeSlot.origin === 'imported') traineeSlot.modifiedAfterImport = true;
@@ -293,7 +293,7 @@ function seedDemoData() {
     // Add some unassigned slots (ensure a few exist)
     [5, 20, 40, 70, 90, 120, 150].forEach(idx => {
         if (slots[idx]) {
-            slots[idx].mediatorId = '';
+            slots[idx].mediatorIds = [];
         }
     });
 
@@ -463,7 +463,7 @@ function renderCalendar() {
 
     // Day columns
     let slots = state.data.slots;
-    if (state.filters.mediatorId) slots = slots.filter(s => s.mediatorId === state.filters.mediatorId);
+    if (state.filters.mediatorId) slots = slots.filter(s => s.mediatorIds.includes(state.filters.mediatorId));
     if (state.filters.offerId) slots = slots.filter(s => s.offerId === state.filters.offerId);
 
     for (let i = 0; i < 7; i++) {
@@ -519,9 +519,9 @@ function renderCalendar() {
         lanes.forEach((laneSlots, laneIdx) => {
             laneSlots.forEach(slot => {
                 const offer = state.data.offers.find(o => o.id === slot.offerId);
-                const mediator = state.data.mediators.find(m => m.id === slot.mediatorId);
-                const unassigned = !slot.mediatorId;
-                const available = mediator ? isMediatorAvailable(slot.mediatorId, slot.date, slot.startTime, slot.endTime, state.data.absences) : true;
+                const mediator = state.data.mediators.find(m => m.id === slot.mediatorIds[0]);
+                const unassigned = !slot.mediatorIds.length;
+                const available = mediator ? isMediatorAvailable(slot.mediatorIds[0], slot.date, slot.startTime, slot.endTime, state.data.absences) : true;
                 const conflictIcon = available ? '' : ' ⚠️';
                 const conflictClass = available ? '' : ' slot-conflict';
                 const unassignedClass = unassigned ? ' slot-unassigned' : '';
@@ -655,7 +655,7 @@ function renderMediators() {
 function deleteMediator(id) {
     if (!confirm('Supprimer ce médiateur ?')) return;
     state.data.mediators = state.data.mediators.filter(m => m.id !== id);
-    state.data.slots = state.data.slots.filter(s => s.mediatorId !== id);
+    state.data.slots = state.data.slots.filter(s => !s.mediatorIds.includes(id));
     commitState();
     renderMediators();
 }
@@ -867,8 +867,8 @@ function updateMediatorWarning(mediatorId, slot) {
 
 function openSlotDetailModal(slot) {
     const offer = state.data.offers.find(o => o.id === slot.offerId);
-    const mediator = state.data.mediators.find(m => m.id === slot.mediatorId);
-    const available = mediator ? isMediatorAvailable(slot.mediatorId, slot.date, slot.startTime, slot.endTime, state.data.absences) : true;
+    const mediator = state.data.mediators.find(m => m.id === slot.mediatorIds[0]);
+    const available = mediator ? isMediatorAvailable(slot.mediatorIds[0], slot.date, slot.startTime, slot.endTime, state.data.absences) : true;
     const originBadge = slot.origin === 'imported'
         ? `<span class="badge origin-badge-imported">📥 ${ORIGIN_LABELS.imported}</span>${slot.modifiedAfterImport ? ' <span class="badge origin-badge-modified">✏ Modifié après import</span>' : ''}`
         : `<span class="badge origin-badge-manual">✋ ${ORIGIN_LABELS.manual}</span>`;
@@ -917,7 +917,7 @@ function openSlotModal(slot = null, options = {}) {
             return `<option value="${m.id}" ${m.id === selectedId ? 'selected' : ''} ${overlap ? 'disabled' : ''}>${label}</option>`;
         }).join('');
     }
-    const mediatorOptions = buildMediatorOptions(s.mediatorId);
+    const mediatorOptions = buildMediatorOptions(s.mediatorIds[0] || '');
     const offerOptions = state.data.offers.map(o =>
         `<option value="${o.id}" ${s.offerId === o.id ? 'selected' : ''}>${o.name}</option>`
     ).join('');
@@ -960,10 +960,10 @@ function openSlotModal(slot = null, options = {}) {
 
         document.getElementById('modal-cancel').addEventListener('click', closeModal);
         document.getElementById('s-mediatorId').addEventListener('change', e => updateMediatorWarning(e.target.value, s));
-        updateMediatorWarning(s.mediatorId, s);
+        updateMediatorWarning(s.mediatorIds[0] || '', s);
         document.getElementById('form-slot').addEventListener('submit', e => {
             e.preventDefault();
-            s.mediatorId = document.getElementById('s-mediatorId').value;
+            s.mediatorIds = [document.getElementById('s-mediatorId').value].filter(Boolean);
             if (s.origin === 'imported') {
                 s.modifiedAfterImport = true;
             }
@@ -1052,7 +1052,7 @@ function openSlotModal(slot = null, options = {}) {
     document.getElementById('form-slot').addEventListener('submit', e => {
         e.preventDefault();
         s.offerId = document.getElementById('s-offerId').value;
-        s.mediatorId = document.getElementById('s-mediatorId').value;
+        s.mediatorIds = [document.getElementById('s-mediatorId').value].filter(Boolean);
         s.date = document.getElementById('s-date').value;
         s.startTime = document.getElementById('s-startTime').value;
         s.endTime = document.getElementById('s-endTime').value;
