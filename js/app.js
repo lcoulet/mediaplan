@@ -21,26 +21,141 @@ let state = {
 
 // ===== Demo data (for first run) =====
 function seedDemoData() {
-    const m1 = createMediator({ lastName: 'Dupont', firstName: 'Marie', email: 'marie.dupont@museum.fr', color: '#2c6e49' });
-    const m2 = createMediator({ lastName: 'Martin', firstName: 'Paul', email: 'paul.martin@museum.fr', color: '#d68c45' });
-    const m3 = createMediator({ lastName: 'Bernard', firstName: 'Sophie', email: 'sophie.bernard@museum.fr', color: '#2980b9' });
-    const m4 = createMediator({ lastName: 'Lefebvre', firstName: 'Thomas', email: 'thomas.lefebvre@museum.fr', color: '#8e44ad' });
-    const m5 = createMediator({ lastName: 'Moreau', firstName: 'Claire', email: 'claire.moreau@museum.fr', color: '#c0392b' });
+    // --- 20 mediators with creative French names ---
+    const mediatorDefs = [
+        { lastName: 'Tempête', firstName: 'Océane', email: 'oceane.tempete@museum.fr', phone: '06 12 34 56 78', color: '#1abc9c', notes: 'Spécialiste paléontologie' },
+        { lastName: 'Fortin', firstName: 'Maxime', email: 'maxime.fortin@museum.fr', phone: '06 23 45 67 89', color: '#e67e22', notes: '' },
+        { lastName: 'Vermillon', firstName: 'Léonie', email: 'leonie.vermillon@museum.fr', phone: '06 34 56 78 90', color: '#e74c3c', notes: 'Historienne de l’art' },
+        { lastName: 'Lavandier', firstName: 'Côme', email: 'come.lavandier@museum.fr', color: '#9b59b6', notes: '' },
+        { lastName: 'Ménétrier', firstName: 'Aubin', email: 'aubin.menétrier@museum.fr', phone: '07 11 22 33 44', color: '#3498db', notes: 'Musicien, anime les conférences-spectacles' },
+        { lastName: 'Roselière', firstName: 'Hortense', email: 'hortense.roselière@museum.fr', color: '#2ecc71', notes: 'Botaniste' },
+        { lastName: 'Marchenoir', firstName: 'Gaspard', email: 'gaspard.marchenoir@museum.fr', phone: '06 78 90 12 34', color: '#34495e', notes: '' },
+        { lastName: 'Clair de Lune', firstName: 'Aurore', email: 'aurore.clairdelune@museum.fr', color: '#f39c12', notes: 'Spécialiste des visites nocturnes' },
+        { lastName: 'Brisemarbre', firstName: 'Timothée', email: 'timothée.brisemarbre@museum.fr', phone: '07 22 33 44 55', color: '#16a085', notes: '' },
+        { lastName: 'ÉtoiledeMer', firstName: 'Pénelope', email: 'penelope.etoiledemer@museum.fr', color: '#d35400', notes: 'Spécialiste zoologie marine' },
+        { lastName: 'Orage', firstName: 'Théodore', email: 'theodore.orage@museum.fr', phone: '06 56 78 90 12', color: '#27ae60', notes: '' },
+        { lastName: 'Plumedor', firstName: 'Yseult', email: 'yseult.plumedor@museum.fr', color: '#c0392b', notes: 'Spécialiste oiseaux et taxidermie' },
+        { lastName: 'Rochembrune', firstName: 'Médéric', email: 'mederic.rochembrune@museum.fr', color: '#8e44ad', notes: '' },
+        { lastName: 'Fontainebleue', firstName: 'Blanche', email: 'blanche.fontainebleue@museum.fr', phone: '06 89 01 23 45', color: '#2980b9', notes: '' },
+        { lastName: 'PapillondArgent', firstName: 'Éléonore', email: 'eleonore.papillondargent@museum.fr', color: '#a0522d', notes: 'Spécialiste insectes' },
+        { lastName: 'Sablevague', firstName: 'Hippolyte', email: 'hippolyte.sablevague@museum.fr', phone: '07 33 44 55 66', color: '#2c6e49', notes: '' },
+        { lastName: 'BrumedAutomne', firstName: 'Solène', email: 'solene.brumedautomne@museum.fr', color: '#1f618d', notes: '' },
+        { lastName: 'LoupdOrage', firstName: 'Lancelot', email: 'lancelot.loupdorage@museum.fr', phone: '06 44 55 66 77', color: '#7d3c98', notes: '' },
+        { lastName: 'Vignesvertes', firstName: 'Margaux', email: 'margaux.vignesvertes@museum.fr', color: '#117a65', notes: 'Spécialiste jardin botanique' },
+        { lastName: 'CuivredOr', firstName: 'Faustine', email: 'faustine.cuivredor@museum.fr', phone: '07 55 66 77 88', color: '#b9770e', notes: '' },
+    ];
+    const mediators = mediatorDefs.map(d => createMediator(d));
 
-    const o1 = createOffer({ name: 'Visite guidée Dinosauria', description: 'Visite de la galerie des dinosaures', duration: 90, capacity: 25, location: 'Galerie Dinosauria' });
-    const o2 = createOffer({ name: 'Atelier paléontologie', description: 'Atelier pratique pour enfants', duration: 120, capacity: 15, location: 'Salle pédagogique' });
-    const o3 = createOffer({ name: 'Visite nocturne', description: 'Visite exceptionnelle en soirée', duration: 60, capacity: 20, location: 'Musée entier' });
-    const o4 = createOffer({ name: 'Visite Jardin botanique', description: 'Découverte des plantes', duration: 75, capacity: 20, location: 'Jardin botanique' });
+    // --- 70 offers ---
+    const offerDefs = [
+        // Visites guidées classiques
+        { name: 'Visite guidée Dinosauria', description: 'Découverte de la galerie des dinosaures', duration: 90, capacity: 25, location: 'Galerie Dinosauria' },
+        { name: 'Visite guidée : Trésors de l’Égypte antique', description: 'Parcours dans les collections égyptiennes', duration: 90, capacity: 30, location: 'Salle Égypte' },
+        { name: 'Visite guidée : La Préhistoire pas à pas', description: 'De la pierre taillée à l’art pariétal', duration: 80, capacity: 20, location: 'Galerie Préhistoire' },
+        { name: 'Visite guidée : Animaux disparus', description: 'Tous les animaux éteints du musée', duration: 70, capacity: 25, location: 'Galerie de zoologie' },
+        { name: 'Visite guidée : Minéraux du monde', description: 'Collection de minéraux et gemmes', duration: 60, capacity: 20, location: 'Salle Minéralogie' },
+        { name: 'Visite guidée : Au temps des mammouths', description: 'Faune glaciaire et grands mammifères', duration: 80, capacity: 25, location: 'Galerie Glaciaire' },
+        { name: 'Visite guidée : Les civilisations disparues', description: 'Mayas, Assyriens, Étrusques', duration: 90, capacity: 30, location: 'Salle Archéologie' },
+        { name: 'Visite guidée : Oiseaux du monde', description: 'Plus de 400 espèces naturalisées', duration: 70, capacity: 20, location: 'Galerie d’ornithologie' },
+        { name: 'Visite guidée : Bêtes noires et créatures mythiques', description: 'Quand la science rencontre la légende', duration: 60, capacity: 25, location: 'Galerie Temporaire' },
+        { name: 'Visite guidée : L’homme et la mer', description: 'Histoire de la navigation et de la pêche', duration: 75, capacity: 30, location: 'Galerie Maritime' },
+        { name: 'Visite guidée : Histoire de la Terre', description: 'Formation des continents et tectonique', duration: 60, capacity: 20, location: 'Salle Géologie' },
+        { name: 'Visite guidée : La nuit des étoiles', description: 'Astronomie et observation', duration: 90, capacity: 20, location: 'Planétarium' },
+        { name: 'Visite guidée : Plantes médicinales d’hier et d’aujourd’hui', description: 'Remèdes traditionnels et pharmacopée', duration: 60, capacity: 20, location: 'Jardin botanique' },
+        { name: 'Visite guidée : Les fonds marins', description: 'Biodiversité océanique', duration: 70, capacity: 25, location: 'Galerie Aquatique' },
+        { name: 'Visite guidée : Au cœur du volcan', description: 'Tout savoir sur les volcans', duration: 60, capacity: 20, location: 'Salle Vulcanologie' },
+        // Visites nocturnes et événements
+        { name: 'Visite nocturne : Le musée s’anime', description: 'Visite exceptionnelle en soirée à la lampe de poche', duration: 90, capacity: 20, location: 'Musée entier', setupTime: 30, teardownTime: 15 },
+        { name: 'Visite nocturne : Contes et légendes au musée', description: 'Récits autour des collections', duration: 80, capacity: 30, location: 'Galerie principale', setupTime: 20 },
+        { name: 'Visite nocturne : Dîner-spectacle', description: 'Repas au musée suivi d’une visite', duration: 180, capacity: 40, location: 'Hall d’accueil', setupTime: 60, teardownTime: 45 },
+        { name: 'Visite nocturne : Chasse au trésor nocturne', description: 'Jeu de piste nocturne en équipe', duration: 120, capacity: 25, location: 'Musée entier', setupTime: 30, teardownTime: 15 },
+        { name: 'Visite nocturne : Scènes nocturnes du passé', description: 'Mises en scène sonores et visuelles', duration: 90, capacity: 30, location: 'Galerie principale', setupTime: 45, teardownTime: 30 },
+        // Ateliers et ateliers pédagogiques
+        { name: 'Atelier paléontologie', description: 'Atelier pratique pour enfants : fouilles et moulages', duration: 120, capacity: 15, location: 'Salle pédagogique', setupTime: 30, teardownTime: 20 },
+        { name: 'Atelier : Devenez un chevalier', description: 'Pour les enfants de 6 à 10 ans', duration: 90, capacity: 12, location: 'Salle pédagogique', setupTime: 20, teardownTime: 15 },
+        { name: 'Atelier : Céramique néolithique', description: 'Fabriquer et décorer un pot en argile', duration: 120, capacity: 15, location: 'Salle pédagogique', setupTime: 25, teardownTime: 30 },
+        { name: 'Atelier : Calligraphie égyptienne', description: 'Apprendre les hiéroglyphes', duration: 90, capacity: 12, location: 'Salle pédagogique', setupTime: 15 },
+        { name: 'Atelier : Dissection de la chouette', description: 'Étude des pelotes de rejection', duration: 90, capacity: 15, location: 'Laboratoire éducatif', setupTime: 20, teardownTime: 20 },
+        { name: 'Atelier : Le masque et la moue', description: 'Construire un masque de théâtre antique', duration: 100, capacity: 12, location: 'Salle pédagogique' },
+        { name: 'Atelier : Couleur des pierres', description: 'Observer et dessiner les minéraux', duration: 90, capacity: 15, location: 'Salle Minéralogie', setupTime: 10 },
+        { name: 'Atelier : Tisser l’histoire', description: 'Tissage de fils à la manière gallo-romaine', duration: 110, capacity: 10, location: 'Salle pédagogique', setupTime: 30, teardownTime: 30 },
+        { name: 'Atelier : Le volcan expérimental', description: 'Fabrication et éruption d’un volcan en argile', duration: 90, capacity: 15, location: 'Laboratoire éducatif', setupTime: 30, teardownTime: 30 },
+        { name: 'Atelier : Préparer sa valise de paléontologue', description: 'Atelier pour enfants de 8 à 12 ans', duration: 60, capacity: 15, location: 'Salle pédagogique', setupTime: 15 },
+        { name: 'Atelier : Squelette en carton', description: 'Assemblage d’un squelette humain en modèle réduit', duration: 80, capacity: 15, location: 'Salle pédagogique', setupTime: 15, teardownTime: 15 },
+        { name: 'Atelier : Herboristerie médiévale', description: 'Reconnaître et préparer les plantes du Moyen Âge', duration: 90, capacity: 12, location: 'Jardin botanique', setupTime: 20, teardownTime: 15 },
+        { name: 'Atelier : Moulage fossile', description: 'Apprendre à mouler un fossile', duration: 100, capacity: 12, location: 'Laboratoire éducatif', setupTime: 30, teardownTime: 30 },
+        { name: 'Atelier : L’art de la préhistoire', description: 'Peindre comme à Lascaux', duration: 90, capacity: 15, location: 'Salle pédagogique', setupTime: 20 },
+        { name: 'Atelier : Énigmes au musée', description: 'Rallye-jeu pour enfants', duration: 90, capacity: 20, location: 'Musée entier', setupTime: 10 },
+        { name: 'Atelier : Voyage au centre de la cellule', description: 'Observer au microscope', duration: 90, capacity: 12, location: 'Laboratoire éducatif', setupTime: 25, teardownTime: 15 },
+        // Conférences et conférences-spectacles
+        { name: 'Conférence : Les dinosaures de l’extrême', description: 'Deuxième partie : les prédateurs', duration: 60, capacity: 80, location: 'Auditorium', setupTime: 20, teardownTime: 10 },
+        { name: 'Conférence : Les plantes qui guérissent', description: 'Histoire de la pharmacopée', duration: 60, capacity: 60, location: 'Auditorium', setupTime: 15 },
+        { name: 'Conférence : L’art pariétal', description: 'Lascaux, Chauvet, Altamira', duration: 70, capacity: 80, location: 'Auditorium' },
+        { name: 'Conférence : L’évolution en questions', description: 'Darwin et ses héritiers', duration: 60, capacity: 60, location: 'Auditorium', setupTime: 15, teardownTime: 10 },
+        { name: 'Conférence : Volcans, séismes et tsunamis', description: 'Comprendre la Terre vivante', duration: 70, capacity: 80, location: 'Auditorium' },
+        { name: 'Conférence : Les grands voyageurs du XVIIIe siècle', description: 'Explorations et collections', duration: 60, capacity: 60, location: 'Auditorium', setupTime: 15 },
+        { name: 'Conférence : Le return des grands prédateurs', description: 'Loup, ours, lynx en France', duration: 60, capacity: 60, location: 'Auditorium' },
+        { name: 'Conférence-spectacle : Le rire du mammouth', description: 'One-man-show paléontologique', duration: 80, capacity: 100, location: 'Auditorium', setupTime: 30, teardownTime: 20 },
+        { name: 'Conférence-spectacle : La nuit des pôles', description: 'Récit immersif au-delà du cercle polaire', duration: 90, capacity: 80, location: 'Auditorium', setupTime: 45, teardownTime: 30 },
+        { name: 'Conférence-spectacle : Aux origines de l’art', description: 'Entre science et poésie', duration: 70, capacity: 100, location: 'Auditorium', setupTime: 30, teardownTime: 15 },
+        { name: 'Conférence-spectacle : La Grande Épopée de la Forêt', description: 'Drama naturaliste de la forêt primaire', duration: 90, capacity: 100, location: 'Auditorium', setupTime: 30, teardownTime: 20 },
+        // Spectacles, concerts et événements
+        { name: 'Spectacle : Le Concile des oiseaux', description: 'Spectacle vivant sur l’ornithologie', duration: 60, capacity: 80, location: 'Auditorium', setupTime: 40, teardownTime: 30 },
+        { name: 'Spectacle : Le Maître du feu', description: 'Démonstration interactive sur les volcans', duration: 50, capacity: 60, location: 'Galerie Vulcanologie', setupTime: 30, teardownTime: 20 },
+        { name: 'Concert : Musiques préhistoriques', description: 'Concert d’instruments reconstitués', duration: 70, capacity: 80, location: 'Auditorium', setupTime: 45, teardownTime: 30 },
+        { name: 'Concert : Chants d’oiseaux du monde', description: 'Récital ornithologique', duration: 60, capacity: 60, location: 'Auditorium', setupTime: 30, teardownTime: 20 },
+        { name: 'Spectacle jeune public : La petite fouine', description: 'Aventure sensorielle pour 3-6 ans', duration: 40, capacity: 20, location: 'Salle jeune public', setupTime: 30, teardownTime: 20 },
+        { name: 'Spectacle : La rivière des castors', description: 'Conte musical naturaliste', duration: 50, capacity: 50, location: 'Auditorium', setupTime: 30, teardownTime: 20 },
+        { name: 'Récit musical : Le voyage de la baleine', description: 'Récit immersif sur les cétacés', duration: 60, capacity: 80, location: 'Auditorium', setupTime: 40, teardownTime: 20 },
+        { name: 'Projection-débat : Microcosmos', description: 'Film suivi d’un débat sur les insectes', duration: 100, capacity: 80, location: 'Auditorium', setupTime: 15, teardownTime: 10 },
+        // Parcours thématiques
+        { name: 'Parcours : Animaux de nos régions', description: 'Visite guidée des collections locales', duration: 60, capacity: 20, location: 'Galerie Faune locale' },
+        { name: 'Parcours : Les plantes et leurs secrets', description: 'Botanique dans le jardin', duration: 70, capacity: 15, location: 'Jardin botanique' },
+        { name: 'Parcours : Femme scientifiques, pionnières', description: 'Parcours sur les femmes en sciences', duration: 75, capacity: 25, location: 'Musée entier' },
+        { name: 'Parcours : Les couleurs de la nature', description: 'Couleurs minérales, végétales, animales', duration: 60, capacity: 20, location: 'Musée entier' },
+        { name: 'Parcours sensoriel : À l’aveugle', description: 'Visite à l’aveugle guidée par le toucher et l’odorat', duration: 60, capacity: 8, location: 'Galerie Tactile', setupTime: 20, teardownTime: 10 },
+        { name: 'Parcours : De l’atome à la galaxie', description: 'Parcours multi-échelles', duration: 90, capacity: 25, location: 'Musée entier' },
+        { name: 'Parcours : Le temps des glaciers', description: 'Climat et glaciations', duration: 70, capacity: 20, location: 'Galerie Glaciaire' },
+        // Visites pour publics spécifiques
+        { name: 'Visite tactile des collections', description: 'Expérience insolite : toucher les moulages et spécimens', duration: 60, capacity: 10, location: 'Galerie Tactile', setupTime: 20, teardownTime: 10 },
+        { name: 'Visite en LSF : Trésors du musée', description: 'Visite guidée en langue des signes française', duration: 90, capacity: 15, location: 'Musée entier' },
+        { name: 'Visite adaptée : Handicap mental', description: 'Parcours adapté et sensoriel', duration: 60, capacity: 10, location: 'Galerie Tactile', setupTime: 15, teardownTime: 15 },
+        { name: 'Visite famille : Dino-aventure', description: 'Visite interactive pour les 5-10 ans', duration: 60, capacity: 20, location: 'Galerie Dinosauria' },
+        { name: 'Visite groupe scolaire : Primaire', description: 'Parcours pédagogique adapté au primaire', duration: 90, capacity: 30, location: 'Musée entier' },
+        { name: 'Visite groupe scolaire : Secondaire', description: 'Parcours pédagogique adapté au secondaire', duration: 90, capacity: 30, location: 'Musée entier' },
+        // Événements insolites et expériences
+        { name: 'Bivouac préhistorique', description: 'Bivouac et ateliers de survie préhistorique dans le parc', duration: 300, capacity: 20, location: 'Parc du musée', setupTime: 120, teardownTime: 90 },
+        { name: 'Atelier taxidermie (observation)', description: 'Démonstration et initiation à la taxidermie (spécimens naturalisés)', duration: 180, capacity: 10, location: 'Laboratoire de taxidermie', setupTime: 60, teardownTime: 45 },
+    ];
+    const offers = offerDefs.map(d => createOffer(d));
 
-    // Fix skills references
-    m1.skills = [o1.id, o2.id, o4.id];
-    m2.skills = [o1.id, o3.id];
-    m3.skills = [o2.id, o4.id];
-    m4.skills = [o1.id, o3.id, o4.id];
-    m5.skills = [o2.id, o3.id];
-
-    const mediators = [m1, m2, m3, m4, m5];
-    const offers = [o1, o2, o3, o4];
+    // --- Assign competences (skills) to mediators ---
+    // Each mediator gets a varied subset of offer IDs
+    const skillAssignments = [
+        [0, 20, 42, 62, 64],          // Océane — paléo, ateliers, conf, tactile, bivouac
+        [0, 1, 16, 34, 56],           // Maxime — visites classiques, nocturne, conf
+        [2, 3, 17, 43, 57],           // Léonie — préhistoire, nocturne, conf-spectacle
+        [4, 5, 21, 44, 63],           // Côme — minéraux, visites, ateliers, escape
+        [18, 41, 42, 43, 44],        // Aubin — conférences-spectacles
+        [12, 13, 30, 55],             // Hortense — botanique, atelier herboristerie, parcours plantes
+        [6, 7, 45, 46],               // Gaspard — civilisations, oiseaux, spectacles
+        [16, 17, 18, 19, 48],        // Aurore — visites nocturnes
+        [8, 9, 22, 23, 58],           // Timothée — animaux disparus, mer, ateliers
+        [13, 14, 26, 38, 65],        // Pénelope — fonds marins, volcan, atelier, dégustation
+        [10, 14, 15, 39, 40],        // Théodore — histoire Terre, volcans, conf
+        [7, 25, 47, 50, 51],          // Yseult — oiseaux, atelier, spectacle, concert
+        [2, 3, 21, 24, 33],           // Médéric — préhistoire, ateliers
+        [1, 11, 56, 57],              // Blanche — Égypte, étoiles, parcours
+        [8, 9, 23, 24, 36],           // Éléonore — insectes, ateliers, conf
+        [4, 15, 27, 31, 67],          // Hippolyte — minéraux, volcans, atelier, stage
+        [5, 6, 34, 54, 61],           // Solène — mammouths, civilisations, conf, senoirs
+        [3, 7, 45, 46, 49],           // Lancelot — animaux, oiseaux, spectacles
+        [12, 13, 30, 55, 58],        // Margaux — botanique, atelier, parcours
+        [10, 14, 39, 41, 66],        // Faustine — géologie, volcans, conf, feu de camp
+    ];
+    skillAssignments.forEach((skills, i) => {
+        mediators[i].skills = skills.map(offIdx => offers[offIdx].id);
+    });
 
     // Reference date: start of previous month
     // e.g. if today is Sep 14, 2026 → reference = Aug 1, 2026
@@ -61,23 +176,52 @@ function seedDemoData() {
     const coordinationImport = new Date(refDate.getTime() + 7 * 86400000).toISOString();
 
     // Predefined slot patterns for weekdays (Mon=1..Fri=5)
-    // Each entry: [offerIdx, mediatorIdx, start, end, status, participants, origin, source?, modifiedAfterImport?]
+    // Each entry: [offerIdx, mediatorIdx, start, end, status, participants, origin, source?, modifiedAfterImport?, unassigned?, extraMediatorIdx?]
     const weekdayPatterns = [
+        // Monday
         [0, 0, '09:00', '10:30', 'confirmed', 22, 'imported', 'Secutix'],
-        [1, 2, '10:00', '12:00', 'confirmed', 15, 'imported', 'Secutix'],
-        [0, 1, '11:00', '12:30', 'planned', 18, 'imported', 'Secutix'],
-        [2, 1, '18:00', '19:00', 'planned', 0, 'imported', 'Secutix'],
-        [3, 2, '14:00', '15:15', 'confirmed', 18, 'imported', 'Secutix'],
-        [0, 3, '10:00', '11:30', 'planned', 0, 'manual'],
-        [1, 0, '09:30', '11:30', 'confirmed', 15, 'imported', 'Coordination', false],
-        [0, 3, '15:00', '16:30', 'planned', 12, 'imported', 'Secutix'],
-        [3, 2, '11:00', '12:15', 'confirmed', 20, 'imported', 'Secutix'],
-        [0, 4, '10:00', '11:30', 'planned', 0, 'manual'],
-        [2, 3, '18:00', '19:00', 'confirmed', 20, 'imported', 'Secutix'],
-        [1, 4, '14:00', '16:00', 'planned', 10, 'imported', 'Secutix'],
-        [0, 0, '14:30', '16:00', 'confirmed', 25, 'imported', 'Secutix'],
-        [3, 3, '10:00', '11:15', 'planned', 15, 'manual'],
+        [20, 2, '10:00', '12:00', 'confirmed', 14, 'imported', 'Secutix'],
+        [34, 4, '14:00', '15:00', 'confirmed', 60, 'imported', 'Secutix'],
+        [56, 6, '11:00', '12:00', 'planned', 18, 'imported', 'Secutix'],
+        [1, 8, '15:30', '17:00', 'planned', 12, 'imported', 'Secutix'],
+        [16, 7, '18:00', '19:30', 'planned', 0, 'imported', 'Secutix', null, true],
+        [60, 0, '10:00', '12:00', 'planned', 10, 'manual'],
+        // Tuesday
+        [2, 1, '09:30', '11:00', 'confirmed', 18, 'imported', 'Secutix'],
+        [22, 3, '10:00', '11:40', 'confirmed', 12, 'imported', 'Secutix'],
+        [42, 4, '14:00', '15:20', 'confirmed', 80, 'imported', 'Secutix'],
+        [5, 10, '11:00', '12:20', 'planned', 20, 'imported', 'Secutix'],
+        [12, 5, '14:30', '15:30', 'planned', 18, 'imported', 'Secutix'],
+        [61, 12, '10:00', '11:15', 'planned', 14, 'imported', 'Coordination'],
+        [66, 0, '10:00', '11:30', 'planned', 12, 'manual'],
+        // Wednesday
+        [0, 0, '09:00', '10:30', 'confirmed', 25, 'imported', 'Secutix'],
+        [20, 2, '10:00', '12:00', 'confirmed', 15, 'imported', 'Secutix'],
+        [38, 3, '14:00', '15:00', 'confirmed', 60, 'imported', 'Secutix'],
+        [44, 4, '15:30', '16:50', 'planned', 100, 'imported', 'Secutix'],
+        [13, 5, '11:00', '12:10', 'planned', 20, 'imported', 'Secutix'],
+        [57, 8, '10:00', '11:00', 'planned', 8, 'imported', 'Coordination'],
+        [62, 0, '10:00', '11:00', 'planned', 10, 'imported', 'Secutix', null, true],
+        // Thursday
+        [3, 1, '09:30', '11:00', 'confirmed', 22, 'imported', 'Secutix'],
+        [21, 12, '10:00', '11:30', 'confirmed', 12, 'imported', 'Secutix'],
+        [35, 4, '14:00', '15:00', 'planned', 60, 'imported', 'Secutix'],
+        [7, 6, '11:00', '12:10', 'planned', 25, 'imported', 'Secutix'],
+        [46, 11, '18:00', '19:00', 'confirmed', 50, 'imported', 'Secutix'],
+        [58, 8, '10:00', '12:00', 'planned', 12, 'manual'],
+        [0, 2, '14:30', '16:00', 'planned', 20, 'imported', 'Secutix', null, false, 18], // training assignment
+        // Friday
+        [0, 0, '09:00', '10:30', 'confirmed', 25, 'imported', 'Secutix'],
+        [24, 14, '10:00', '11:30', 'confirmed', 12, 'imported', 'Secutix'],
+        [40, 10, '14:00', '15:00', 'planned', 60, 'imported', 'Secutix'],
+        [8, 6, '11:00', '12:10', 'confirmed', 25, 'imported', 'Secutix'],
+        [17, 7, '18:00', '19:20', 'planned', 30, 'imported', 'Secutix'],
+        [64, 0, '10:00', '11:30', 'planned', 0, 'manual', null, true],
+        [63, 16, '10:00', '11:30', 'planned', 12, 'imported', 'Coordination'],
     ];
+
+    // Map day-of-week to a starting pattern index (7 patterns per day, 5 weekdays)
+    const dayPatternOffsets = { 1: 0, 2: 7, 3: 14, 4: 21, 5: 28 }; // Mon=1..Fri=5
 
     // Generate slots across all 3 months
     for (let day = 0; day < totalDays; day++) {
@@ -86,61 +230,95 @@ function seedDemoData() {
         const dow = date.getDay(); // 0=Sun, 6=Sat
         if (dow === 0 || dow === 6) continue; // Skip weekends
 
-        // Use day index to pick patterns deterministically
-        const patternIdx = day % weekdayPatterns.length;
-        const pattern = weekdayPatterns[patternIdx];
+        const patternStart = dayPatternOffsets[dow];
 
         // Vary which mediators get assigned based on week number
         const weekNum = Math.floor(day / 7);
         const medOffset = weekNum % mediators.length;
 
-        const [offIdx, medIdx, start, end, status, participants, origin, source, modified] = pattern;
-        const mediatorId = origin === 'manual' && participants === 0 ? '' : mediators[(medIdx + medOffset) % mediators.length].id;
+        // Generate ~7 slots per weekday
+        for (let p = 0; p < 7; p++) {
+            const patternIdx = patternStart + p;
+            if (patternIdx >= weekdayPatterns.length) break;
+            const pattern = weekdayPatterns[patternIdx];
+            const [offIdx, medIdx, start, end, status, participants, origin, source, modified, unassigned, extraMed] = pattern;
 
-        const slotData = {
-            offerId: offers[offIdx].id,
-            mediatorId,
-            date: dayFromRef(day),
-            startTime: start,
-            endTime: end,
-            status,
-            participantCount: participants,
-            origin,
-        };
-        if (source) {
-            slotData.importSource = source;
-            slotData.importedAt = source === 'Secutix' ? secutixImport : coordinationImport;
+            // Determine mediator
+            let mediatorId = '';
+            if (!unassigned) {
+                mediatorId = mediators[(medIdx + medOffset) % mediators.length].id;
+            }
+
+            const slotData = {
+                offerId: offers[offIdx].id,
+                mediatorId,
+                date: dayFromRef(day),
+                startTime: start,
+                endTime: end,
+                status,
+                participantCount: participants,
+                origin,
+            };
+            if (source) {
+                slotData.importSource = source;
+                slotData.importedAt = source === 'Secutix' ? secutixImport : coordinationImport;
+            }
+            if (modified) slotData.modifiedAfterImport = true;
+
+            slots.push(createSlot(slotData));
+
+            // Add a second mediator (training assignment) on some slots
+            if (extraMed !== undefined) {
+                const traineeId = mediators[(extraMed + medOffset) % mediators.length].id;
+                if (traineeId !== mediatorId) {
+                    const traineeSlot = createSlot({
+                        ...slotData,
+                        mediatorId: traineeId,
+                        notes: 'Tutorat — formation en situation',
+                    });
+                    if (traineeSlot.origin === 'imported') traineeSlot.modifiedAfterImport = true;
+                    slots.push(traineeSlot);
+                }
+            }
         }
-        if (modified) slotData.modifiedAfterImport = true;
-
-        slots.push(createSlot(slotData));
     }
 
     // Mark a few slots as modified after import (scattered across the timeline)
-    [10, 25, 45, 60].forEach(idx => {
+    [10, 25, 45, 60, 80, 100, 130].forEach(idx => {
         if (slots[idx] && slots[idx].origin === 'imported') {
             slots[idx].modifiedAfterImport = true;
         }
     });
 
-    // Add some unassigned slots
-    [5, 20, 35, 55, 75].forEach(idx => {
+    // Add some unassigned slots (ensure a few exist)
+    [5, 20, 40, 70, 90, 120, 150].forEach(idx => {
         if (slots[idx]) {
             slots[idx].mediatorId = '';
         }
     });
 
-    // Generate absences spread across the 3 months
+    // Generate ~20 absences spread across the 3 months
     const absencePatterns = [
         { mediator: 0, startDay: 7, duration: 1, halfDay: 'morning', type: 'leave', notes: 'RTT' },
-        { mediator: 1, startDay: 12, duration: 2, halfDay: 'none', type: 'mission', notes: 'Déplacement Lyon' },
-        { mediator: 2, startDay: 5, duration: 1, halfDay: 'afternoon', type: 'training', notes: 'Formation first aid' },
+        { mediator: 1, startDay: 12, duration: 2, halfDay: 'none', type: 'mission', notes: 'Déplacement Lyon — colloque' },
+        { mediator: 2, startDay: 5, duration: 1, halfDay: 'afternoon', type: 'training', notes: 'Formation accueil du public' },
         { mediator: 3, startDay: 20, duration: 3, halfDay: 'none', type: 'leave', notes: 'Congés payés' },
         { mediator: 4, startDay: 35, duration: 1, halfDay: 'morning', type: 'sick', notes: 'Maladie' },
-        { mediator: 0, startDay: 45, duration: 2, halfDay: 'none', type: 'mission', notes: 'Salon professionnel' },
-        { mediator: 1, startDay: 60, duration: 1, halfDay: 'afternoon', type: 'training', notes: 'Formation accueil' },
-        { mediator: 2, startDay: 70, duration: 4, halfDay: 'none', type: 'leave', notes: 'Congés été' },
-        { mediator: 3, startDay: 80, duration: 1, halfDay: 'morning', type: 'other', notes: 'Rendez-vous médical' },
+        { mediator: 5, startDay: 3, duration: 2, halfDay: 'none', type: 'mission', notes: 'Mission Bordeaux — inventaire botanique' },
+        { mediator: 6, startDay: 15, duration: 1, halfDay: 'afternoon', type: 'other', notes: 'Rendez-vous médical' },
+        { mediator: 7, startDay: 28, duration: 1, halfDay: 'none', type: 'training', notes: 'Formation sécurité' },
+        { mediator: 8, startDay: 42, duration: 4, halfDay: 'none', type: 'leave', notes: 'Congés d’été' },
+        { mediator: 9, startDay: 50, duration: 1, halfDay: 'morning', type: 'sick', notes: 'Grippe' },
+        { mediator: 10, startDay: 18, duration: 2, halfDay: 'none', type: 'mission', notes: 'Salon professionnel Paris' },
+        { mediator: 11, startDay: 60, duration: 1, halfDay: 'afternoon', type: 'training', notes: 'Formation taxidermie — perfectionnement' },
+        { mediator: 12, startDay: 8, duration: 1, halfDay: 'morning', type: 'other', notes: 'Administratif' },
+        { mediator: 13, startDay: 33, duration: 3, halfDay: 'none', type: 'leave', notes: 'Congés sans solde' },
+        { mediator: 14, startDay: 47, duration: 1, halfDay: 'afternoon', type: 'sick', notes: 'Migraine' },
+        { mediator: 15, startDay: 55, duration: 2, halfDay: 'none', type: 'mission', notes: 'Fouilles archéologiques — bénévolat encadré' },
+        { mediator: 16, startDay: 72, duration: 1, halfDay: 'morning', type: 'training', notes: 'Formation LSF niveau 2' },
+        { mediator: 17, startDay: 80, duration: 1, halfDay: 'none', type: 'other', notes: 'Congé familial' },
+        { mediator: 18, startDay: 65, duration: 2, halfDay: 'none', type: 'leave', notes: 'RTT cumulée' },
+        { mediator: 19, startDay: 85, duration: 1, halfDay: 'afternoon', type: 'sick', notes: 'Rendez-vous médical' },
     ];
 
     absencePatterns.forEach(p => {
