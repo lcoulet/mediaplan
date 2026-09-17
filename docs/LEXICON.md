@@ -106,22 +106,27 @@ instant, unlocking requires a confirmation warning.
 
 ### Day Planning View (Vue planning du jour)
 A calendar view focused on a single day. Layout:
-- Rows: mediators (with their current cycle week label, e.g. "S1", "S2")
-  plus two types of non-mediator lanes:
-  - **Unassigned lane**: imported offers not yet allocated to a mediator
-  - **Standard offers lane**: catalog of standard offers that can be
-    dragged onto a mediator row + time slot to create a manual slot
-    (virtual reservation). The offer stays in the lane for reuse.
+- Rows: mediators (with cycle week label as a pill/badge to the right of
+  their name, e.g. "S1", "S2") plus two types of non-mediator lanes:
+  - **Unassigned lane**: imported offers not yet allocated to a mediator,
+    shown only for the selected day, positioned on their time slot
+  - **Standard offers lane**: catalog of all standard offers (no time
+    positioning — these are not reservations). Draggable onto a mediator
+    row + time position to create a manual slot (virtual reservation)
+    using the offer's default duration. The offer stays in the lane for
+    reuse. Filters will be added later.
 - Columns: time axis with thin lines every 10 minutes, thick lines every
   hour
 - Display: mediator availability/unavailability (from work cycle + absences)
   as background, assigned offers as blocks
+- Slot block: visually divided into setup / offer / teardown zones with
+  dashed separators, reflecting the offer's setupTime and teardownTime
 - Slot overlap on the same mediator row: overlapping slots shown on top
   of each other with red hatching and/or red highlight to indicate conflict
 - Interactions:
   - Drag-and-drop offers from unassigned lane to a mediator row to assign
   - Drag standard offer onto a mediator row + time position to create a
-    manual slot (origin: manual)
+    manual slot (origin: manual, duration: offer default)
   - Drag a slot edge to modify start/end time (same day only, no day change)
   - Drag a slot body to move it within the same day (no day change)
   - Duplicate a slot onto one or more other mediators — adds mediator to

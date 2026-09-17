@@ -170,8 +170,8 @@ MediaPlan project. Updated inline during grilling sessions.
 - Slot model migrating from `mediatorId` to `mediatorIds` (array)
 
 **Open questions:**
-- [ ] In the unassigned lane, are all imported-but-unassigned slots shown, or only those for the selected day?
-- [ ] Should the standard offers lane show all 70 offers, or only those the selected mediator has competence for?
-- [ ] When dragging a standard offer to create a manual slot, what duration does it get? (default offer duration? user-specified?)
-- [ ] How is the cycle week label (S1, S2) displayed next to the mediator name? (badge? column?)
-- [ ] Should the day view show setup/teardown time visually within the slot block, or just the offer time?
+- [x] In the unassigned lane, are all imported-but-unassigned slots shown, or only those for the selected day? → Only those for the selected day, positioned on their time slot.
+- [x] Should the standard offers lane show all 70 offers, or only those the selected mediator has competence for? → All offers (filters added later). No time positioning — these are not reservations.
+- [x] When dragging a standard offer to create a manual slot, what duration does it get? (default offer duration? user-specified?) → Default offer duration.
+- [x] How is the cycle week label (S1, S2) displayed next to the mediator name? (badge? column?) → Pill/badge to the right of the name.
+- [x] Should the day view show setup/teardown time visually within the slot block, or just the offer time? → Yes, with a visual separator (dashed line or similar) between setup / offer / teardown zones within the slot block.
