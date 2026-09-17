@@ -15,10 +15,25 @@ can lead), active status (can be deactivated without deletion).
 ### Mediation Offer (Offre de médiation)
 An activity proposed by the museum to visitors (guided tour, workshop,
 show, etc.). Has: name, duration (multiple of 30 min), capacity,
-location. Can be:
+location, **setup time** (temps de mise en place), **teardown time**
+(temps de démontage). Can be:
 - **Reserved** (réservée) — booked by a visitor group via Secutix import
-- **Fixed** (fixe) — scheduled regularly without reservation
-- **Occasional** (ponctuelle) — scheduled once without reservation
+- **Ad hoc** (ponctuelle) — entered manually, scheduled once without reservation
+
+No recurring offers exist in the current scope. All offers are unique
+instances.
+
+### Setup Time (Temps de mise en place)
+The time needed before an offer to prepare the activity (room, equipment).
+Part of the offer definition. When a mediator is assigned to a slot, the
+setup time extends the mediator's occupied time range before the offer
+start. Used for overlap detection.
+
+### Teardown Time (Temps de démontage)
+The time needed after an offer to clean up and store equipment.
+Part of the offer definition. When a mediator is assigned to a slot, the
+teardown time extends the mediator's occupied time range after the offer
+end. Used for overlap detection.
 
 ### Slot (Créneau)
 An instance of an offer assigned to a date, time, and one or more

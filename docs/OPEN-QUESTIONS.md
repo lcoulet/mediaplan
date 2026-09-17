@@ -34,11 +34,15 @@ MediaPlan project. Updated inline during grilling sessions.
 
 **Established so far:**
 - Slots are in multiples of 30 minutes
-- Offers can be reserved (Secutix), fixed, or occasional
+- Offers can be reserved (Secutix) or ad hoc (manual entry)
+- No recurring offers exist — all offers are unique instances
+- Offers have setup time and teardown time (part of the offer definition)
+- Setup/teardown extend the mediator's occupied time range for overlap detection
+- No mandatory breaks between assignments — managed manually by the mediator
 
 **Open questions:**
-- [ ] Are there recurring offers (e.g. "every Tuesday at 14:00") or only unique slots?
-- [ ] If recurring, how are exceptions handled (cancellation, time change)?
+- [x] Are there recurring offers (e.g. "every Tuesday at 14:00") or only unique slots? → No recurring offers. All ad hoc.
+- [x] If recurring, how are exceptions handled? → N/A (no recurrence)
 
 ## Mediator constraints
 
@@ -46,11 +50,13 @@ MediaPlan project. Updated inline during grilling sessions.
 - Mediators have competences (list of offers they can lead)
 - Multiple mediators can be assigned to one slot (for training)
 - Overlapping assignments are forbidden
+- No mandatory breaks — managed manually
+- Offers have setup/teardown times that extend the mediator's occupied range
 
 **Open questions:**
-- [ ] Are there mandatory breaks between assignments?
 - [ ] Is there a maximum number of assignments per day per mediator?
 - [ ] Can a mediator be assigned to an offer they don't have competence for? (exception process?)
+- [ ] Are setup/teardown times the same for all mediators, or per-mediator per-offer?
 
 ## Deployment
 
