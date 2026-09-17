@@ -60,10 +60,12 @@ MediaPlan project. Updated inline during grilling sessions.
 
 **Established so far:**
 - Mediators have competences (list of offers they can lead)
-- Multiple mediators can be assigned to one slot (for training)
-- Overlapping assignments are forbidden
+- Multiple mediators can be assigned to one slot (multi-mediator, not
+  independent copies — same slot, multiple mediatorIds)
+- Overlapping assignments are forbidden (with warning + confirmation)
 - No mandatory breaks — managed manually
 - Offers have setup/teardown times that extend the mediator's occupied range
+- No max assignments per day — managed by coordinator
 
 **Open questions:**
 - [x] Is there a maximum number of assignments per day per mediator? → No limit. Managed by the coordinator.
@@ -148,3 +150,28 @@ MediaPlan project. Updated inline during grilling sessions.
 - [ ] What day does a cycle week start on? (Monday? Sunday?)
 - [ ] When a cycle is overridden for a specific week, does it revert to the rotation afterward or stay manual?
 - [ ] Are cycle definitions (S1, S2, etc.) shared across mediators or unique per mediator?
+
+## Day planning view
+
+**Established so far:**
+- View focused on a single day: mediators as rows, time as columns
+- Time grid: thin lines every 10 minutes, thick lines every hour
+- Background shows mediator availability (work cycle) + unavailability (absences)
+- Two non-mediator lanes:
+  - Unassigned lane: imported offers not yet allocated to a mediator
+  - Standard offers lane: catalog of offers, draggable onto mediator+time
+    to create a manual slot. Offer stays in lane for reuse.
+- Drag-and-drop: assign offers, resize slots (drag edge), move slots
+  (drag body, same day only)
+- Slot duplication: adds mediator to same slot (multi-mediator, not copy)
+- Overlap on same mediator: red hatching/highlight + warning confirmation
+- Navigation: day tabs with prev/next/today
+- Toggle: day / week / month views
+- Slot model migrating from `mediatorId` to `mediatorIds` (array)
+
+**Open questions:**
+- [ ] In the unassigned lane, are all imported-but-unassigned slots shown, or only those for the selected day?
+- [ ] Should the standard offers lane show all 70 offers, or only those the selected mediator has competence for?
+- [ ] When dragging a standard offer to create a manual slot, what duration does it get? (default offer duration? user-specified?)
+- [ ] How is the cycle week label (S1, S2) displayed next to the mediator name? (badge? column?)
+- [ ] Should the day view show setup/teardown time visually within the slot block, or just the offer time?
