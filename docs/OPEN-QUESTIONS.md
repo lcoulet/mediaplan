@@ -33,7 +33,7 @@ MediaPlan project. Updated inline during grilling sessions.
 ## Offer recurrence
 
 **Established so far:**
-- Slots are in multiples of 30 minutes
+- Slots are in 10-minute increments (e.g. 14:00, 14:10, 14:20)
 - Offers can be reserved (Secutix) or ad hoc (manual entry)
 - No recurring offers exist — all offers are unique instances
 - Offers have setup time and teardown time (part of the offer definition)

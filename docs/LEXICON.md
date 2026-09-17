@@ -14,9 +14,8 @@ can lead), active status (can be deactivated without deletion).
 
 ### Mediation Offer (Offre de médiation)
 An activity proposed by the museum to visitors (guided tour, workshop,
-show, etc.). Has: name, duration (multiple of 30 min), capacity,
-location, **setup time** (temps de mise en place), **teardown time**
-(temps de démontage). Can be:
+show, etc.). Has: name, duration, capacity, location, **setup time**
+(temps de mise en place), **teardown time** (temps de démontage). Can be:
 - **Reserved** (réservée) — booked by a visitor group via Secutix import
 - **Ad hoc** (ponctuelle) — entered manually, scheduled once without reservation
 
@@ -37,7 +36,9 @@ end. Used for overlap detection.
 
 ### Slot (Créneau)
 An instance of an offer assigned to a date, time, and one or more
-mediators. This is the atomic unit of the planning. Tracks:
+mediators. This is the atomic unit of the planning. Time granularity is
+10-minute increments (e.g. 14:00, 14:10, 14:20). Sub-10-minute precision
+is not needed. Tracks:
 - `origin`: "manual" or "imported"
 - `importSource`: e.g. "Secutix"
 - `importedAt`: timestamp of import
