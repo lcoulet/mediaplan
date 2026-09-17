@@ -139,6 +139,17 @@ mediaplan/
 - GitHub: `lcoulet/mediaplan`, branch `main`, MIT license
 - Local dev: `python3 -m http.server 8000` in the project root
 
+## Workflow
+
+Development is orchestrated by a dedicated Hermes profile (`dev`) that
+coordinates subagents through phases: specs → design → design review →
+implementation → code review → quality gate. Individual agents receive
+tasks via delegate_task and should focus only on their assigned phase.
+The orchestrator handles context passing and phase sequencing.
+
+Architectural decisions are documented in `docs/adr/`. Any change that
+reverses or supersedes an existing decision must update or add an ADR.
+
 ## User Preferences
 
 - Communication: direct and concise, French or English
