@@ -153,6 +153,10 @@ reverses or supersedes an existing decision must update or add an ADR.
 Domain vocabulary is defined in `docs/LEXICON.md`. All agents must use
 these terms consistently in code, documentation, and discussion.
 
+Open questions and established facts are tracked in
+`docs/OPEN-QUESTIONS.md`. Never start work on a topic that has open
+questions — resolve them first.
+
 ## User Preferences
 
 - Communication: direct and concise, French or English
