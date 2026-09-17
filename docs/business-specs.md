@@ -4,7 +4,10 @@
 
 The Museum of Toulouse offers mediation programs (guided tours, workshops,
 special events, etc.) that require scheduling the mediators who lead them.
-MediaPlan is the tool used to manage these schedules.
+MediaPlan is the tool used to manage these schedules. It is used by
+coordinators who build and maintain the planning, assign mediators to
+offers, and share the result at the daily briefing with mediators (via
+Excel export or paper printout).
 
 ## Entities
 
@@ -15,9 +18,37 @@ MediaPlan is the tool used to manage these schedules.
 - `firstName`: first name
 - `email`: email address (optional)
 - `phone`: phone number (optional)
-- `skills`: list of mediation offers the mediator is qualified to lead
+- `competences`: list of { offerId, status } pairs where status is
+  `confirmed` (can lead alone) or `learning` (in acquisition, can be
+  assigned as supplemental or exceptionally lead)
 - `active`: boolean (active mediator or not)
 - `notes`: free-form notes (optional)
+- `workCycleId`: reference to the active work cycle (optional)
+
+### Work Cycle
+
+- `id`: unique identifier
+- `mediatorId`: reference to the mediator
+- `name`: cycle name (e.g. "S1", "S2", "S3")
+- `weeks`: list of cycle weeks (1 to N)
+- `active`: boolean — one active cycle per mediator at a time
+
+### Cycle Week
+
+- `id`: unique identifier
+- `cycleId`: reference to the work cycle
+- `weekNumber`: position in the cycle (1, 2, 3, ...)
+- `label`: display name (e.g. "S1", "S2")
+- `days`: list of { dayOfWeek, startTime, endTime } for each working day
+  (dayOfWeek: 1=Monday .. 7=Sunday)
+
+### Cycle Override
+
+- `id`: unique identifier
+- `mediatorId`: reference to the mediator
+- `weekStartDate`: ISO date of the Monday of the overridden week
+- `cycleWeekId`: reference to the cycle week used instead of the rotated one
+- `notes`: reason for override (optional)
 
 ### Mediation Offer
 
@@ -27,6 +58,10 @@ MediaPlan is the tool used to manage these schedules.
 - `duration`: duration in minutes
 - `capacity`: maximum number of participants
 - `location`: intervention location (optional)
+- `setupTime`: preparation time in minutes before the offer (fixed, same
+  for all mediators)
+- `teardownTime`: cleanup time in minutes after the offer (fixed, same
+  for all mediators)
 
 ### Schedule (Planning)
 
@@ -35,24 +70,27 @@ MediaPlan is the tool used to manage these schedules.
 - `startDate`: period start date
 - `endDate`: period end date
 - `status`: `draft` | `published` | `archived`
-- `locked`: boolean — when true, slots cannot be added, edited, or deleted without unlocking first
+- `locked`: boolean — when true, slots cannot be added, edited, or deleted
+  without unlocking first (locked by default)
 
-### Reservation (Slot)
+### Slot (Reservation)
 
 - `id`: unique identifier
 - `scheduleId`: reference to the schedule
 - `offerId`: reference to the mediation offer
-- `mediatorId`: reference to the assigned mediator
+- `mediatorIds`: list of assigned mediator IDs (multiple for training)
 - `date`: slot date (ISO 8601, e.g. `2026-09-15`)
-- `startTime`: start time (ISO 8601, e.g. `09:00`)
-- `endTime`: end time (ISO 8601, e.g. `10:30`)
+- `startTime`: start time (10-minute increments, e.g. `09:00`, `09:10`)
+- `endTime`: end time (10-minute increments)
 - `participantCount`: number of participants (optional)
 - `status`: `planned` | `confirmed` | `cancelled` | `completed`
 - `notes`: free-form notes (optional)
-- `origin`: `manual` (created or edited by hand) | `imported` (came from an external import)
-- `importSource`: source label for imported slots (e.g. `"Secutix"`, `"Coordination"`) — empty for manual slots
-- `importedAt`: import timestamp (ISO 8601, e.g. `2026-09-14T19:30:00.000Z`) — empty for manual slots
-- `modifiedAfterImport`: boolean — true if an imported slot was later edited by hand
+- `origin`: `manual` | `imported`
+- `importSource`: source label (e.g. `"Secutix"`, `"Coordination"`)
+- `importedAt`: import timestamp (ISO 8601) — empty for manual slots
+- `modifiedAfterImport`: boolean — true if edited after import
+- `contractNumber`: unique identifier from Secutix for deduplication
+  (reserved slots only)
 
 ### Mediator Unavailability (Absence)
 
@@ -60,75 +98,108 @@ MediaPlan is the tool used to manage these schedules.
 - `mediatorId`: reference to the mediator
 - `startDate`: absence start date
 - `endDate`: absence end date (inclusive)
-- `halfDay`: `none` (full day) | `morning` | `afternoon` (applies to start and end dates for single-day absences; for multi-day, applies to start date only)
-- `type`: `leave` (congés CP/RTT) | `mission` (déplacement professionnel) | `training` (formation) | `sick` (maladie) | `other`
+- `halfDay`: `none` (full day) | `morning` | `afternoon`
+- `type`: `leave` | `mission` | `training` | `sick` | `other`
 - `notes`: free-form notes (optional)
 
 ## Features
 
 ### Mediator Management
 - List, add, edit, delete a mediator
-- Filter by skill / active status
+- Manage competences: assign offers with status (confirmed/learning)
+- Filter by competence / active status
 - Search by name
+- Manage work cycle (create, edit, activate)
+
+### Work Cycle Management
+- Create a cycle with 1 to N named weeks
+- Define working days and hours per week (10-minute granularity)
+- One active cycle per mediator at a time
+- Cycles rotate in sequence (S1 → S2 → S3 → S1)
+- Override specific weeks manually
+- Cycles view: grid with one mediator per row, columns showing week
+  numbers and date ranges
 
 ### Mediation Offer Management
 - List, add, edit, delete an offer
-- Associate offers with mediators (skills)
+- Define setup time and teardown time per offer
+- Associate offers with mediators (competences)
 
 ### Mediator Unavailability Management
 - List, add, edit, delete an absence for a mediator
-- Absence types: leave (CP/RTT), mission, training, sick, other
+- Absence types: leave, mission, training, sick, other
 - Granularity: full day or half-day (morning/afternoon)
-- Detect conflicts: warn when assigning a mediator to a slot during an absence
+- Detect conflicts: warn when assigning a mediator during an absence
 - Calendar: colored banner on affected days
-- Slot display: badge/icon next to mediator name when absent
 - Dedicated view: list absences per mediator with filters
 
 ### Schedule Management
 - Create a schedule for a given period
 - Visualize the schedule as a calendar/grid
 - Edit slots (drag & drop or selection)
-- Assign a mediator to each slot
-- Change schedule status
-- Lock/unlock schedule editing (with warning confirmation on unlock)
-- Visual distinction between imported and manually created/edited slots:
+- Assign one or more mediators to each slot (filtered by competence)
+- Lock/unlock schedule editing (locked by default, warning on unlock)
+- Visual distinction between imported and manual slots:
   - Imported slots: badge showing source, read-only feel
   - Manual slots: distinct visual style
   - Modified imported slots: badge showing "imported (modified)"
-- Detailed slot view: show origin (manual/imported), import source label,
-  and import date (human-friendly French format, e.g. "14 sept. 2026 à 19:30")
+- Setup/teardown time displayed on calendar for assigned mediators
+- Overlap detection uses extended time range (start - setup, end + teardown)
+
+### Secutix Import (Synchronization)
+- Import Secutix Excel export to create/update reserved slots
+- Deduplicate using contract number — skip slots already imported
+- Update existing slots when reservation modified (headcount, time)
+- Deallocate slots no longer in the Secutix file (cancelled reservations)
+- Preserve mediator assignments on modified slots when possible
 
 ### Excel Import/Export
 - Export the schedule in .xlsx format (one tab per entity or per week)
 - Export the mediator list and their assignments
-- Import data from existing files (Secutix, coordination files)
+- Import data from Secutix and coordination files
 - Configurable import format (column mapping)
 
 ### Data Persistence
 - All data in `localStorage`
 - Full JSON export/import (backup/restore)
+- V1: export as `.json.gz` with timestamp in filename
+  (e.g. `mediaplan_2026-09-17_1430.json.gz`)
+- V1: manual sharing via shared filesystem
+- V2: server with client-side encryption and versioning
 
 ## User Interface
 
-- **Default language: French** — the application UI is in French
+- **Default language: French**
 - Responsive design (desktop-first, tablet-secondary)
 - Main calendar view (week / month)
-- Secondary views: mediator list, offer list
+- Secondary views: mediators, offers, absences, cycles
 - Navigation bar / main menu
 - Filters: by mediator, by offer, by date
 
+## User Access
+
+- V1: coordinators only (no authentication)
+- V1: mediators see the planning via export (Excel/paper)
+- Future: read-only mediator view
+- Future: authentication when backend is added
+
 ## External Data Sources
 
-- **Secutix**: the Museum's ticketing/reservation system — Excel file exported
-  from Secutix, imported into MediaPlan to retrieve existing reservations.
+- **Secutix**: the Museum's ticketing/reservation system — Excel file
+  exported from Secutix, imported into MediaPlan to synchronize reserved
+  slots. Import is a synchronization, not a simple append: deduplicate by
+  contract number, update modified reservations, deallocate cancelled ones.
 - **Coordination files**: internal Excel files from the mediation team,
-  imported to initialize schedules and mediators.
+  may include VBA macros. Format to be analyzed from sample files.
+
+## Deployment
+
+- Hosted on external VPS (not on museum SI)
+- Domain: mediaplan.coulet.me
+- Caddy with HTTPS (Let's Encrypt)
+- V1: static files served by Caddy (or dev server)
+- V2: server component for encrypted blob storage and sync
 
 ## Glossary
 
-- **Mediator**: staff member leading mediation offers (tours, workshops, etc.)
-- **Mediation offer**: activity offered by the Museum (guided tour, educational
-  workshop, special event, etc.)
-- **Schedule**: a set of slots over a given period
-- **Slot / Reservation**: assignment of a mediator to an offer at a given date
-  and time
+See `docs/LEXICON.md` for the authoritative domain vocabulary.
