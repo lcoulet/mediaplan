@@ -50,14 +50,16 @@ other), date range, and period (full-day, morning, afternoon).
 Absences are non-interactive on the calendar (display only).
 
 ### Work Cycle (Cycle de travail)
-A mediator's recurring weekly schedule pattern. Defined as a set of
-named weeks (e.g. S1, S2, S3), each specifying precise working days
-and hours (e.g. S1 = Monday 9:00-18:00, Tuesday 9:00-18:00, Wednesday off).
-Cycles rotate (S1 → S2 → S3 → S1 → ...) but can be manually overridden
-for specific weeks to accommodate planning changes.
+A mediator's recurring weekly schedule pattern. A mediator has one
+active cycle at a time. A cycle consists of 1 to N named weeks
+(e.g. S1, S2, S3), each specifying precise working days and hours
+(e.g. S1 = Monday 9:00-18:00, Tuesday 9:00-18:00, Wednesday off).
+Cycles rotate in sequence (S1 → S2 → S3 → S1 → ...) but can be
+manually overridden for specific weeks to accommodate planning changes.
 
-A cycle week defines the mediator's base availability. Absences
-further reduce availability on top of the cycle.
+Cycle management (creation, editing) is done in the mediator's own
+settings/view. A cycle week defines the mediator's base availability.
+Absences further reduce availability on top of the cycle.
 
 ### Schedule (Planning)
 A planning period containing all slots and absences. Has a `locked`
