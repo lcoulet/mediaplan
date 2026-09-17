@@ -55,8 +55,8 @@ MediaPlan project. Updated inline during grilling sessions.
 
 **Open questions:**
 - [ ] Is there a maximum number of assignments per day per mediator?
-- [ ] Can a mediator be assigned to an offer they don't have competence for? (exception process?)
-- [ ] Are setup/teardown times the same for all mediators, or per-mediator per-offer?
+- [x] Can a mediator be assigned to an offer they don't have competence for? (exception process?) → No, unless in "learning" status. A learning mediator can be assigned as supplemental (to acquire the offer) or exceptionally lead it.
+- [x] Are setup/teardown times the same for all mediators, or per-mediator per-offer? → Fixed per offer, same for all mediators.
 
 ## Deployment
 

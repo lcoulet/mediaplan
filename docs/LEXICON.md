@@ -89,9 +89,15 @@ remains allowed in locked mode (mediator-only modal). Locking is
 instant, unlocking requires a confirmation warning.
 
 ### Competence (Compétence)
-The set of offers a mediator is qualified to lead. Used to filter
-assignment suggestions. A mediator can only be assigned to an offer
-if they have the matching competence.
+The set of offers a mediator is qualified to lead. Each mediator-offer
+pair has a status:
+- **Confirmed** (confirmé) — can lead the offer alone
+- **Learning** (en acquisition/formation) — cannot lead alone, but can
+  be assigned as a supplemental mediator to learn the offer. May
+  exceptionally lead the offer if no confirmed mediator is available.
+
+Used to filter assignment suggestions. The coordinator manages
+competence statuses.
 
 ### Training Assignment (Affectation de formation)
 Assigning multiple mediators to a single slot beyond the required
