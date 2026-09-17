@@ -101,6 +101,22 @@ Planning state preventing modifications to slots. Mediator assignment
 remains allowed in locked mode (mediator-only modal). Locking is
 instant, unlocking requires a confirmation warning.
 
+### Day Planning View (Vue planning du jour)
+A calendar view focused on a single day. Layout:
+- Rows: mediators (with their current cycle week label, e.g. "S1", "S2")
+  plus an "unassigned" zone (non-mediator rows) for offers awaiting
+  assignment
+- Columns: time axis with thin lines every 10 minutes, thick lines every
+  hour
+- Display: mediator availability/unavailability (from work cycle + absences)
+  as background, assigned offers as blocks
+- Interactions:
+  - Drag-and-drop offers from unassigned zone to a mediator row to assign
+  - Drag a slot edge to modify start/end time
+  - Duplicate a slot onto one or more other mediators (for training or
+    parallel assignment)
+- Navigation: day tabs with prev/next/today buttons
+
 ### Competence (Compétence)
 The set of offers a mediator is qualified to lead. Each mediator-offer
 pair has a status:

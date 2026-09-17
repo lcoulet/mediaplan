@@ -146,6 +146,18 @@ Excel export or paper printout).
 - Setup/teardown time displayed on calendar for assigned mediators
 - Overlap detection uses extended time range (start - setup, end + teardown)
 
+### Day Planning View
+- Layout: mediators as rows (with cycle week label), time as columns
+- Time grid: thin lines every 10 minutes, thick lines every hour
+- Background: mediator availability (work cycle) + unavailability (absences)
+- Unassigned zone: rows below mediators for offers awaiting assignment
+- Drag-and-drop offers from unassigned zone to a mediator row to assign
+- Drag slot edge to modify start/end time
+- Duplicate a slot onto one or more other mediators (training/parallel)
+- Navigation: day tabs with prev/next/today buttons
+- Toggle between day / week / month views
+- Overlap detection uses extended time range (start - setup, end + teardown)
+
 ### Secutix Import (Synchronization)
 - Import Secutix Excel export to create/update reserved slots
 - Deduplicate using contract number — skip slots already imported

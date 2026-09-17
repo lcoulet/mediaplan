@@ -80,6 +80,10 @@
 ## Features (Future)
 
 - [ ] Calendar views: day / week / month toggle in the planning view
+  - Day view: mediators as rows, time as columns, 10min grid lines
+  - Unassigned zone for offers awaiting assignment
+  - Drag-and-drop assignment, slot resize, slot duplication
+  - Day navigation tabs (prev/next/today)
 - [ ] Drag & drop on calendar to move slots
 - [ ] Schedule entity management (create/edit/delete schedules as distinct objects)
 - [ ] Statistics and dashboards
