@@ -23,12 +23,24 @@ MediaPlan project. Updated inline during grilling sessions.
 - Two Excel sources: Secutix export + coordination tool
 - The coordination tool has a VBA macro for import
 - ADR pending until formats are analyzed
+- Secutix import flow: coordinators import the Secutix Excel export into
+  the planning tool, which stacks all reserved offers above the planning view
+- Each import may contain reservations already imported previously → must
+  deduplicate
+- Reservations no longer in the Secutix file must be deallocated (cancelled)
+- Reservations may have been modified (headcount, time changes) since last
+  import → must update existing slots
+- A contract number or order number identifies a reservation uniquely
 
 **Open questions:**
 - [ ] What is the exact structure of the Secutix Excel export? (awaiting sample file)
 - [ ] What is the exact structure of the coordination tool Excel? (awaiting sample file)
 - [ ] What does the VBA macro do? Can it be replaced by TypeScript parsing?
 - [ ] Are the two formats compatible or do they need separate parsers?
+- [ ] What is the exact field name for the contract/order number in the Secutix export?
+- [ ] When a reservation is deallocated (no longer in Secutix), should the slot be deleted or kept with a "cancelled" status?
+- [ ] When a reservation is modified (headcount, time), should the slot be updated and marked `modifiedAfterImport`?
+- [ ] What happens to mediator assignments on a modified or deallocated slot?
 
 ## Offer recurrence
 
