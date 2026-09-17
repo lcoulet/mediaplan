@@ -95,3 +95,22 @@ MediaPlan project. Updated inline during grilling sessions.
 - [ ] When should the migration to Vite+React+TS happen? Now, or after core features are stable?
 - [ ] Should BDD (Cucumber.js) be added before or after the migration?
 - [ ] Does the stakeholder (Loic's wife) need to validate the vanilla JS prototype first?
+
+## Work cycles
+
+**Established so far:**
+- Mediators have work cycles defining their base availability (days + hours)
+- Cycles are named weeks (e.g. S1, S2, S3) with precise working hours per day
+- Cycles rotate in sequence but can be manually overridden per week
+- Cycle defines base availability; absences reduce availability on top
+- New view needed: "Cycles view" — grid with one mediator per row, columns
+  showing week numbers and date ranges, allowing visualization and editing
+  of cycle assignments
+
+**Open questions:**
+- [ ] Does the cycle rotate automatically in a loop (S1→S2→S3→S1→...) or is it assigned manually per week?
+- [ ] Is the number of weeks in a cycle fixed (always 3) or variable per mediator?
+- [ ] Can a mediator have multiple active cycles at the same time?
+- [ ] What day does a cycle week start on? (Monday? Sunday?)
+- [ ] When a cycle is overridden for a specific week, does it revert to the rotation afterward or stay manual?
+- [ ] Are cycle definitions (S1, S2, etc.) shared across mediators or unique per mediator?
