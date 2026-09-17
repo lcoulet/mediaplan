@@ -81,19 +81,28 @@ MediaPlan project. Updated inline during grilling sessions.
 - Server must not see data in clear text — client-side encryption
 - Mediator names should not be stored server-side, only IDs (RGPD)
 - Multiple coordinators on different workstations, intermittent connections
-- Conflict resolution: versioning + conflict alert
-  - V1: on sync, if server has a newer version than the one being pushed,
-    alert the coordinator with timestamps and let them choose which to keep
-  - V2: visual diff comparison between conflicting versions
+- V1: manual sharing via export/import of database file on a shared filesystem
+  - Export file format: JSON compressed (.json.gz)
+  - File name includes date/time of last modification (e.g. mediaplan_2026-09-17_1430.json.gz)
+  - No server-side sync in V1
+- V2: server with client-side encryption + versioning + conflict resolution
+  - Server stores encrypted blobs only
+  - Conflict resolution: versioning + conflict alert with timestamps, manual choice
+  - V3: visual diff comparison
+- V2 encryption: envelope encryption (content key + per-coordinator public key)
+  - V2 identification: per-coordinator key pair, signatures for attribution
+  - Replaces V1 shared secret approach
 
 **Open questions:**
 - [ ] Should Caddy serve static files directly (no Python) in production?
 - [ ] Is a systemd service needed for the Python server, or do we migrate to static serving?
 - [ ] Who are the end users? How many concurrent users expected?
-- [ ] What encryption scheme for client-side encryption? (AES-GCM with client-held key? Per-user key? Shared key?)
-- [ ] How is the encryption key distributed to coordinators? (Shared via out-of-band channel? Per-account key management?)
-- [ ] What granularity for versioning? (Entire data model per push, or per-entity?)
-- [ ] How does the server know which entity to compare versions for if data is encrypted? (Metadata in clear: entity ID + version + timestamp)
+- [ ] V1: what shared filesystem? (USB key, network share, cloud drive?)
+- [ ] V1: how does the coordinator know if the imported file is older or newer than their local data? (check timestamps in filename vs localStorage?)
+- [ ] V2: what encryption scheme details? (AES-GCM for content, RSA-OAEP for envelope?)
+- [ ] V2: how is the coordinator's key pair generated and stored? (browser WebCrypto API, local keystore?)
+- [ ] V2: what granularity for versioning? (Entire data model per push, or per-entity?)
+- [ ] V2: how does the server know which entity to compare versions for if data is encrypted? (Metadata in clear: entity ID + version + timestamp)
 
 ## User access
 
