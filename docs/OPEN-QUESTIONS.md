@@ -10,12 +10,18 @@ MediaPlan project. Updated inline during grilling sessions.
 **Established so far:**
 - localStorage limit is ~5-10 MB per browser
 - ADR-0002 documents the decision to use localStorage with migration path to IndexedDB
+- No IndexedDB needed — no long-term history, no far-future planning
+- Data volume stays small; localStorage is sufficient for the foreseeable scope
+- ~20 mediators
+- A few reserved offers per day (imported from Secutix)
+- A few dozen offers in the catalog (standard offers)
+- Annual slot count: a few per day × ~250 working days ≈ low hundreds to low thousands — well within localStorage limits
 
 **Open questions:**
-- [ ] How many mediators will be managed? (estimated: dozens)
-- [ ] How many offers per year? (estimated: 200+)
-- [ ] How many slots per year? (could approach localStorage limit)
-- [ ] Should we proactively switch to IndexedDB before saturation, or wait?
+- [x] How many mediators will be managed? (estimated: dozens) → Not needed to resolve; localStorage sufficient regardless
+- [x] How many offers per year? (estimated: 200+) → Not needed to resolve; localStorage sufficient
+- [x] How many slots per year? (could approach localStorage limit) → Not needed to resolve; short planning window keeps volume low
+- [x] Should we proactively switch to IndexedDB before saturation, or wait? → No. localStorage is sufficient.
 
 ## Excel import formats
 
@@ -96,8 +102,8 @@ MediaPlan project. Updated inline during grilling sessions.
   - Replaces V1 shared secret approach
 
 **Open questions:**
-- [ ] Should Caddy serve static files directly (no Python) in production?
-- [ ] Is a systemd service needed for the Python server, or do we migrate to static serving?
+- [x] Should Caddy serve static files directly (no Python) in production? → Yes. Caddy serves static files directly (root directive). No Python http.server in production. ADR-0005 updated.
+- [x] Is a systemd service needed for the Python server, or do we migrate to static serving? → No systemd service needed. Caddy's own systemd service handles restarts.
 - [ ] Who are the end users? How many concurrent users expected?
 - [ ] V1: what shared filesystem? (USB key, network share, cloud drive?)
 - [ ] V1: how does the coordinator know if the imported file is older or newer than their local data? (check timestamps in filename vs localStorage?)
@@ -126,11 +132,20 @@ MediaPlan project. Updated inline during grilling sessions.
 - ADR-0001: vanilla JS for prototype, migration to Vite+React+TS planned
 - TDD with Node test runner works well for pure modules
 - AGENTS.md, LEXICON.md, ADRs are in place for any agent to pick up
+- ADR-0013: migration to Vite + React + TypeScript decided
+- Tests migrated from node --test to vitest
+- State management: Context API + useReducer (no external store)
+- CSS kept as-is (style.css + calendar.css, no CSS Modules/Tailwind)
+- Same features and UI as vanilla JS — stack change only
+- Build runs locally on VPS → /home/loic/mediaplan/dist/
+- Caddy serves dist/ as static files
+- Preview builds: feat/* branches → /home/loic/mediaplan/preview/
+- GitHub Actions CI: added to TODO (not blocking)
 
 **Open questions:**
-- [ ] When should the migration to Vite+React+TS happen? Now, or after core features are stable?
-- [ ] Should BDD (Cucumber.js) be added before or after the migration?
-- [ ] Does the stakeholder (Loic's wife) need to validate the vanilla JS prototype first?
+- [x] When should the migration to Vite+React+TS happen? Now, or after core features are stable? → Now. Before complex features (day planning view, work cycles, Excel import).
+- [x] Should BDD (Cucumber.js) be added before or after the migration? → Resolved by ADR-0013. Vitest replaces node --test. BDD still a separate question.
+- [ ] Does the stakeholder (Loic's wife) need to validate the vanilla JS prototype first? → No — migration proceeds now, Loic will validate the React version.
 
 ## Work cycles
 

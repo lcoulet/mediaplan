@@ -15,14 +15,16 @@ Alternatives considered:
 - Cloudflare Tunnel: no open ports, but external dependency
 
 ## Decision
-Use Caddy v2.6.4. Reverse proxy from mediaplan.coulet.me to localhost:8000
-(Python http.server). Caddy handles Let's Encrypt automatically.
+Use Caddy v2.6.4 to serve static files directly from the project root
+(`root` directive). No Python http.server in production — Caddy handles
+both HTTPS and static file serving. Let's Encrypt is automatic.
+
+In dev, Caddy can also be used (same config, or `caddy file-server`).
 
 ## Consequences
 - Zero-config HTTPS — Caddy provisions and renews certificates
 - Caddyfile.d snippet at /etc/caddy/Caddyfile.d/hermes-dashboards.caddyfile
-- Python http.server is a dev server — not production-grade. Should be
-  replaced by Caddy serving static files directly (root directive) or
-  a proper build output (dist/) once a build system is added
-- If the VPS restarts, Python server must be restarted manually
-  (no systemd service yet)
+- No Python http.server in production — eliminates the need for a systemd
+  service to keep it running
+- Caddy's own systemd service handles restarts automatically
+- Once a build system (Vite) is added, point Caddy's root to dist/

@@ -8,6 +8,8 @@
 - [ ] Add app versioning (semantic version, displayed in UI footer)
 - [ ] Create a release script (tag + build + GitHub release via `gh`)
 - [ ] Add version number to `package.json` and inject into the app at build time
+- [ ] GitHub Actions CI: run tests on push (vitest) and build preview
+- [ ] GitHub Actions: deploy preview builds to VPS /home/loic/mediaplan/preview/
 
 ## Export Format (V1 sharing)
 
