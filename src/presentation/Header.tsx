@@ -11,7 +11,11 @@ const NAV_ITEMS: { view: ViewName; label: string }[] = [
   { view: 'import-export', label: 'Import / Export' },
 ];
 
-export default function Header() {
+interface HeaderProps {
+  onOpenUserGuide: () => void;
+}
+
+export default function Header({ onOpenUserGuide }: HeaderProps) {
   const { state, dispatch, canUndo, canRedo, undo, redo, resetData } = useData();
 
   return (
@@ -52,19 +56,11 @@ export default function Header() {
         </button>
         <button
           className="icon-btn"
-          id="btn-reset-data"
-          title="Réinitialiser les données de démonstration"
-          onClick={() => {
-            if (
-              confirm(
-                '⚠️ Cela va supprimer TOUTES les données actuelles et les remplacer par les données de démonstration.\n\nContinuer ?'
-              )
-            ) {
-              resetData();
-            }
-          }}
+          id="btn-user-guide"
+          title="Ouvrir la documentation utilisateur"
+          onClick={onOpenUserGuide}
         >
-          ⟳
+          ?
         </button>
       </nav>
     </header>

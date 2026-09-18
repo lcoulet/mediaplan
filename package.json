@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "docs:serve": "node scripts/docs-serve.mjs",
+    "docs:generate": "echo 'TODO: intégrer puppeteer/playwright pour captures' && node scripts/docs-serve.mjs"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",
