@@ -19,7 +19,7 @@ export default function Header() {
       <div className="header-left">
         <h1 className="app-title">MediaPlan</h1>
         <span className="app-subtitle">
-          Gestion des plannings de médiation — Muséum de Toulouse
+          Gestion des plannings de médiation — Museum
         </span>
       </div>
       <nav className="header-nav">

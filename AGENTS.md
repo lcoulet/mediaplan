@@ -6,8 +6,8 @@ This file provides context, conventions, and rules for any AI coding agent
 ## Project Overview
 
 MediaPlan is a web application for managing mediation schedules at the
-Museum of Toulouse. It is **frontend-only** (no backend), with data in
-`localStorage`. The UI is in **French**. All documentation is in **English**.
+museum. It is **frontend-only** (no backend), with data in `localStorage`.
+The UI is in **French**. All documentation is in **English**.
 
 ## Tech Stack
 

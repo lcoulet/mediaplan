@@ -1,7 +1,7 @@
 {
   "name": "mediaplan",
   "version": "0.1.0",
-  "description": "Mediation scheduling for the Museum of Toulouse",
+  "description": "Mediation scheduling for the museum",
   "license": "MIT",
   "type": "module",
   "scripts": {

@@ -1,10 +1,10 @@
-# MediaPlan — Mediation Scheduling for the Museum of Toulouse
+# MediaPlan — Mediation Scheduling for the Museum
 
 ## Overview
 
-MediaPlan is a web application for managing mediation schedules at the Museum of
-Toulouse. It allows coordinators to plan mediators, manage reservations, and
-import/export data in Excel format.
+MediaPlan is a web application for managing mediation schedules at the museum.
+It allows coordinators to plan mediators, manage reservations, and import/export
+data in Excel format.
 
 The application is **frontend-only** (no backend). Data is stored in the
 browser's `localStorage`. A future evolution to a server-based architecture is
