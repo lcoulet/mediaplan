@@ -9,10 +9,21 @@ Frontend-only web application. No backend, no database server.
 ### Runtime
 
 - Runs entirely in the browser
-- Vanilla JavaScript (ES modules)
-- No framework, no build tool
+- Built with Vite + React 18 + TypeScript
 - Data persisted in `localStorage` (~5-10 MB limit per origin)
 - Application works offline once loaded
+- State management via Context API + useReducer (no external store)
+
+### Architecture Layers (DDD-inspired)
+
+- **Domain** (`src/domain/`): Pure logic, no browser APIs. Entities, factory
+  functions, business rules (overlap detection, availability, labels).
+  Fully unit-tested.
+- **Infrastructure** (`src/infrastructure/`): Side-effectful code. localStorage
+  persistence, gzip export/import, Excel stub. Uses browser APIs.
+- **Presentation** (`src/presentation/`): React components. UI glue. State
+  managed via Context API + useReducer. Not unit-tested (logic extracted to
+  domain when testable).
 
 ### Browser Compatibility
 
@@ -20,14 +31,25 @@ Modern browsers only: Chrome, Firefox, Edge, Safari.
 
 ### Serving
 
-- Served by Caddy (reverse proxy / static file server)
-- HTTPS via Let's Encrypt (automatic)
-- Domain: `museum.31.70.143.152.nip.io` (nip.io wildcard DNS)
+- Production: Caddy serves `dist/` as static files
+- Dev: Vite dev server (`npm run dev` → http://localhost:5173)
+- HTTPS via Let's Encrypt (automatic via Caddy)
+- Domain: `mediaplan.coulet.me`
 
 ### Dependencies
 
-- [SheetJS](https://sheetjs.com/) — Excel import/export (loaded via CDN or
-  bundled locally)
+- **Vite** — build tool and dev server
+- **React 18** — UI framework
+- **TypeScript** — type safety
+- **Vitest** — test runner
+- [SheetJS](https://sheetjs.com/) — Excel import/export (planned, not yet integrated)
+
+### Build & Deploy
+
+- Build: `npm run build` → `dist/`
+- Deploy: Caddy serves `/home/loic/mediaplan/dist/` as static files
+- Preview builds: `feat/*` branches → `/home/loic/mediaplan/preview/` (separate Caddy route)
+- GitHub Actions CI: planned (tests on push, preview builds) — see TODO.md
 
 ## Future Architecture (v2+)
 
@@ -37,6 +59,7 @@ Modern browsers only: Chrome, Firefox, Edge, Safari.
 - Persistent database (PostgreSQL or similar)
 - User authentication (roles: admin, coordinator, mediator)
 - Real-time multi-device synchronization
+- Client-side encryption (envelope encryption — see ADR-0012)
 
 ### Additional Features (Server-Dependent)
 
@@ -50,8 +73,8 @@ Modern browsers only: Chrome, Firefox, Edge, Safari.
 
 - Host: Linux (RHEL / Rocky Linux)
 - Public IP: `31.70.143.152`
-- Caddy installed (`/usr/bin/caddy`, v2.6.4)
-- Service: systemd (currently inactive — to be enabled)
+- Caddy installed (`/usr/bin/caddy`, v2.6.4) — serves `dist/` as static files
+- Service: systemd (Caddy's own service handles restarts)
 
 ### GitHub
 
