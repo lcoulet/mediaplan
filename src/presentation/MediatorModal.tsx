@@ -5,6 +5,8 @@ import { useData, useCRUD } from './DataContext';
 import { createMediator } from '../domain/models';
 import type { Mediator } from '../domain/types';
 import Modal from './Modal';
+import MultiSelect from './MultiSelect';
+import type { MultiSelectOption } from './MultiSelect';
 
 interface Props {
   mediator: Mediator | null;
@@ -22,13 +24,8 @@ export default function MediatorModal({ mediator, onClose }: Props) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function toggleSkill(offerId: string) {
-    setForm((prev) => ({
-      ...prev,
-      skills: prev.skills.includes(offerId)
-        ? prev.skills.filter((id) => id !== offerId)
-        : [...prev.skills, offerId],
-    }));
+  function handleSkillsChange(selected: string[]) {
+    setForm((prev) => ({ ...prev, skills: selected }));
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -115,22 +112,21 @@ export default function MediatorModal({ mediator, onClose }: Props) {
         </div>
         <div className="form-group">
           <label>Compétences</label>
-          <div className="checkbox-group">
-            {state.data.offers.length === 0 ? (
-              <span style={{ color: 'var(--color-text-muted)' }}>Aucune offre définie</span>
-            ) : (
-              state.data.offers.map((o) => (
-                <label key={o.id} className="checkbox-line">
-                  <input
-                    type="checkbox"
-                    checked={form.skills.includes(o.id)}
-                    onChange={() => toggleSkill(o.id)}
-                  />
-                  {o.name}
-                </label>
-              ))
-            )}
-          </div>
+          {state.data.offers.length === 0 ? (
+            <span style={{ color: 'var(--color-text-muted)' }}>Aucune offre définie</span>
+          ) : (
+            <MultiSelect
+              options={state.data.offers.map((o): MultiSelectOption => ({
+                value: o.id,
+                label: o.name,
+              }))}
+              value={form.skills}
+              onChange={handleSkillsChange}
+              ariaLabel="Compétences"
+              placeholder="Rechercher une offre…"
+              noOptionsMessage="Aucune offre trouvée"
+            />
+          )}
         </div>
         <div className="form-group">
           <label>Notes</label>

@@ -12,6 +12,7 @@ import {
 } from '../domain/models';
 import type { Slot } from '../domain/types';
 import Modal from './Modal';
+import MultiSelect from './MultiSelect';
 import { SlotStatusValues } from './types';
 
 interface Props {
@@ -45,8 +46,7 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleMediatorChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const selected = Array.from(e.target.selectedOptions).map((o) => o.value).filter(Boolean);
+  function handleMediatorsChange(selected: string[]) {
     setSelectedMediators(selected);
   }
 
@@ -92,9 +92,9 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
       let label = `${m.firstName} ${m.lastName}`;
       if (overlap) label += ' ⚠️ Conflit horaire';
       else if (absent) label += ' 🚫 Absent';
-      return { id: m.id, label, overlap, selected: selectedMediators.includes(m.id) };
+      return { value: m.id, label, color: m.color, isDisabled: overlap };
     });
-  }, [state.data.mediators, state.data.slots, state.data.absences, form.date, form.startTime, form.endTime, form.id, selectedMediators]);
+  }, [state.data.mediators, state.data.slots, state.data.absences, form.date, form.startTime, form.endTime, form.id]);
 
   const offer = state.data.offers.find((o) => o.id === form.offerId);
 
@@ -143,23 +143,19 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
           <hr />
           <div className="form-group">
             <label>Médiateurs</label>
-            <select
-              multiple
-              size={5}
+            <MultiSelect
+              options={mediatorOptions}
               value={selectedMediators}
-              onChange={handleMediatorChange}
-            >
-              {mediatorOptions.map((opt) => (
-                <option key={opt.id} value={opt.id} disabled={opt.overlap}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+              onChange={handleMediatorsChange}
+              ariaLabel="Médiateurs"
+              placeholder="Rechercher un médiateur…"
+              noOptionsMessage="Aucun médiateur disponible"
+            />
             <div className="form-hint">
               {warning ? (
                 <span className="warning-text">{warning}</span>
               ) : (
-                'Ctrl+clic pour sélectionner plusieurs'
+                'Cliquez pour ajouter, × pour retirer'
               )}
             </div>
           </div>
@@ -208,23 +204,19 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
         </div>
         <div className="form-group">
           <label>Médiateurs</label>
-          <select
-            multiple
-            size={5}
+          <MultiSelect
+            options={mediatorOptions}
             value={selectedMediators}
-            onChange={handleMediatorChange}
-          >
-            {mediatorOptions.map((opt) => (
-              <option key={opt.id} value={opt.id} disabled={opt.overlap}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            onChange={handleMediatorsChange}
+            ariaLabel="Médiateurs"
+            placeholder="Rechercher un médiateur…"
+            noOptionsMessage="Aucun médiateur disponible"
+          />
           <div className="form-hint">
             {warning ? (
               <span className="warning-text">{warning}</span>
             ) : (
-              'Ctrl+clic pour sélectionner plusieurs'
+              'Cliquez pour ajouter, × pour retirer'
             )}
           </div>
         </div>
