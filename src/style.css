@@ -576,6 +576,24 @@ body {
     border: 1px solid rgba(0,0,0,0.1);
 }
 
+/* ===== Offer color pill ===== */
+.offer-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    border: 1px solid rgba(0,0,0,0.15);
+    white-space: nowrap;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+/* Keep several pills in a cell readable */
+td .offer-pill + .offer-pill { margin-left: 4px; }
+
 /* ===== Detail view (read-only slot modal) ===== */
 .detail-view { font-size: 14px; }
 .detail-row {

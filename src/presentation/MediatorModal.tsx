@@ -119,6 +119,7 @@ export default function MediatorModal({ mediator, onClose }: Props) {
               options={state.data.offers.map((o): MultiSelectOption => ({
                 value: o.id,
                 label: o.name,
+                color: o.color,
               }))}
               value={form.skills}
               onChange={handleSkillsChange}

@@ -3,7 +3,8 @@
 import { useState, useMemo } from 'react';
 import { useData, useCRUD } from './DataContext';
 import MediatorModal from './MediatorModal';
-import type { Mediator } from '../domain/types';
+import OfferPill from './OfferPill';
+import type { Mediator, Offer } from '../domain/types';
 
 export default function MediatorsView() {
   const { state } = useData();
@@ -86,10 +87,9 @@ export default function MediatorsView() {
               </tr>
             ) : (
               filtered.map((m) => {
-                const skills = m.skills
-                  .map((sid) => state.data.offers.find((o) => o.id === sid)?.name)
-                  .filter(Boolean)
-                  .join(', ');
+                const skillOffers = m.skills
+                  .map((sid) => state.data.offers.find((o) => o.id === sid))
+                  .filter((o): o is Offer => !!o);
                 return (
                   <tr key={m.id}>
                     <td>
@@ -99,7 +99,15 @@ export default function MediatorsView() {
                     <td>{m.firstName}</td>
                     <td>{m.email || '—'}</td>
                     <td>{m.phone || '—'}</td>
-                    <td>{skills || '—'}</td>
+                    <td>
+                      {skillOffers.length > 0 ? (
+                        skillOffers.map((o) => (
+                          <OfferPill key={o.id} offer={o} />
+                        ))
+                      ) : (
+                        '—'
+                      )}
+                    </td>
                     <td>
                       <span className={`badge ${m.active ? 'badge-active' : 'badge-inactive'}`}>
                         {m.active ? 'Actif' : 'Inactif'}

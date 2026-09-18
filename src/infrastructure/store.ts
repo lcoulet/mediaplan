@@ -1,7 +1,8 @@
 // store.ts — localStorage persistence
 
 import { generateExportFilename, buildExportMetadata } from '../domain/export-utils';
-import type { AppData } from '../domain/types';
+import { defaultOfferColor } from '../domain/models';
+import type { AppData, Offer } from '../domain/types';
 
 const STORAGE_KEY = 'mediaplan_data_v1';
 const LAST_MODIFIED_KEY = 'mediaplan_last_modified';
@@ -19,9 +20,13 @@ export function load(): AppData {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...defaultData };
     const parsed = JSON.parse(raw) as Partial<AppData>;
+    // Migrate: assign a palette color to offers persisted before the color field existed
+    const offers: Offer[] = (parsed.offers || []).map((o) =>
+      o.color ? o : { ...o, color: defaultOfferColor() }
+    );
     return {
       mediators: parsed.mediators || [],
-      offers: parsed.offers || [],
+      offers,
       schedules: parsed.schedules || [],
       slots: parsed.slots || [],
       absences: parsed.absences || [],

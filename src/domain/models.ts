@@ -54,6 +54,12 @@ export function createMediator(data: MediatorInput = {}): Mediator {
 }
 
 // Mediation Offer
+const OFFER_COLORS = [
+  '#8e44ad', '#2980b9', '#27ae60', '#d35400',
+  '#c0392b', '#16a085', '#f39c12', '#2c3e50',
+];
+let offerColorIndex = 0;
+
 interface OfferInput {
   id?: string;
   name?: string;
@@ -63,6 +69,7 @@ interface OfferInput {
   location?: string;
   setupTime?: number;
   teardownTime?: number;
+  color?: string;
 }
 
 export function createOffer(data: OfferInput = {}): Offer {
@@ -75,7 +82,14 @@ export function createOffer(data: OfferInput = {}): Offer {
     location: data.location || '',
     ...(data.setupTime !== undefined ? { setupTime: data.setupTime } : {}),
     ...(data.teardownTime !== undefined ? { teardownTime: data.teardownTime } : {}),
+    // Assign a palette color when none provided (tests rely on this default)
+    color: data.color || OFFER_COLORS[offerColorIndex++ % OFFER_COLORS.length],
   };
+}
+
+/** Default color for an offer that has none (e.g. legacy persisted data). */
+export function defaultOfferColor(): string {
+  return OFFER_COLORS[offerColorIndex++ % OFFER_COLORS.length];
 }
 
 // Schedule

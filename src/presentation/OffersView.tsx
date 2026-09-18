@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useData, useCRUD } from './DataContext';
 import OfferModal from './OfferModal';
+import OfferPill from './OfferPill';
 import type { Offer } from '../domain/types';
 
 export default function OffersView() {
@@ -64,7 +65,10 @@ export default function OffersView() {
             ) : (
               state.data.offers.map((o) => (
                 <tr key={o.id}>
-                  <td><strong>{o.name}</strong></td>
+                  <td>
+                    <OfferPill offer={o} />{' '}
+                    <strong>{o.name}</strong>
+                  </td>
                   <td>{o.description || '—'}</td>
                   <td>{o.duration} min</td>
                   <td>{o.capacity}</td>

@@ -9,6 +9,7 @@ import {
 } from '../domain/models';
 import type { Slot } from '../domain/types';
 import Modal from './Modal';
+import OfferPill from './OfferPill';
 
 interface Props {
   slot: Slot;
@@ -43,7 +44,9 @@ export default function SlotDetailModal({ slot, onClose }: Props) {
       <div className="detail-view">
         <div className="detail-row">
           <span className="detail-label">Offre</span>
-          <span className="detail-value">{offer ? offer.name : '—'}</span>
+          <span className="detail-value">
+            {offer ? <OfferPill offer={offer} /> : '—'}
+          </span>
         </div>
         {offer?.description && (
           <div className="detail-row">

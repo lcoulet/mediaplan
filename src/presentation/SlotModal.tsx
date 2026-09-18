@@ -13,6 +13,7 @@ import {
 import type { Slot } from '../domain/types';
 import Modal from './Modal';
 import MultiSelect from './MultiSelect';
+import OfferPill from './OfferPill';
 import { SlotStatusValues } from './types';
 
 interface Props {
@@ -115,7 +116,9 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
           <div className="detail-view">
             <div className="detail-row">
               <span className="detail-label">Offre</span>
-              <span className="detail-value">{offer ? offer.name : '—'}</span>
+              <span className="detail-value">
+                {offer ? <OfferPill offer={offer} /> : '—'}
+              </span>
             </div>
             <div className="detail-row">
               <span className="detail-label">Date</span>
@@ -201,6 +204,11 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
               <option key={o.id} value={o.id}>{o.name}</option>
             ))}
           </select>
+          {offer && (
+            <div className="form-hint">
+              <OfferPill offer={offer} id="slot-offer-pill" />
+            </div>
+          )}
         </div>
         <div className="form-group">
           <label>Médiateurs</label>

@@ -21,6 +21,7 @@ export interface Offer {
   location: string;
   setupTime?: number;
   teardownTime?: number;
+  color?: string;
 }
 
 export type ScheduleStatus = 'draft' | 'published' | 'archived';

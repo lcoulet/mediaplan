@@ -81,13 +81,26 @@ export default function OfferModal({ offer, onClose }: Props) {
             />
           </div>
         </div>
-        <div className="form-group">
-          <label>Lieu</label>
-          <input
-            type="text"
-            value={form.location}
-            onChange={(e) => setField('location', e.target.value)}
-          />
+        <div className="form-row">
+          <div className="form-group">
+            <label>Lieu</label>
+            <input
+              type="text"
+              value={form.location}
+              onChange={(e) => setField('location', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Couleur</label>
+            <div className="color-picker">
+              <input
+                type="color"
+                value={form.color || '#2c6e49'}
+                onChange={(e) => setField('color', e.target.value)}
+              />
+              <span className="color-preview" style={{ background: form.color || '#2c6e49' }}></span>
+            </div>
+          </div>
         </div>
         <div className="form-actions">
           <button type="button" className="btn btn-secondary" onClick={onClose}>Annuler</button>
