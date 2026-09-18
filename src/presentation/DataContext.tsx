@@ -9,11 +9,11 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
-import type { AppData, Mediator, Offer, Slot, Absence } from '../domain/types';
+import type { AppData, Mediator } from '../domain/types';
 import { createMediator } from '../domain/models';
 import { createHistory, DEFAULT_HISTORY_SIZE } from '../domain/history';
 import { load, save } from '../infrastructure/store';
-import type { AppState, Action, ViewName } from './types';
+import type { AppState, Action } from './types';
 import { seedDemoData } from './DemoData';
 
 // ---- Week helpers ----

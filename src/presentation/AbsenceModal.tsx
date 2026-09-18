@@ -1,9 +1,9 @@
 // AbsenceModal.tsx — Add/edit absence form
 
 import { useState } from 'react';
-import { useCRUD } from './DataContext';
+import { useCRUD, useData } from './DataContext';
 import { createAbsence, ABSENCE_TYPE_LABELS } from '../domain/models';
-import type { Absence } from '../domain/types';
+import type { Absence, Mediator } from '../domain/types';
 import Modal from './Modal';
 import { AbsenceTypeValues, AbsenceHalfDayValues, HALF_DAY_LABELS } from './types';
 
@@ -57,7 +57,7 @@ export default function AbsenceModal({ absence, onClose }: Props) {
             required
           >
             <option value="">— Choisir —</option>
-            {state.data.mediators.map((m) => (
+            {state.data.mediators.map((m: Mediator) => (
               <option key={m.id} value={m.id}>
                 {m.firstName} {m.lastName}
               </option>
