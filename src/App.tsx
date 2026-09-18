@@ -1,14 +1,41 @@
-function App() {
-  return (
-    <header className="app-header">
-      <div className="header-left">
-        <h1 className="app-title">MediaPlan</h1>
-        <span className="app-subtitle">
-          Gestion des plannings de médiation — Muséum de Toulouse
-        </span>
-      </div>
-    </header>
-  )
+// App.tsx — Root component: composes header + view router
+
+import { DataProvider, useData } from './presentation/DataContext';
+import Header from './presentation/Header';
+import CalendarView from './presentation/CalendarView';
+import MediatorsView from './presentation/MediatorsView';
+import OffersView from './presentation/OffersView';
+import AbsencesView from './presentation/AbsencesView';
+import ImportExportView from './presentation/ImportExportView';
+
+function ViewRouter() {
+  const { state } = useData();
+
+  switch (state.currentView) {
+    case 'calendar':
+      return <CalendarView />;
+    case 'mediators':
+      return <MediatorsView />;
+    case 'offers':
+      return <OffersView />;
+    case 'absences':
+      return <AbsencesView />;
+    case 'import-export':
+      return <ImportExportView />;
+    default:
+      return <CalendarView />;
+  }
 }
 
-export default App
+function App() {
+  return (
+    <DataProvider>
+      <Header />
+      <main className="app-main">
+        <ViewRouter />
+      </main>
+    </DataProvider>
+  );
+}
+
+export default App;
