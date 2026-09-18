@@ -5,6 +5,7 @@ interface UserGuideModalProps {
 }
 
 export default function UserGuideModal({ onClose }: UserGuideModalProps) {
+  console.log('UserGuideModal rendered');
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
