@@ -33,6 +33,7 @@ function App() {
   const [showUserGuide, setShowUserGuide] = useState(false);
 
   const handleOpenUserGuide = () => {
+    console.log('handleOpenUserGuide called');
     setShowUserGuide(true);
   };
 
