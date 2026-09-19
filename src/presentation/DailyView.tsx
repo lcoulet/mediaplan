@@ -287,7 +287,7 @@ export default function DailyView() {
                       }}
                       onClick={() => {
                         setSelectedSlot(slot);
-                        setSlotModal({ slot, mediatorOnly: locked, defaultDate: slot.date });
+                        setSlotModal({ slot, mediatorOnly: locked && isImported, defaultDate: slot.date });
                       }}
                       draggable
                       onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
@@ -358,7 +358,7 @@ export default function DailyView() {
                         }}
                         onClick={() => {
                           setSelectedSlot(slot);
-                          setSlotModal({ slot, mediatorOnly: locked, defaultDate: slot.date });
+                          setSlotModal({ slot, mediatorOnly: locked && isImported, defaultDate: slot.date });
                         }}
                         draggable
                         onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
