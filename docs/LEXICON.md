@@ -111,10 +111,11 @@ A calendar view focused on a single day. Layout:
     shown only for the selected day, positioned on their time slot
   - **Mediator rows**: active mediators (with cycle week label as a pill/badge
     to the right of their name, e.g. "S1", "S2")
-    **Competence highlighting**: When a slot is selected for moving, mediators are highlighted:
-    - Blue background: confirmed competence for the slot's offer
-    - Yellow background: learning competence for the slot's offer
-    - Hatched background: no competence for the slot's offer
+    **Competence highlighting**: When a slot is selected (click or drag),
+    mediators are highlighted by competence for the slot's offer:
+    - Blue background: confirmed competence
+    - Yellow background: learning competence
+    - Hatched background: no competence
   - **Standard offers lane** (bottom): catalog of all standard offers (no time
     positioning — these are not reservations). Draggable onto a mediator
     row + time position to create a manual slot (virtual reservation)
@@ -132,13 +133,21 @@ A calendar view focused on a single day. Layout:
   - Drag-and-drop offers from unassigned lane to a mediator row to assign
   - Drag standard offer onto a mediator row + time position to create a
     manual slot (origin: manual, duration: offer default)
-  - Drag a slot edge to modify start/end time (same day only, no day change)
   - Drag a slot body to move it within the same day (no day change)
   - Duplicate a slot onto one or more other mediators — adds mediator to
     the same slot (multi-mediator assignment), not an independent copy
+  - Slots (imported or manual) are always draggable for mediator assignment
 - Conflict on overlap: warning shown, user must confirm to proceed.
   Conflict is visually highlighted (red hatching and/or red overlay).
 - Navigation: day tabs with prev/next/today buttons
+- **Lock toggle** ("Mode modification"): same switch as Weekly View
+  - Locked (default): imported slots open in mediator-only mode (assign only);
+    manual slots remain fully editable; standard offers remain draggable
+    to create manual slots
+  - Unlocked: all slots (imported and manual) fully editable (offer, date,
+    time, deletion); imported slots marked "modified after import" on save
+- Mediator selector in slot modal: sorted by competence (confirmed → learning
+  → none), then alphabetical within each group
 
 ### Competence (Compétence)
 The set of offers a mediator is qualified to lead. Each mediator-offer

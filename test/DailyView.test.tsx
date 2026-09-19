@@ -205,7 +205,7 @@ describe('DailyView', () => {
     expect(container.querySelector('.daily-time-axis')).toBeTruthy();
   });
 
-  it('should not allow dragging offers when locked (default)', () => {
+  it('should always allow dragging offers (creating manual reservations)', () => {
     const { container } = render(
       <DataProvider>
         <DailyView />
@@ -213,8 +213,8 @@ describe('DailyView', () => {
     );
     const offer = container.querySelector('.daily-offer');
     expect(offer).toBeTruthy();
-    // locked by default → not draggable
-    expect(offer?.getAttribute('draggable')).toBe('false');
+    // offers are always draggable to create manual slots, even when locked
+    expect(offer).toHaveAttribute('draggable', 'true');
   });
 
   it('should allow dragging unassigned slots even when locked (for mediator assignment)', () => {

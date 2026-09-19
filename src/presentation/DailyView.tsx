@@ -383,7 +383,7 @@ export default function DailyView() {
               <div className="daily-empty">Aucune offre libre disponible.</div>
             ) : (
               allOffers.map(offer => (
-                <div key={offer.id} className="daily-offer" draggable={!locked}
+                <div key={offer.id} className="daily-offer" draggable
                   onDragStart={(e) => handleDragStart(e, 'offer', offer.id)}
                   onDragEnd={handleDragEnd}>
                   <div className="offer-name">{offer.name}</div>

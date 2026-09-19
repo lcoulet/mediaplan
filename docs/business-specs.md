@@ -153,13 +153,17 @@ Excel export or paper printout).
     shown only for the selected day, positioned on their time slot
   - **Mediator rows**: active mediators with their color badge, each row
     displays assigned slots for that mediator
+    - **Competence highlighting**: When a slot is selected (click) or dragged,
+      mediator rows are highlighted by competence for the slot's offer:
+      - Blue: confirmed competence
+      - Yellow: learning competence
+      - Hatched: no competence
   - **Standard offers lane** (bottom): catalog of all standard offers, draggable
     onto a mediator row + time position to create a manual slot
 - Time grid: thin lines every 10 minutes, thick lines every hour
 - Background: mediator availability (work cycle) + unavailability (absences)
 - Drag-and-drop offers from unassigned lane to a mediator row to assign
 - Drag standard offer onto mediator row + time to create manual slot
-- Drag slot edge to modify start/end time (same day only)
 - Drag slot body to move within same day (no day change)
 - Duplicate slot onto other mediators — adds mediator to same slot
   (multi-mediator assignment, not independent copy)
@@ -168,8 +172,18 @@ Excel export or paper printout).
 - Navigation: prev/next/today buttons to change the selected day
 - Toggle between day / week views
 - Slot assignment: can assign mediators from the slot modal (multi-select)
+- Mediator selector sorted by competence (confirmed → learning → none),
+  then alphabetical within each group
 - Mediator colors: displayed as colored badges/pills next to mediator names
 - Overlap detection uses extended time range (start - setup, end + teardown)
+- **Lock toggle** ("Mode modification"): same switch as Weekly View
+  - Locked (default): imported slots open in mediator-only mode (assign only);
+    standard offers remain draggable to create manual slots; manual slots
+    remain fully editable
+  - Unlocked: all slots (imported and manual) fully editable (offer, date,
+    time, deletion); imported slots marked "modified after import" on save
+  - Slots (imported or manual) are always draggable for mediator assignment
+    regardless of lock state
 
 ### Secutix Import (Synchronization)
 - Import Secutix Excel export to create/update reserved slots

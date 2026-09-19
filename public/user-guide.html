@@ -103,11 +103,18 @@
           <span><strong>⚠️ Hachures</strong> : médiateur incompétent</span>
         </div>
       </div>
-      <li><strong>Surlignage des compétences</strong> : Quand vous sélectionnez un créneau pour le déplacer, les médiateurs sont automatiquement surlignés selon leur compétence pour l'offre du créneau</li>
+      <li><strong>Surlignage des compétences</strong> : Quand vous sélectionnez (clic ou glisser) un créneau, les médiateurs sont automatiquement surlignés selon leur compétence pour l'offre du créneau</li>
     </li>
-    <li><strong>Voie "Offres libres"</strong> (en bas) : catalogue des offres disponibles, glissables sur une ligne de médiateur + position horaire</li>
-    <li><strong>Assignation depuis la modale</strong> : cliquez sur un créneau → ouvrez la modale → sélectionnez un ou plusieurs médiateurs via le multi-select. Les médiateurs sont indiqués avec : ✅ (confiré), 📚 (apprentissage), ⚠️ (incompétent)</li>
+    <li><strong>Voie "Offres libres"</strong> (en bas) : catalogue des offres disponibles, glissables sur une ligne de médiateur + position horaire pour créer une réservation manuelle (disponible en permanence, verrouillé ou non)</li>
+    <li><strong>Assignation depuis la modale</strong> : cliquez sur un créneau → ouvrez la modale → sélectionnez un ou plusieurs médiateurs via le multi-select. Les médiateurs sont triés par compétence : ✅ (confirmé) en premier, 📚 (apprentissage), ⚠️ (incompétent), puis par ordre alphabétique</li>
     <li><strong>Couleurs des médiateurs</strong> : pastille colorée à côté du nom de chaque médiateur</li>
+    <li><strong>Mode modification</strong> : switch dans la barre d'outils (comme la vue hebdo)
+      <ul>
+        <li><strong>Verrouillé (par défaut)</strong> : les créneaux importés ouvrent une modale d'assignation uniquement (médiateur-only). Les créneaux manuels restent entièrement modifiables. Les offres libres restent déplaçables pour créer des réservations manuelles.</li>
+        <li><strong>Déverrouillé</strong> : tous les créneaux (importés et manuels) sont entièrement modifiables (offre, date, horaire, suppression). Les créneaux importés modifiés sont marqués "modifié après import".</li>
+        <li>Les créneaux (importés ou manuels) sont toujours déplaçables par glisser-déposer pour l'assignation à un médiateur, quel que soit l'état du verrouillage.</li>
+      </ul>
+    </li>
   </ul>
 
   <h3>3. Médiateurs</h3>
