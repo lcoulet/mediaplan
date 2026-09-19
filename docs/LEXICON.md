@@ -9,8 +9,8 @@ listed, the English term is used in code, the French term in the UI.
 
 ### Mediator (Médiateur)
 A staff member who leads mediation activities at the museum.
-Has: name, color (for calendar display), skills (list of offers they
-can lead), active status (can be deactivated without deletion).
+Has: name, color (for calendar display), **competences** (list of offers they
+can lead with a status: confirmed or learning), active status (can be deactivated without deletion).
 
 ### Mediation Offer (Offre de médiation)
 An activity proposed by the museum to visitors (guided tour, workshop,
@@ -106,11 +106,16 @@ instant, unlocking requires a confirmation warning.
 
 ### Day Planning View (Vue planning du jour)
 A calendar view focused on a single day. Layout:
-- Rows: mediators (with cycle week label as a pill/badge to the right of
-  their name, e.g. "S1", "S2") plus two types of non-mediator lanes:
-  - **Unassigned lane**: imported offers not yet allocated to a mediator,
+- Rows: two non-mediator lanes at the top, then mediators:
+  - **Unassigned lane** (top): imported offers not yet allocated to a mediator,
     shown only for the selected day, positioned on their time slot
-  - **Standard offers lane**: catalog of all standard offers (no time
+  - **Mediator rows**: active mediators (with cycle week label as a pill/badge
+    to the right of their name, e.g. "S1", "S2")
+    **Competence highlighting**: When a slot is selected for moving, mediators are highlighted:
+    - Blue background: confirmed competence for the slot's offer
+    - Yellow background: learning competence for the slot's offer
+    - Hatched background: no competence for the slot's offer
+  - **Standard offers lane** (bottom): catalog of all standard offers (no time
     positioning — these are not reservations). Draggable onto a mediator
     row + time position to create a manual slot (virtual reservation)
     using the offer's default duration. The offer stays in the lane for

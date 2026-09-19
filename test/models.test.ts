@@ -24,7 +24,7 @@ describe('createMediator', () => {
     expect(m.firstName).toBe('');
     expect(m.email).toBe('');
     expect(m.phone).toBe('');
-    expect(m.skills).toEqual([]);
+    expect(m.competences).toEqual([]);
     expect(m.active).toBe(true);
     expect(m.notes).toBe('');
   });
@@ -35,7 +35,7 @@ describe('createMediator', () => {
       firstName: 'Marie',
       email: 'marie@museum.fr',
       phone: '0600000000',
-      skills: ['off_1', 'off_2'],
+      competences: [{ offerId: 'off_1', status: 'confirmed' }, { offerId: 'off_2', status: 'learning' }],
       active: false,
       notes: 'Disponible le matin',
     });
@@ -43,7 +43,7 @@ describe('createMediator', () => {
     expect(m.firstName).toBe('Marie');
     expect(m.email).toBe('marie@museum.fr');
     expect(m.phone).toBe('0600000000');
-    expect(m.skills).toEqual(['off_1', 'off_2']);
+    expect(m.competences).toEqual([{ offerId: 'off_1', status: 'confirmed' }, { offerId: 'off_2', status: 'learning' }]);
     expect(m.active).toBe(false);
     expect(m.notes).toBe('Disponible le matin');
   });

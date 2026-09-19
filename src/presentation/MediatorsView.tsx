@@ -87,8 +87,8 @@ export default function MediatorsView() {
               </tr>
             ) : (
               filtered.map((m) => {
-                const skillOffers = m.skills
-                  .map((sid) => state.data.offers.find((o) => o.id === sid))
+                const skillOffers = m.competences
+                  .map((c) => state.data.offers.find((o) => o.id === c.offerId))
                   .filter((o): o is Offer => !!o);
                 return (
                   <tr key={m.id}>

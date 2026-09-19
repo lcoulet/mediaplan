@@ -1,5 +1,4 @@
-// CalendarView.tsx — Weekly calendar grid with slots, absences, filters, toolbar
-
+// WeeklyView.tsx — Vue hebdomadaire (anciennement CalendarView)
 import { useState, useMemo } from 'react';
 import { useData, getWeekStart } from './DataContext';
 import {
@@ -11,14 +10,14 @@ import SlotModal from './SlotModal';
 import SlotDetailModal from './SlotDetailModal';
 
 const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-const HOURS = Array.from({ length: 12 }, (_, i) => i + 8); // 8h to 19h
+const HOURS = Array.from({ length: 12 }, (_, i) => i + 8); // 8h à 19h
 
 function toMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
   return h * 60 + m;
 }
 
-export default function CalendarView() {
+export default function WeeklyView() {
   const { state, dispatch } = useData();
   const { data, currentWeekStart, filters, locked, showAbsences } = state;
 
@@ -126,7 +125,7 @@ export default function CalendarView() {
     <div className="view active">
       <div className="toolbar">
         <div className="toolbar-left">
-          <h2>Planning</h2>
+          <h2>Plan Hebdo</h2>
           <button className="btn btn-secondary" id="btn-prev-week" onClick={() => changeWeek(-1)}>
             ←
           </button>
@@ -281,7 +280,7 @@ export default function CalendarView() {
                     ) : null;
 
                     const top = (parseInt(slot.startTime) - 8) * 40 + (parseInt(slot.startTime.split(':')[1]) / 60) * 40;
-                    const height =
+                    const heightCalc =
                       (parseInt(slot.endTime) - parseInt(slot.startTime)) * 40 +
                       ((parseInt(slot.endTime.split(':')[1]) - parseInt(slot.startTime.split(':')[1])) / 60) * 40;
                     const widthPct = laneCount > 1 ? 100 / laneCount : 100;
@@ -293,7 +292,7 @@ export default function CalendarView() {
                         className={`cal-slot status-${slot.status}${conflictClass}${unassignedClass} origin-${slot.origin}`}
                         style={{
                           top: `${top}px`,
-                          height: `${height - 2}px`,
+                          height: `${heightCalc - 2}px`,
                           width: `calc(${widthPct}% - 4px)`,
                           left: `calc(${leftPct}% + 2px)`,
                           borderLeftColor: mediatorColor,

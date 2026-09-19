@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { AppData, Mediator } from '../domain/types';
-import { createMediator } from '../domain/models';
+import { createMediator, normalizeCompetences } from '../domain/models';
 import { createHistory, DEFAULT_HISTORY_SIZE } from '../domain/history';
 import { load, save } from '../infrastructure/store';
 import type { AppState, Action } from './types';
@@ -37,13 +37,23 @@ function getInitialState(): AppState {
       m.color = createMediator().color;
     }
   });
+  // Migrate: skills -> competences
+  data.mediators.forEach((m: Mediator) => {
+    if (m.hasOwnProperty('skills') && !m.hasOwnProperty('competences')) {
+      // @ts-ignore - legacy field
+      const skills: string[] = m.skills || [];
+      m.competences = skills.map(offerId => ({ offerId, status: 'confirmed' as const }));
+      // @ts-ignore - remove legacy field
+      delete m.skills;
+    }
+  });
   if (data.mediators.length === 0 && data.offers.length === 0) {
     seedDemoData(data);
     save(data);
   }
   return {
     data,
-    currentView: 'calendar',
+    currentView: 'weekly',
     currentWeekStart: getWeekStart(new Date()),
     filters: { mediatorId: '', offerId: '' },
     absenceFilter: { mediatorId: '' },
@@ -120,7 +130,7 @@ function reducer(state: AppState, action: Action): AppState {
           slots: state.data.slots.filter((s) => s.offerId !== action.id),
           mediators: state.data.mediators.map((m) => ({
             ...m,
-            skills: m.skills.filter((sid) => sid !== action.id),
+            competences: normalizeCompetences(m.competences.filter((c) => c.offerId !== action.id)),
           })),
         },
       };
@@ -355,7 +365,7 @@ export function useCRUD() {
             slots: state.data.slots.filter((s) => s.offerId !== action.id),
             mediators: state.data.mediators.map((m) => ({
               ...m,
-              skills: m.skills.filter((sid) => sid !== action.id),
+              competences: normalizeCompetences(m.competences.filter((c) => c.offerId !== action.id)),
             })),
           };
           break;

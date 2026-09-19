@@ -33,7 +33,7 @@ interface MediatorInput {
   firstName?: string;
   email?: string;
   phone?: string;
-  skills?: string[];
+  competences?: { offerId: string; status: 'confirmed' | 'learning' }[];
   active?: boolean;
   color?: string;
   notes?: string;
@@ -46,7 +46,7 @@ export function createMediator(data: MediatorInput = {}): Mediator {
     firstName: data.firstName || '',
     email: data.email || '',
     phone: data.phone || '',
-    skills: data.skills || [],
+    competences: data.competences || [],
     active: data.active !== undefined ? data.active : true,
     color: data.color || MEDIATOR_COLORS[colorIndex++ % MEDIATOR_COLORS.length],
     notes: data.notes || '',
@@ -266,6 +266,49 @@ export function hasMediatorOverlap(
     }
   }
   return false;
+}
+
+// Validate and normalize competences: ensure no duplicate offerId with different statuses
+// If an offer is both 'confirmed' and 'learning', keep only 'confirmed'
+export function normalizeCompetences(competences: { offerId: string; status: 'confirmed' | 'learning' }[]): { offerId: string; status: 'confirmed' | 'learning' }[] {
+  const map = new Map<string, 'confirmed' | 'learning'>();
+  
+  // Process in order, 'confirmed' takes precedence over 'learning'
+  for (const c of competences) {
+    const existing = map.get(c.offerId);
+    if (existing === 'confirmed') {
+      // Already confirmed, skip
+      continue;
+    }
+    // If existing is 'learning' and new is 'confirmed', upgrade
+    // Otherwise keep the existing or add the new one
+    if (c.status === 'confirmed' || !existing) {
+      map.set(c.offerId, c.status);
+    }
+  }
+  
+  return Array.from(map.entries()).map(([offerId, status]) => ({ offerId, status }));
+}
+
+// Check if a mediator knows an offer (confirmed or learning)
+export function mediatorKnowsOffer(mediator: Mediator, offerId: string): boolean {
+  return mediator.competences.some(c => c.offerId === offerId);
+}
+
+// Check if a mediator is confirmed for an offer
+export function mediatorConfirmedForOffer(mediator: Mediator, offerId: string): boolean {
+  return mediator.competences.some(c => c.offerId === offerId && c.status === 'confirmed');
+}
+
+// Check if a mediator is learning an offer
+export function mediatorLearningOffer(mediator: Mediator, offerId: string): boolean {
+  return mediator.competences.some(c => c.offerId === offerId && c.status === 'learning');
+}
+
+// Get competence status for a mediator and offer
+export function getCompetenceStatus(mediator: Mediator, offerId: string): 'confirmed' | 'learning' | null {
+  const competence = mediator.competences.find(c => c.offerId === offerId);
+  return competence ? competence.status : null;
 }
 
 // Format an ISO 8601 timestamp to a French human-friendly string

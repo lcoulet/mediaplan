@@ -112,7 +112,7 @@ describe('offers — colored pills display', () => {
       JSON.stringify({
         mediators: [{
           id: 'med_1', lastName: 'Dupont', firstName: 'Marie', email: '', phone: '',
-          skills: ['off_1', 'off_2'], active: true, color: '#1abc9c', notes: '',
+          competences: [{ offerId: 'off_1', status: 'confirmed' }, { offerId: 'off_2', status: 'confirmed' }], active: true, color: '#1abc9c', notes: '',
         }],
         offers: [offerRed, offerBlue],
         schedules: [],
@@ -180,7 +180,7 @@ describe('offers — colored pills display', () => {
     const { default: MediatorModal } = await import('../src/presentation/MediatorModal');
     const mediator = {
       id: 'med_1', lastName: 'Dupont', firstName: 'Marie', email: '', phone: '',
-      skills: ['off_1'], active: true, color: '#1abc9c', notes: '',
+      competences: [{ offerId: 'off_1', status: 'confirmed' as const }], active: true, color: '#1abc9c', notes: '',
     };
     render(
       <DataProvider>

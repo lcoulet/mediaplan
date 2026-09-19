@@ -66,7 +66,7 @@ describe('store.save', () => {
 
   it('should persist data to localStorage', () => {
     const data: AppData = {
-      mediators: [{ id: 'med_1', lastName: 'Dupont', firstName: '', email: '', phone: '', skills: [], active: true, color: '#fff', notes: '' }],
+      mediators: [{ id: 'med_1', lastName: 'Dupont', firstName: '', email: '', phone: '', competences: [], active: true, color: '#fff', notes: '' }],
       offers: [],
       schedules: [],
       slots: [],

@@ -147,15 +147,16 @@ Excel export or paper printout).
 - Setup/teardown time displayed on calendar for assigned mediators
 - Overlap detection uses extended time range (start - setup, end + teardown)
 
-### Day Planning View
-- Layout: mediators as rows (with cycle week label), time as columns
+### Day Planning View (Plan Jour)
+- Layout: time as horizontal columns (8h-19h), rows organized as:
+  - **Unassigned lane** (top): imported offers not yet allocated to a mediator,
+    shown only for the selected day, positioned on their time slot
+  - **Mediator rows**: active mediators with their color badge, each row
+    displays assigned slots for that mediator
+  - **Standard offers lane** (bottom): catalog of all standard offers, draggable
+    onto a mediator row + time position to create a manual slot
 - Time grid: thin lines every 10 minutes, thick lines every hour
 - Background: mediator availability (work cycle) + unavailability (absences)
-- Two non-mediator lanes:
-  - Unassigned lane: imported offers not yet allocated to a mediator
-  - Standard offers lane: catalog of standard offers, draggable onto a
-    mediator row + time position to create a manual slot. Offer stays in
-    the lane for reuse.
 - Drag-and-drop offers from unassigned lane to a mediator row to assign
 - Drag standard offer onto mediator row + time to create manual slot
 - Drag slot edge to modify start/end time (same day only)
@@ -164,8 +165,10 @@ Excel export or paper printout).
   (multi-mediator assignment, not independent copy)
 - Slot overlap on same mediator: red hatching and/or red highlight,
   warning confirmation required
-- Navigation: day tabs with prev/next/today buttons
-- Toggle between day / week / month views
+- Navigation: prev/next/today buttons to change the selected day
+- Toggle between day / week views
+- Slot assignment: can assign mediators from the slot modal (multi-select)
+- Mediator colors: displayed as colored badges/pills next to mediator names
 - Overlap detection uses extended time range (start - setup, end + teardown)
 
 ### Secutix Import (Synchronization)

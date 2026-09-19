@@ -9,6 +9,8 @@ import {
   STATUS_LABELS,
   ORIGIN_LABELS,
   formatImportDate,
+  mediatorConfirmedForOffer,
+  mediatorLearningOffer,
 } from '../domain/models';
 import type { Slot } from '../domain/types';
 import Modal from './Modal';
@@ -85,17 +87,39 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
     onClose();
   }
 
-  // Build mediator options with overlap/absence indicators
+  // Build mediator options with overlap/absence/competence indicators
   const mediatorOptions = useMemo(() => {
+    const offerId = form.offerId;
     return state.data.mediators.map((m) => {
       const overlap = hasMediatorOverlap(m.id, form.date, form.startTime, form.endTime, state.data.slots, form.id);
       const absent = !isMediatorAvailable(m.id, form.date, form.startTime, form.endTime, state.data.absences);
+      const confirmed = mediatorConfirmedForOffer(m, offerId);
+      const learning = mediatorLearningOffer(m, offerId);
+      
       let label = `${m.firstName} ${m.lastName}`;
-      if (overlap) label += ' ⚠️ Conflit horaire';
-      else if (absent) label += ' 🚫 Absent';
-      return { value: m.id, label, color: m.color, isDisabled: overlap };
+      
+      // Add competence indicators
+      if (confirmed) {
+        label += ' ✅';
+      } else if (learning) {
+        label += ' 📚';
+      } else if (offerId) {
+        label += ' ⚠️ Incompétent';
+      }
+      
+      // Add overlap/absence indicators
+      if (overlap) label += ' — Conflit horaire';
+      else if (absent) label += ' — Absent';
+      
+      return { 
+        value: m.id, 
+        label, 
+        color: m.color, 
+        isDisabled: overlap,
+        competenceStatus: confirmed ? 'confirmed' : learning ? 'learning' : null,
+      };
     });
-  }, [state.data.mediators, state.data.slots, state.data.absences, form.date, form.startTime, form.endTime, form.id]);
+  }, [state.data.mediators, state.data.slots, state.data.absences, form.date, form.startTime, form.endTime, form.id, form.offerId]);
 
   const offer = state.data.offers.find((o) => o.id === form.offerId);
 

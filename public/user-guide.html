@@ -33,6 +33,34 @@
     a:hover {
       text-decoration: underline;
     }
+    .competence-legend {
+      display: flex;
+      gap: 20px;
+      margin: 10px 0;
+      flex-wrap: wrap;
+    }
+    .competence-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .competence-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    .competence-confirmed { background: rgba(0, 100, 255, 0.2); border-left: 4px solid #0064ff; }
+    .competence-learning { background: rgba(255, 200, 0, 0.2); border-left: 4px solid #ffc800; }
+    .competence-none {
+      background: repeating-linear-gradient(
+        45deg,
+        #f0f0f0,
+        #f0f0f0 10px,
+        #e0e0e0 10px,
+        #e0e0e0 20px
+      );
+    }
   </style>
 </head>
 <body>
@@ -45,7 +73,7 @@
   </ul>
 
   <h2>📱 Fonctionnalités principales</h2>
-  <h3>1. Planning</h3>
+  <h3>1. Plan Hebdo</h3>
   <ul>
     <li>Vue hebdomadaire des réservations</li>
     <li>Filtres : médiateurs, offres, dates</li>
@@ -55,14 +83,48 @@
     <li><strong>Suppression</strong> : cliquez sur une réservation → Supprimer</li>
   </ul>
 
-  <h3>2. Médiateurs</h3>
+  <h3>2. Plan Jour</h3>
+  <ul>
+    <li>Vue quotidienne des réservations avec les heures en colonnes (8h-19h)</li>
+    <li><strong>Navigation</strong> : boutons ← → pour changer de jour, "Aujourd'hui" pour revenir à la date du jour</li>
+    <li><strong>Voie "Réservations non affectées"</strong> (en haut) : créneaux importés non encore assignés à un médiateur</li>
+    <li><strong>Voie "Médiateurs"</strong> : lignes avec les médiateurs actifs, chaque ligne affiche les créneaux assignés
+      <div class="competence-legend">
+        <div class="competence-item">
+          <div class="competence-color competence-confirmed"></div>
+          <span><strong>✅ Bleu</strong> : médiateur confirmée pour l'offre</span>
+        </div>
+        <div class="competence-item">
+          <div class="competence-color competence-learning"></div>
+          <span><strong>📚 Jaune</strong> : médiateur en apprentissage</span>
+        </div>
+        <div class="competence-item">
+          <div class="competence-color competence-none"></div>
+          <span><strong>⚠️ Hachures</strong> : médiateur incompétent</span>
+        </div>
+      </div>
+      <li><strong>Surlignage des compétences</strong> : Quand vous sélectionnez un créneau pour le déplacer, les médiateurs sont automatiquement surlignés selon leur compétence pour l'offre du créneau</li>
+    </li>
+    <li><strong>Voie "Offres libres"</strong> (en bas) : catalogue des offres disponibles, glissables sur une ligne de médiateur + position horaire</li>
+    <li><strong>Assignation depuis la modale</strong> : cliquez sur un créneau → ouvrez la modale → sélectionnez un ou plusieurs médiateurs via le multi-select. Les médiateurs sont indiqués avec : ✅ (confiré), 📚 (apprentissage), ⚠️ (incompétent)</li>
+    <li><strong>Couleurs des médiateurs</strong> : pastille colorée à côté du nom de chaque médiateur</li>
+  </ul>
+
+  <h3>3. Médiateurs</h3>
   <ul>
     <li>Liste des médiateurs avec leurs couleurs</li>
     <li>Ajouter / modifier / supprimer un médiateur</li>
+    <li><strong>Compétences</strong> : Pour chaque médiateur, vous pouvez définir :
+      <ul>
+        <li><strong>Compétences confirmées</strong> : offres que le médiateur peut animer seul</li>
+        <li><strong>Compétences en apprentissage</strong> : offres que le médiateur est en train d'apprendre</li>
+      </ul>
+      <li>Quand une offre passe de "en apprentissage" à "confirmée", le statut "en apprentissage" est automatiquement supprimé</li>
+    </li>
     <li><strong>Couleur</strong> : chaque médiateur a une couleur visible dans le planning et les réservations</li>
   </ul>
 
-  <h3>3. Offres</h3>
+  <h3>4. Offres</h3>
   <ul>
     <li>Liste des offres de médiation (visites guidées, ateliers…)</li>
     <li>Chaque offre a une couleur visible dans le planning et les réservations</li>
@@ -70,21 +132,41 @@
     <li><strong>Couleur</strong> : choisissez une couleur via le sélecteur dans le formulaire d'offre</li>
   </ul>
 
-  <h3>4. Absences</h3>
+  <h3>5. Absences</h3>
   <ul>
     <li>Liste des absences (congés, missions, formations…)</li>
     <li>Ajouter / modifier / supprimer une absence</li>
     <li>Les absences sont affichées en gris sur le planning (non cliquables)</li>
   </ul>
 
-  <h3>5. Import / Export</h3>
+  <h3>6. Import / Export</h3>
   <ul>
-    <li><strong>Export</strong> : sauvegarde JSON + Excel (stub)</li>
-    <li><strong>Import</strong> : restauration depuis JSON</li>
+    <li><strong>Export JSON</strong> : sauvegarde complète de toutes les données (médiateurs, offres, créneaux, absences, compétences) au format JSON.gz (compressé)</li>
+    <li><strong>Export Excel</strong> : export du planning ou de la liste des médiateurs</li>
+    <li><strong>Import JSON</strong> : restauration depuis un fichier JSON ou JSON.gz. <strong>⚠️ Attention : l'import remplace toutes les données actuelles</strong></li>
     <li><strong>Reset</strong> : 🔄 → réinitialise avec les données de démonstration</li>
   </ul>
 
-  <h3>6. Raccourcis clavier</h3>
+  <h3>7. Gestion des compétences</h3>
+  <ul>
+    <li><strong>Statuts des compétences</strong> :
+      <ul>
+        <li><strong>✅ Confirmée</strong> : le médiateur peut animer l'offre seul</li>
+        <li><strong>📚 En apprentissage</strong> : le médiateur est en formation sur cette offre</li>
+        <li><strong>⚠️ Incompétent</strong> : le médiateur ne connaît pas cette offre</li>
+      </ul>
+    </li>
+    <li><strong>Règles automatiques</strong> :
+      <ul>
+        <li>Si un médiateur a une compétence "confirmée" pour une offre, le statut "en apprentissage" est automatiquement supprimé</li>
+        <li>Si une offre est supprimée, toutes les références à cette offre dans les compétences des médiateurs sont automatiquement supprimées</li>
+      </ul>
+    </li>
+    <li><strong>Assignation avec avertissement</strong> : Quand vous essayez d'assigner un médiateur incompétent à une offre, un avertissement ⚠️ est affiché dans le sélecteur de médiateurs</li>
+    <li><strong>Surlignage dans le Plan Jour</strong> : Quand vous sélectionnez un créneau pour le déplacer, les médiateurs sont surlignés selon leur compétence pour l'offre du créneau</li>
+  </ul>
+
+  <h3>8. Raccourcis clavier</h3>
   <ul>
     <li><strong>Ctrl+Z</strong> : Annuler</li>
     <li><strong>Ctrl+Shift+Z</strong> : Rétablir</li>
@@ -106,9 +188,10 @@
 
   <h2>📌 Bonnes pratiques</h2>
   <ul>
-    <li><strong>Sauvegardez</strong> régulièrement via Import/Export</li>
+    <li><strong>Sauvegardez</strong> régulièrement via Import/Export JSON</li>
     <li><strong>Vérifiez les conflits</strong> avant d'assigner un médiateur à une réservation</li>
     <li><strong>Utilisez les couleurs</strong> pour repérer rapidement les médiateurs/offres</li>
+    <li><strong>Gérez les compétences</strong> : maintenez à jour les compétences des médiateurs pour éviter les assignations incompétentes</li>
   </ul>
 
   <hr>

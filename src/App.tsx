@@ -2,7 +2,8 @@
 
 import { DataProvider, useData } from './presentation/DataContext';
 import Header from './presentation/Header';
-import CalendarView from './presentation/CalendarView';
+import WeeklyView from './presentation/WeeklyView';
+import DailyView from './presentation/DailyView';
 import MediatorsView from './presentation/MediatorsView';
 import OffersView from './presentation/OffersView';
 import AbsencesView from './presentation/AbsencesView';
@@ -14,8 +15,10 @@ function ViewRouter() {
   const { state } = useData();
 
   switch (state.currentView) {
-    case 'calendar':
-      return <CalendarView />;
+    case 'weekly':
+      return <WeeklyView />;
+    case 'daily':
+      return <DailyView />;
     case 'mediators':
       return <MediatorsView />;
     case 'offers':
@@ -25,7 +28,7 @@ function ViewRouter() {
     case 'import-export':
       return <ImportExportView />;
     default:
-      return <CalendarView />;
+      return <WeeklyView />;
   }
 }
 

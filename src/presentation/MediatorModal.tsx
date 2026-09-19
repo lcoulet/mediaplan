@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useData, useCRUD } from './DataContext';
-import { createMediator } from '../domain/models';
+import { createMediator, normalizeCompetences } from '../domain/models';
 import type { Mediator } from '../domain/types';
 import Modal from './Modal';
 import MultiSelect from './MultiSelect';
@@ -24,8 +24,24 @@ export default function MediatorModal({ mediator, onClose }: Props) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleSkillsChange(selected: string[]) {
-    setForm((prev) => ({ ...prev, skills: selected }));
+  function handleConfirmedCompetencesChange(selected: string[]) {
+    setForm((prev) => ({
+      ...prev,
+      competences: normalizeCompetences([
+        ...prev.competences.filter(c => c.status === 'learning'),
+        ...selected.map(offerId => ({ offerId, status: 'confirmed' as const })),
+      ]),
+    }));
+  }
+
+  function handleLearningCompetencesChange(selected: string[]) {
+    setForm((prev) => ({
+      ...prev,
+      competences: normalizeCompetences([
+        ...prev.competences.filter(c => c.status === 'confirmed'),
+        ...selected.map(offerId => ({ offerId, status: 'learning' as const })),
+      ]),
+    }));
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -36,6 +52,7 @@ export default function MediatorModal({ mediator, onClose }: Props) {
       firstName: form.firstName.trim(),
       email: form.email.trim(),
       phone: form.phone.trim(),
+      competences: normalizeCompetences(form.competences),
       notes: form.notes.trim(),
     };
     if (isEdit) {
@@ -45,6 +62,14 @@ export default function MediatorModal({ mediator, onClose }: Props) {
     }
     onClose();
   }
+
+  // Get offer IDs for each competence status
+  const confirmedOfferIds = form.competences
+    .filter(c => c.status === 'confirmed')
+    .map(c => c.offerId);
+  const learningOfferIds = form.competences
+    .filter(c => c.status === 'learning')
+    .map(c => c.offerId);
 
   return (
     <Modal title={isEdit ? 'Modifier le médiateur' : 'Nouveau médiateur'} onClose={onClose}>
@@ -111,7 +136,7 @@ export default function MediatorModal({ mediator, onClose }: Props) {
           </div>
         </div>
         <div className="form-group">
-          <label>Compétences</label>
+          <label>Compétences confirmées</label>
           {state.data.offers.length === 0 ? (
             <span style={{ color: 'var(--color-text-muted)' }}>Aucune offre définie</span>
           ) : (
@@ -121,9 +146,28 @@ export default function MediatorModal({ mediator, onClose }: Props) {
                 label: o.name,
                 color: o.color,
               }))}
-              value={form.skills}
-              onChange={handleSkillsChange}
-              ariaLabel="Compétences"
+              value={confirmedOfferIds}
+              onChange={handleConfirmedCompetencesChange}
+              ariaLabel="Compétences confirmées"
+              placeholder="Rechercher une offre…"
+              noOptionsMessage="Aucune offre trouvée"
+            />
+          )}
+        </div>
+        <div className="form-group">
+          <label>Compétences en apprentissage</label>
+          {state.data.offers.length === 0 ? (
+            <span style={{ color: 'var(--color-text-muted)' }}>Aucune offre définie</span>
+          ) : (
+            <MultiSelect
+              options={state.data.offers.map((o): MultiSelectOption => ({
+                value: o.id,
+                label: o.name,
+                color: o.color,
+              }))}
+              value={learningOfferIds}
+              onChange={handleLearningCompetencesChange}
+              ariaLabel="Compétences en apprentissage"
               placeholder="Rechercher une offre…"
               noOptionsMessage="Aucune offre trouvée"
             />

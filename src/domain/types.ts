@@ -6,7 +6,7 @@ export interface Mediator {
   firstName: string;
   email: string;
   phone: string;
-  skills: string[];
+  competences: { offerId: string; status: 'confirmed' | 'learning' }[];
   active: boolean;
   color: string;
   notes: string;

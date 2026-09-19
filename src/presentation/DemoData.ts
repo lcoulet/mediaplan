@@ -128,7 +128,7 @@ export function seedDemoData(data: AppData): void {
     [10, 14, 39, 41, 66],
   ];
   skillAssignments.forEach((skills, i) => {
-    mediators[i].skills = skills.map((offIdx) => offers[offIdx].id);
+    mediators[i].competences = skills.map((offIdx) => ({ offerId: offers[offIdx].id, status: 'confirmed' as const }));
   });
 
   // Reference date: start of previous month

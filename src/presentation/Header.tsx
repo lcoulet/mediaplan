@@ -4,7 +4,8 @@ import { useData } from './DataContext';
 import type { ViewName } from './types';
 
 const NAV_ITEMS: { view: ViewName; label: string }[] = [
-  { view: 'calendar', label: 'Planning' },
+  { view: 'weekly', label: 'Plan Hebdo' },
+  { view: 'daily', label: 'Plan Jour' },
   { view: 'mediators', label: 'Médiateurs' },
   { view: 'offers', label: 'Offres' },
   { view: 'absences', label: 'Absences' },
