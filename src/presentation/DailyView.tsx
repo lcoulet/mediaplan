@@ -289,7 +289,7 @@ export default function DailyView() {
                         setSelectedSlot(slot);
                         setSlotModal({ slot, mediatorOnly: locked, defaultDate: slot.date });
                       }}
-                      draggable={!locked || !isImported}
+                      draggable
                       onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
                       onDragEnd={handleDragEnd}
                     >
@@ -360,7 +360,7 @@ export default function DailyView() {
                           setSelectedSlot(slot);
                           setSlotModal({ slot, mediatorOnly: locked, defaultDate: slot.date });
                         }}
-                        draggable={!locked || !isImported}
+                        draggable
                         onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
                         onDragEnd={handleDragEnd}
                       >
