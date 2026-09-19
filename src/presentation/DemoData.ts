@@ -150,16 +150,25 @@ export function seedDemoData(data: AppData): void {
 
   // Predefined slot patterns for weekdays (Mon=1..Fri=5)
   // Each entry: [offerIdx, mediatorIdx, start, end, status, participants, origin, source?, modifiedAfterImport?, unassigned?, extraMediatorIdx?]
+  // Doubled patterns: most unassigned (imported reservations without mediator)
   const weekdayPatterns: (string | number | boolean | null)[][] = [
-    // Monday
+    // Monday — 14 patterns (most unassigned)
     [0, 0, '09:00', '10:30', 'confirmed', 22, 'imported', 'Secutix'],
     [20, 2, '10:00', '12:00', 'confirmed', 14, 'imported', 'Secutix'],
     [34, 4, '14:00', '15:00', 'confirmed', 60, 'imported', 'Secutix'],
     [56, 6, '11:00', '12:00', 'planned', 18, 'imported', 'Secutix'],
     [1, 8, '15:30', '17:00', 'planned', 12, 'imported', 'Secutix'],
-    [16, 7, '18:00', '19:30', 'planned', 0, 'imported', 'Secutix', null, true],
+    [16, null, '18:00', '19:30', 'planned', 0, 'imported', 'Secutix', null, false, true],
     [60, 0, '10:00', '12:00', 'planned', 10, 'manual'],
-    // Tuesday
+    // Monday unassigned extras
+    [3, null, '09:30', '11:00', 'planned', 18, 'imported', 'Secutix', null, true],
+    [21, null, '14:30', '16:00', 'planned', 22, 'imported', 'Secutix', null, true],
+    [42, null, '10:00', '11:30', 'planned', 14, 'imported', 'Coordination', null, true],
+    [7, null, '11:00', '12:10', 'planned', 25, 'imported', 'Secutix', null, true],
+    [46, null, '16:00', '17:00', 'planned', 50, 'imported', 'Secutix', null, true],
+    [13, null, '09:00', '10:00', 'planned', 20, 'imported', 'Secutix', null, true],
+    [66, null, '14:00', '15:30', 'planned', 12, 'imported', 'Coordination', null, true],
+    // Tuesday — 14 patterns
     [2, 1, '09:30', '11:00', 'confirmed', 18, 'imported', 'Secutix'],
     [22, 3, '10:00', '11:40', 'confirmed', 12, 'imported', 'Secutix'],
     [42, 4, '14:00', '15:20', 'confirmed', 80, 'imported', 'Secutix'],
@@ -167,15 +176,31 @@ export function seedDemoData(data: AppData): void {
     [12, 5, '14:30', '15:30', 'planned', 18, 'imported', 'Secutix'],
     [61, 12, '10:00', '11:15', 'planned', 14, 'imported', 'Coordination'],
     [66, 0, '10:00', '11:30', 'planned', 12, 'manual'],
-    // Wednesday
+    // Tuesday unassigned extras
+    [0, null, '09:00', '10:30', 'planned', 25, 'imported', 'Secutix', null, true],
+    [24, null, '14:00', '15:00', 'planned', 12, 'imported', 'Secutix', null, true],
+    [40, null, '10:00', '11:30', 'planned', 60, 'imported', 'Secutix', null, true],
+    [8, null, '11:00', '12:10', 'planned', 25, 'imported', 'Secutix', null, true],
+    [17, null, '18:00', '19:20', 'planned', 30, 'imported', 'Secutix', null, true],
+    [57, null, '10:00', '11:00', 'planned', 8, 'imported', 'Coordination', null, true],
+    [63, null, '14:30', '16:00', 'planned', 10, 'imported', 'Secutix', null, true],
+    // Wednesday — 14 patterns
     [0, 0, '09:00', '10:30', 'confirmed', 25, 'imported', 'Secutix'],
     [20, 2, '10:00', '12:00', 'confirmed', 15, 'imported', 'Secutix'],
     [38, 3, '14:00', '15:00', 'confirmed', 60, 'imported', 'Secutix'],
     [44, 4, '15:30', '16:50', 'planned', 100, 'imported', 'Secutix'],
     [13, 5, '11:00', '12:10', 'planned', 20, 'imported', 'Secutix'],
     [57, 8, '10:00', '11:00', 'planned', 8, 'imported', 'Coordination'],
-    [62, 0, '10:00', '11:00', 'planned', 10, 'imported', 'Secutix', null, true],
-    // Thursday
+    [62, null, '10:00', '11:00', 'planned', 10, 'imported', 'Secutix', null, true],
+    // Wednesday unassigned extras
+    [1, null, '09:00', '10:30', 'planned', 22, 'imported', 'Secutix', null, true],
+    [21, null, '14:00', '15:30', 'planned', 12, 'imported', 'Secutix', null, true],
+    [35, null, '10:00', '11:00', 'planned', 60, 'imported', 'Secutix', null, true],
+    [7, null, '11:00', '12:10', 'planned', 25, 'imported', 'Secutix', null, true],
+    [46, null, '18:00', '19:00', 'planned', 50, 'imported', 'Secutix', null, true],
+    [58, null, '10:00', '12:00', 'planned', 12, 'imported', 'Secutix', null, true],
+    [64, null, '10:00', '11:30', 'planned', 0, 'imported', 'Secutix', null, true],
+    // Thursday — 14 patterns
     [3, 1, '09:30', '11:00', 'confirmed', 22, 'imported', 'Secutix'],
     [21, 12, '10:00', '11:30', 'confirmed', 12, 'imported', 'Secutix'],
     [35, 4, '14:00', '15:00', 'planned', 60, 'imported', 'Secutix'],
@@ -183,7 +208,15 @@ export function seedDemoData(data: AppData): void {
     [46, 11, '18:00', '19:00', 'confirmed', 50, 'imported', 'Secutix'],
     [58, 8, '10:00', '12:00', 'planned', 12, 'manual'],
     [0, 2, '14:30', '16:00', 'planned', 20, 'imported', 'Secutix', null, false, 18],
-    // Friday
+    // Thursday unassigned extras
+    [2, null, '09:30', '11:00', 'planned', 18, 'imported', 'Secutix', null, true],
+    [22, null, '10:00', '11:40', 'planned', 12, 'imported', 'Secutix', null, true],
+    [42, null, '14:00', '15:20', 'planned', 80, 'imported', 'Secutix', null, true],
+    [5, null, '11:00', '12:20', 'planned', 20, 'imported', 'Secutix', null, true],
+    [12, null, '14:30', '15:30', 'planned', 18, 'imported', 'Secutix', null, true],
+    [61, null, '10:00', '11:15', 'planned', 14, 'imported', 'Coordination', null, true],
+    [66, null, '10:00', '11:30', 'planned', 12, 'imported', 'Secutix', null, true],
+    // Friday — 14 patterns
     [0, 0, '09:00', '10:30', 'confirmed', 25, 'imported', 'Secutix'],
     [24, 14, '10:00', '11:30', 'confirmed', 12, 'imported', 'Secutix'],
     [40, 10, '14:00', '15:00', 'planned', 60, 'imported', 'Secutix'],
@@ -191,9 +224,17 @@ export function seedDemoData(data: AppData): void {
     [17, 7, '18:00', '19:20', 'planned', 30, 'imported', 'Secutix'],
     [64, 0, '10:00', '11:30', 'planned', 0, 'manual', null, true],
     [63, 16, '10:00', '11:30', 'planned', 12, 'imported', 'Coordination'],
+    // Friday unassigned extras
+    [1, null, '09:00', '10:30', 'planned', 22, 'imported', 'Secutix', null, true],
+    [20, null, '10:00', '12:00', 'planned', 14, 'imported', 'Secutix', null, true],
+    [34, null, '14:00', '15:00', 'planned', 60, 'imported', 'Secutix', null, true],
+    [56, null, '11:00', '12:00', 'planned', 18, 'imported', 'Secutix', null, true],
+    [13, null, '09:00', '10:00', 'planned', 20, 'imported', 'Secutix', null, true],
+    [42, null, '14:30', '16:00', 'planned', 80, 'imported', 'Secutix', null, true],
+    [7, null, '11:00', '12:10', 'planned', 25, 'imported', 'Secutix', null, true],
   ];
 
-  const dayPatternOffsets: Record<number, number> = { 1: 0, 2: 7, 3: 14, 4: 21, 5: 28 };
+  const dayPatternOffsets: Record<number, number> = { 1: 0, 2: 14, 3: 28, 4: 42, 5: 56 };
 
   for (let day = 0; day < totalDays; day++) {
     const date = new Date(refDate);
@@ -205,7 +246,7 @@ export function seedDemoData(data: AppData): void {
     const weekNum = Math.floor(day / 7);
     const medOffset = weekNum % mediators.length;
 
-    for (let p = 0; p < 7; p++) {
+    for (let p = 0; p < 14; p++) {
       const patternIdx = patternStart + p;
       if (patternIdx >= weekdayPatterns.length) break;
       const pattern = weekdayPatterns[patternIdx];

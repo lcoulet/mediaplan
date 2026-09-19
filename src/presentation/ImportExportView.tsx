@@ -6,7 +6,7 @@ import { exportJSON, importJSON } from '../infrastructure/store';
 import { exportExcel, importExcel } from '../infrastructure/excel';
 
 export default function ImportExportView() {
-  const { state, commit } = useData();
+  const { state, commit, resetData } = useData();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -39,6 +39,16 @@ export default function ImportExportView() {
       }
     } catch (e) {
       alert('Erreur import: ' + (e as Error).message);
+    }
+  }
+
+  function handleResetDemo() {
+    if (
+      confirm(
+        "⚠️ Charger les données de démonstration va SUPPRIMER toutes vos données actuelles.\n\nCette action est irréversible. Faites une sauvegarde JSON d'abord.\n\nContinuer ?"
+      )
+    ) {
+      resetData();
     }
   }
 
@@ -95,6 +105,24 @@ export default function ImportExportView() {
           </div>
           <div className="io-hint">
             ⚠️ L'import remplace toutes les données actuelles. Faites une sauvegarde JSON d'abord.
+          </div>
+        </div>
+
+        {/* Demo data card */}
+        <div className="io-card">
+          <h2>Données de démonstration</h2>
+          <p>Rechargez les données de démonstration pour tester l'application.</p>
+          <div className="io-actions">
+            <button
+              className="btn btn-secondary"
+              id="btn-load-demo"
+              onClick={handleResetDemo}
+            >
+              🔄 Charger les données de démonstration
+            </button>
+          </div>
+          <div className="io-hint">
+            ⚠️ Cette action supprime toutes les données actuelles et les remplace par les données de démonstration.
           </div>
         </div>
       </div>
