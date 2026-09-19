@@ -88,6 +88,7 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
   }
 
   // Build mediator options with overlap/absence/competence indicators
+  // Sort: confirmed first, then learning, then none — alphabetical within each group
   const mediatorOptions = useMemo(() => {
     const offerId = form.offerId;
     return state.data.mediators.map((m) => {
@@ -95,9 +96,9 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
       const absent = !isMediatorAvailable(m.id, form.date, form.startTime, form.endTime, state.data.absences);
       const confirmed = mediatorConfirmedForOffer(m, offerId);
       const learning = mediatorLearningOffer(m, offerId);
-      
+
       let label = `${m.firstName} ${m.lastName}`;
-      
+
       // Add competence indicators
       if (confirmed) {
         label += ' ✅';
@@ -106,18 +107,25 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
       } else if (offerId) {
         label += ' ⚠️ Incompétent';
       }
-      
+
       // Add overlap/absence indicators
       if (overlap) label += ' — Conflit horaire';
       else if (absent) label += ' — Absent';
-      
-      return { 
-        value: m.id, 
-        label, 
-        color: m.color, 
+
+      const competenceRank = confirmed ? 0 : learning ? 1 : 2;
+
+      return {
+        value: m.id,
+        label,
+        color: m.color,
         isDisabled: overlap,
         competenceStatus: confirmed ? 'confirmed' : learning ? 'learning' : null,
+        competenceRank,
+        sortName: `${m.lastName} ${m.firstName}`.toLowerCase(),
       };
+    }).sort((a, b) => {
+      if (a.competenceRank !== b.competenceRank) return a.competenceRank - b.competenceRank;
+      return a.sortName.localeCompare(b.sortName);
     });
   }, [state.data.mediators, state.data.slots, state.data.absences, form.date, form.startTime, form.endTime, form.id, form.offerId]);
 
