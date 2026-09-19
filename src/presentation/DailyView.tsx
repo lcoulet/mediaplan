@@ -46,11 +46,24 @@ export default function DailyView() {
   // Standard offers (catalog — all offers available for drag-and-drop)
   const allOffers = data.offers;
 
-  // Selected slot for competence highlighting
+  // Selected slot for competence highlighting (click → modal)
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
 
   // Drag and drop state
   const [draggedItem, setDraggedItem] = useState<{ type: 'offer' | 'slot'; id: string; data: any } | null>(null);
+
+  // Highlight offer: from selected slot (click) OR dragged item (drag)
+  const highlightOfferId = useMemo(() => {
+    if (draggedItem) {
+      if (draggedItem.type === 'slot') {
+        const slot = data.slots.find(s => s.id === draggedItem.id);
+        return slot?.offerId || null;
+      } else {
+        return draggedItem.id; // offer id directly
+      }
+    }
+    return selectedSlot?.offerId || null;
+  }, [draggedItem, selectedSlot, data.slots]);
 
   // Calculate time from drop position (x in pixels)
   function getTimeFromPosition(x: number): { hour: number; minute: number } {
@@ -155,6 +168,12 @@ export default function DailyView() {
     document.querySelectorAll('.daily-mediator-track').forEach(track => {
       track.classList.remove('drag-over');
     });
+  }
+
+  // Clear selection when modal closes
+  function handleModalClose() {
+    setSlotModal(null);
+    setSelectedSlot(null);
   }
 
   // Modal state
@@ -265,9 +284,9 @@ export default function DailyView() {
               slot.mediatorIds.includes(mediator.id)
             );
             
-            // Get competence status for selected slot's offer
-            const competenceStatus = selectedSlot ? 
-              getMediatorCompetenceStatus(mediator, selectedSlot.offerId) : null;
+            // Get competence status for the highlighted offer (drag or selection)
+            const competenceStatus = highlightOfferId ? 
+              getMediatorCompetenceStatus(mediator, highlightOfferId) : null;
 
             return (
               <div 
@@ -351,10 +370,7 @@ export default function DailyView() {
             slot={slotModal.slot}
             mediatorOnly={slotModal.mediatorOnly}
             defaultDate={slotModal.defaultDate}
-            onClose={() => {
-              setSlotModal(null);
-              setSelectedSlot(null);
-            }}
+            onClose={handleModalClose}
           />
         )}
       </div>
