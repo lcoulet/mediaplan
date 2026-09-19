@@ -8,9 +8,9 @@ import type { AppData } from '../domain/types';
 // Test data matching AppData interface
 const mockData: AppData = {
   mediators: [
-    { id: 'm1', firstName: 'Jean', lastName: 'Dupont', email: '', phone: '', notes: '', color: '#FF0000', active: true, skills: [] },
-    { id: 'm2', firstName: 'Marie', lastName: 'Martin', email: '', phone: '', notes: '', color: '#00FF00', active: true, skills: [] },
-    { id: 'm3', firstName: 'Inactif', lastName: 'Test', email: '', phone: '', notes: '', color: '#0000FF', active: false, skills: [] },
+    { id: 'm1', firstName: 'Jean', lastName: 'Dupont', email: '', phone: '', notes: '', color: '#FF0000', active: true, competences: [] },
+    { id: 'm2', firstName: 'Marie', lastName: 'Martin', email: '', phone: '', notes: '', color: '#00FF00', active: true, competences: [] },
+    { id: 'm3', firstName: 'Inactif', lastName: 'Test', email: '', phone: '', notes: '', color: '#0000FF', active: false, competences: [] },
   ],
   offers: [
     { id: 'o1', name: 'Visite guidée', description: '', duration: 60, capacity: 20, location: 'Salle 1', setupTime: 10, teardownTime: 10 },
@@ -205,7 +205,7 @@ describe('DailyView', () => {
     expect(container.querySelector('.daily-time-axis')).toBeTruthy();
   });
 
-  it('should allow dragging offers from offers lane', () => {
+  it('should not allow dragging offers when locked (default)', () => {
     const { container } = render(
       <DataProvider>
         <DailyView />
@@ -213,10 +213,11 @@ describe('DailyView', () => {
     );
     const offer = container.querySelector('.daily-offer');
     expect(offer).toBeTruthy();
-    expect(offer).toHaveAttribute('draggable', 'true');
+    // locked by default → not draggable
+    expect(offer?.getAttribute('draggable')).toBe('false');
   });
 
-  it('should allow dragging unassigned slots', () => {
+  it('should allow dragging unassigned slots when locked (imported unassigned still draggable for assignment)', () => {
     const { container } = render(
       <DataProvider>
         <DailyView />
@@ -224,7 +225,8 @@ describe('DailyView', () => {
     );
     const unassignedSlots = container.querySelectorAll('.daily-slot.unassigned');
     expect(unassignedSlots.length).toBeGreaterThan(0);
-    expect(unassignedSlots[0]).toHaveAttribute('draggable', 'true');
+    // imported slot is not draggable when locked
+    expect(unassignedSlots[0].getAttribute('draggable')).toBe('false');
   });
 
   it('should allow dragging assigned slots', () => {
@@ -235,6 +237,7 @@ describe('DailyView', () => {
     );
     const assignedSlots = container.querySelectorAll('.daily-slot.assigned');
     expect(assignedSlots.length).toBeGreaterThan(0);
+    // manual assigned slot is draggable even when locked (for re-assignment)
     expect(assignedSlots[0]).toHaveAttribute('draggable', 'true');
   });
 

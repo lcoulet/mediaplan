@@ -204,7 +204,8 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
   }
 
   // ---- Full edit mode ----
-  const originInfo = form.origin === 'imported' ? (
+  const isImported = form.origin === 'imported';
+  const originInfo = isImported ? (
     <div className="origin-info">
       <span className="badge origin-badge-imported">📥 {ORIGIN_LABELS.imported}</span>
       {form.modifiedAfterImport && <span className="badge origin-badge-modified">✏ Modifié après import</span>}
@@ -230,6 +231,7 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
             value={form.offerId}
             onChange={(e) => setField('offerId', e.target.value)}
             required
+            disabled={isImported}
           >
             <option value="">— Choisir —</option>
             {state.data.offers.map((o) => (
@@ -267,6 +269,7 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
             value={form.date}
             onChange={(e) => setField('date', e.target.value)}
             required
+            disabled={isImported}
           />
         </div>
         <div className="form-row">
@@ -277,6 +280,7 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
               value={form.startTime}
               onChange={(e) => setField('startTime', e.target.value)}
               required
+              disabled={isImported}
             />
           </div>
           <div className="form-group">
@@ -286,6 +290,7 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
               value={form.endTime}
               onChange={(e) => setField('endTime', e.target.value)}
               required
+              disabled={isImported}
             />
           </div>
         </div>
@@ -323,7 +328,7 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
           ></textarea>
         </div>
         <div className="form-actions">
-          {isEdit && (
+          {isEdit && !isImported && (
             <button type="button" className="btn btn-danger" id="slot-delete" onClick={handleDelete}>
               Supprimer
             </button>

@@ -18,9 +18,9 @@ function toMinutes(time: string): number {
 }
 
 export default function DailyView() {
-  const { state } = useData();
+  const { state, dispatch } = useData();
   const crud = useCRUD();
-  const { data } = state;
+  const { data, locked } = state;
 
   // Local state for the selected day (defaults to today)
   const [selectedDate, setSelectedDate] = useState(() => new Date());
@@ -212,6 +212,33 @@ export default function DailyView() {
           <button className="btn btn-secondary" onClick={goToToday}>Aujourd'hui</button>
           <button className="btn btn-secondary" onClick={() => goToDay(1)}>→</button>
         </div>
+        <div className="toolbar-right">
+          <label className="toggle-switch">
+            <input
+              type="checkbox"
+              id="toggle-edit-mode-daily"
+              checked={!locked}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                if (checked) {
+                  if (
+                    !confirm(
+                      '⚠️ Activer le mode modification permet de modifier les créneaux.\n\nLes offres importées pourront être éditées et seront marquées comme "modifiées après import".\n\nContinuer ?'
+                    )
+                  ) {
+                    e.target.checked = false;
+                    return;
+                  }
+                  dispatch({ type: 'SET_LOCKED', locked: false });
+                } else {
+                  dispatch({ type: 'SET_LOCKED', locked: true });
+                }
+              }}
+            />
+            <span className="toggle-slider"></span>
+            <span className="toggle-label">Mode modification</span>
+          </label>
+        </div>
       </div>
 
       <div className="daily-grid">
@@ -249,19 +276,20 @@ export default function DailyView() {
                 unassignedSlots.map(slot => {
                   const offer = data.offers.find(o => o.id === slot.offerId);
                   const isSelected = selectedSlot?.id === slot.id;
+                  const isImported = slot.origin === 'imported';
                   return (
                     <div
                       key={slot.id}
-                      className={`daily-slot unassigned${isSelected ? ' selected' : ''}`}
+                      className={`daily-slot unassigned${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}`}
                       style={{
                         left: `${getSlotTop(slot)}px`,
                         width: `${getSlotHeight(slot)}px`,
                       }}
                       onClick={() => {
                         setSelectedSlot(slot);
-                        setSlotModal({ slot, mediatorOnly: false, defaultDate: slot.date });
+                        setSlotModal({ slot, mediatorOnly: locked, defaultDate: slot.date });
                       }}
-                      draggable
+                      draggable={!locked || !isImported}
                       onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
                       onDragEnd={handleDragEnd}
                     >
@@ -317,11 +345,12 @@ export default function DailyView() {
                     const offer = data.offers.find(o => o.id === slot.offerId);
                     const mediatorColor = mediator.color || '#ccc';
                     const isSelected = selectedSlot?.id === slot.id;
+                    const isImported = slot.origin === 'imported';
 
                     return (
                       <div
                         key={slot.id}
-                        className={`daily-slot assigned${isSelected ? ' selected' : ''}`}
+                        className={`daily-slot assigned${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}`}
                         style={{
                           left: `${getSlotTop(slot)}px`,
                           width: `${getSlotHeight(slot)}px`,
@@ -329,9 +358,9 @@ export default function DailyView() {
                         }}
                         onClick={() => {
                           setSelectedSlot(slot);
-                          setSlotModal({ slot, mediatorOnly: false, defaultDate: slot.date });
+                          setSlotModal({ slot, mediatorOnly: locked, defaultDate: slot.date });
                         }}
-                        draggable
+                        draggable={!locked || !isImported}
                         onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
                         onDragEnd={handleDragEnd}
                       >
@@ -354,7 +383,7 @@ export default function DailyView() {
               <div className="daily-empty">Aucune offre libre disponible.</div>
             ) : (
               allOffers.map(offer => (
-                <div key={offer.id} className="daily-offer" draggable
+                <div key={offer.id} className="daily-offer" draggable={!locked}
                   onDragStart={(e) => handleDragStart(e, 'offer', offer.id)}
                   onDragEnd={handleDragEnd}>
                   <div className="offer-name">{offer.name}</div>

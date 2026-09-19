@@ -382,6 +382,15 @@ body.edit-mode .cal-day-col:hover {
   border-left-color: #ff9800;
 }
 
+.daily-slot.imported {
+  border-left-style: double;
+  border-left-width: 4px;
+}
+
+.daily-slot.imported .slot-title::after {
+  content: ' 📥';
+}
+
 .daily-slot .slot-time {
   font-weight: 600;
   font-size: 10px;
