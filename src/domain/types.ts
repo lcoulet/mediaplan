@@ -75,6 +75,10 @@ export interface AppData {
   schedules: Schedule[];
   slots: Slot[];
   absences: Absence[];
+  halfDayConfig?: {
+    morningEnd: string;
+    afternoonStart: string;
+  };
 }
 
 export interface ExportMetadata {

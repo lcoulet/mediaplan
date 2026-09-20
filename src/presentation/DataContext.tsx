@@ -82,6 +82,14 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, locked: action.locked };
     case 'SET_SHOW_ABSENCES':
       return { ...state, showAbsences: action.show };
+    case 'SET_HALF_DAY_CONFIG':
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          halfDayConfig: action.config,
+        },
+      };
     case 'ADD_MEDIATOR':
       return {
         ...state,
@@ -394,6 +402,9 @@ export function useCRUD() {
           break;
         case 'DELETE_ABSENCE':
           nextData = { ...state.data, absences: state.data.absences.filter((a) => a.id !== action.id) };
+          break;
+        case 'SET_HALF_DAY_CONFIG':
+          nextData = { ...state.data, halfDayConfig: action.config };
           break;
         default:
           return; // non-CRUD action

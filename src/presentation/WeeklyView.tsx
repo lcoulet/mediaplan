@@ -268,7 +268,7 @@ export default function WeeklyView() {
                     const mediator = data.mediators.find((m) => m.id === slot.mediatorIds[0]);
                     const unassigned = slot.mediatorIds.length === 0;
                     const available = mediator
-                      ? isMediatorAvailable(slot.mediatorIds[0], slot.date, slot.startTime, slot.endTime, data.absences)
+                      ? isMediatorAvailable(slot.mediatorIds[0], slot.date, slot.startTime, slot.endTime, data.absences, data.halfDayConfig)
                       : true;
                     const conflictIcon = available ? '' : ' ⚠️';
                     const conflictClass = available ? '' : ' slot-conflict';

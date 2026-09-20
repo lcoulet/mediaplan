@@ -186,14 +186,19 @@ export function createAbsence(data: AbsenceInput = {}): Absence {
 }
 
 // Check if a mediator is available for a given date/time, given a list of absences
+// Uses configurable half-day boundaries from halfDayConfig if provided
 export function isMediatorAvailable(
   mediatorId: string,
   date: string,
   startTime: string,
   endTime: string,
-  absences: Absence[]
+  absences: Absence[],
+  halfDayConfig?: { morningEnd: string; afternoonStart: string }
 ): boolean {
-  const noon = '12:00';
+  // Use configurable times or fall back to noon
+  const morningEnd = halfDayConfig?.morningEnd || '12:00';
+  const afternoonStart = halfDayConfig?.afternoonStart || '12:00';
+  
   for (const abs of absences) {
     if (abs.mediatorId !== mediatorId) continue;
     // Check if date falls within the absence range (inclusive)
@@ -202,10 +207,10 @@ export function isMediatorAvailable(
     if (abs.halfDay === 'none') {
       return false; // full-day absence
     }
-    if (abs.halfDay === 'morning' && startTime < noon) {
+    if (abs.halfDay === 'morning' && startTime < morningEnd) {
       return false;
     }
-    if (abs.halfDay === 'afternoon' && endTime > noon) {
+    if (abs.halfDay === 'afternoon' && endTime > afternoonStart) {
       return false;
     }
   }
@@ -303,6 +308,14 @@ export function mediatorConfirmedForOffer(mediator: Mediator, offerId: string): 
 // Check if a mediator is learning an offer
 export function mediatorLearningOffer(mediator: Mediator, offerId: string): boolean {
   return mediator.competences.some(c => c.offerId === offerId && c.status === 'learning');
+}
+
+// Get default half-day configuration
+export function getDefaultHalfDayConfig() {
+  return {
+    morningEnd: '13:00',
+    afternoonStart: '13:00',
+  };
 }
 
 // Get competence status for a mediator and offer

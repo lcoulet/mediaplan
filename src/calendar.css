@@ -349,6 +349,25 @@ body.edit-mode .cal-day-col:hover {
   overflow: hidden;
 }
 
+/* Absence background on mediator tracks */
+.daily-mediator-track.absence-leave { background: rgba(231, 76, 60, 0.15); }
+.daily-mediator-track.absence-mission { background: rgba(52, 152, 219, 0.15); }
+.daily-mediator-track.absence-training { background: rgba(155, 89, 182, 0.15); }
+.daily-mediator-track.absence-sick { background: rgba(230, 126, 34, 0.15); }
+.daily-mediator-track.absence-other { background: rgba(149, 165, 166, 0.15); }
+
+/* Half-day absence backgrounds */
+.daily-mediator-track.absence-leave-morning { background: linear-gradient(to bottom, rgba(231, 76, 60, 0.15) 50%, transparent 50%); }
+.daily-mediator-track.absence-leave-afternoon { background: linear-gradient(to bottom, transparent 50%, rgba(231, 76, 60, 0.15) 50%); }
+.daily-mediator-track.absence-mission-morning { background: linear-gradient(to bottom, rgba(52, 152, 219, 0.15) 50%, transparent 50%); }
+.daily-mediator-track.absence-mission-afternoon { background: linear-gradient(to bottom, transparent 50%, rgba(52, 152, 219, 0.15) 50%); }
+.daily-mediator-track.absence-training-morning { background: linear-gradient(to bottom, rgba(155, 89, 182, 0.15) 50%, transparent 50%); }
+.daily-mediator-track.absence-training-afternoon { background: linear-gradient(to bottom, transparent 50%, rgba(155, 89, 182, 0.15) 50%); }
+.daily-mediator-track.absence-sick-morning { background: linear-gradient(to bottom, rgba(230, 126, 34, 0.15) 50%, transparent 50%); }
+.daily-mediator-track.absence-sick-afternoon { background: linear-gradient(to bottom, transparent 50%, rgba(230, 126, 34, 0.15) 50%); }
+.daily-mediator-track.absence-other-morning { background: linear-gradient(to bottom, rgba(149, 165, 166, 0.15) 50%, transparent 50%); }
+.daily-mediator-track.absence-other-afternoon { background: linear-gradient(to bottom, transparent 50%, rgba(149, 165, 166, 0.15) 50%); }
+
 /* Hour grid lines inside tracks */
 .daily-hour-line {
   position: absolute;

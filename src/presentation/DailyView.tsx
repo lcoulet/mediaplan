@@ -86,6 +86,70 @@ export default function DailyView() {
     return 'none';
   }
 
+  // Half-day configuration
+  const halfDayConfig = data.halfDayConfig || { morningEnd: '13:00', afternoonStart: '13:00' };
+
+  // Absences for the selected day
+  const dayAbsences = useMemo(() => {
+    return data.absences.filter(a =>
+      a.startDate <= selectedDateStr && a.endDate >= selectedDateStr
+    );
+  }, [data.absences, selectedDateStr]);
+
+  // Calculate minutes per pixel for the grid
+  const totalGridWidth = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
+  const totalGridHeight = totalGridWidth; // Square grid
+  const minutesPerPx = totalGridHeight / ((END_HOUR - START_HOUR) * 60);
+
+  // Get absence background style for a mediator track
+  function getAbsenceStyleForMediator(mediatorId: string): React.CSSProperties | null {
+    const mediatorAbsences = dayAbsences.filter(a => a.mediatorId === mediatorId);
+    if (mediatorAbsences.length === 0) return null;
+    
+    // Full-day takes precedence over half-day
+    const fullDayAbsence = mediatorAbsences.find(a => a.halfDay === 'none');
+    if (fullDayAbsence) {
+      return {
+        backgroundColor: getAbsenceColor(fullDayAbsence.type, 0.15),
+      };
+    }
+    
+    // For half-day absences, return partial background
+    const halfDayAbsence = mediatorAbsences.find(a => a.halfDay !== 'none');
+    if (halfDayAbsence) {
+      const morningEnd = halfDayConfig.morningEnd || '13:00';
+      const afternoonStart = halfDayConfig.afternoonStart || '13:00';
+      
+      const morningEndMinutes = toMinutes(morningEnd);
+      const afternoonStartMinutes = toMinutes(afternoonStart);
+      
+      if (halfDayAbsence.halfDay === 'morning') {
+        const height = (morningEndMinutes - START_HOUR * 60) * minutesPerPx;
+        return {
+          background: `linear-gradient(to bottom, ${getAbsenceColor(halfDayAbsence.type, 0.15)} 0 ${height}px, transparent ${height}px ${totalGridHeight}px)`,
+        };
+      } else if (halfDayAbsence.halfDay === 'afternoon') {
+        const startY = (afternoonStartMinutes - START_HOUR * 60) * minutesPerPx;
+        return {
+          background: `linear-gradient(to bottom, transparent 0 ${startY}px, ${getAbsenceColor(halfDayAbsence.type, 0.15)} ${startY}px ${totalGridHeight}px)`,
+        };
+      }
+    }
+    
+    return null;
+  }
+
+  function getAbsenceColor(type: string, opacity: number): string {
+    const colors: Record<string, string> = {
+      leave: `rgba(231, 76, 60, ${opacity})`,
+      mission: `rgba(52, 152, 219, ${opacity})`,
+      training: `rgba(155, 89, 182, ${opacity})`,
+      sick: `rgba(230, 126, 34, ${opacity})`,
+      other: `rgba(149, 165, 166, ${opacity})`,
+    };
+    return colors[type] || `rgba(149, 165, 166, ${opacity})`;
+  }
+
   // Handle drop on mediator track
   function handleDropOnMediator(e: React.DragEvent, mediatorId: string) {
     e.preventDefault();
@@ -200,8 +264,6 @@ export default function DailyView() {
   function getSlotHeight(slot: Slot): number {
     return toMinutes(slot.endTime) - toMinutes(slot.startTime);
   }
-
-  const totalGridWidth = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
 
   return (
     <div className="view active">
@@ -327,7 +389,11 @@ export default function DailyView() {
                 </div>
                 <div
                   className="daily-mediator-track"
-                  style={{ width: `${totalGridWidth}px`, position: 'relative' }}
+                  style={{
+                    width: `${totalGridWidth}px`,
+                    position: 'relative',
+                    ...(getAbsenceStyleForMediator(mediator.id) || {}),
+                  }}
                   onDrop={(e) => handleDropOnMediator(e, mediator.id)}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}

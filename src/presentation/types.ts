@@ -65,6 +65,7 @@ export type Action =
   | { type: 'SET_ABSENCE_FILTER_MEDIATOR'; mediatorId: string }
   | { type: 'SET_LOCKED'; locked: boolean }
   | { type: 'SET_SHOW_ABSENCES'; show: boolean }
+  | { type: 'SET_HALF_DAY_CONFIG'; config: { morningEnd: string; afternoonStart: string } }
   // CRUD operations that also commit to history
   | { type: 'ADD_MEDIATOR'; mediator: Mediator }
   | { type: 'UPDATE_MEDIATOR'; mediator: Mediator }

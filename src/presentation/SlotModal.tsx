@@ -40,7 +40,7 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
     const firstMed = selectedMediators[0];
     if (!firstMed) return '';
     const overlap = hasMediatorOverlap(firstMed, form.date, form.startTime, form.endTime, state.data.slots, form.id);
-    const absent = !isMediatorAvailable(firstMed, form.date, form.startTime, form.endTime, state.data.absences);
+    const absent = !isMediatorAvailable(firstMed, form.date, form.startTime, form.endTime, state.data.absences, state.data.halfDayConfig);
     if (overlap) return '⚠️ Ce médiateur a déjà un créneau à cet horaire';
     if (absent) return '🚫 Ce médiateur est absent à ce créneau';
     return '';
@@ -94,7 +94,7 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
     const offerId = form.offerId;
     return state.data.mediators.map((m) => {
       const overlap = hasMediatorOverlap(m.id, form.date, form.startTime, form.endTime, state.data.slots, form.id);
-      const absent = !isMediatorAvailable(m.id, form.date, form.startTime, form.endTime, state.data.absences);
+      const absent = !isMediatorAvailable(m.id, form.date, form.startTime, form.endTime, state.data.absences, state.data.halfDayConfig);
       const confirmed = mediatorConfirmedForOffer(m, offerId);
       const learning = mediatorLearningOffer(m, offerId);
 

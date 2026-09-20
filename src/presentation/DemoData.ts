@@ -1,7 +1,7 @@
 // DemoData.ts — seedDemoData, ported from js/app.js seedDemoData()
 
 import type { AppData } from '../domain/types';
-import { createMediator, createOffer, createSlot, createAbsence } from '../domain/models';
+import { createMediator, createOffer, createSlot, createAbsence, getDefaultHalfDayConfig } from '../domain/models';
 
 export function seedDemoData(data: AppData): void {
   // --- 20 mediators with creative French names ---
@@ -348,4 +348,5 @@ export function seedDemoData(data: AppData): void {
   data.schedules = [];
   data.slots = slots;
   data.absences = absences;
+  data.halfDayConfig = getDefaultHalfDayConfig();
 }
