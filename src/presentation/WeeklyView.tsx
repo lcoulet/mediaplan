@@ -2,11 +2,12 @@
 import { useState, useMemo } from 'react';
 import { useData, getWeekStart } from './DataContext';
 import {
-  isMediatorAvailable,
   ABSENCE_TYPE_LABELS,
   getAbsenceTimeRange,
+  getSlotPlanningStatus,
   toLocalDateString,
 } from '../domain/models';
+import type { SlotPlanningStatus } from '../domain/models';
 import type { Slot, Absence } from '../domain/types';
 import { useViewportPxPerHour } from './useElementWidth';
 import SlotModal from './SlotModal';
@@ -15,6 +16,23 @@ import SlotDetailModal from './SlotDetailModal';
 const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 8); // 8h à 19h
 const FALLBACK_PX_PER_HOUR_V = 40; // before measurement / jsdom
+
+// Planning status labels and colors (weekly view)
+const STATUS_LABELS: Record<SlotPlanningStatus, string> = {
+  ok: 'OK',
+  unassigned: 'À assigner',
+  dispo_issue: 'Indisponibilité',
+  learning: 'En formation',
+  incompetent: 'Incompétent',
+};
+const STATUS_BG: Record<SlotPlanningStatus, string> = {
+  ok: '#e8f5e9',          // green tint
+  unassigned: '#fff3cd',  // amber tint
+  dispo_issue: '#f8d7da', // red tint
+  learning: '#fff8e1',   // pale yellow
+  incompetent: '#e2e3e5', // grey tint
+};
+const STATUS_ORDER: SlotPlanningStatus[] = ['ok', 'unassigned', 'dispo_issue', 'learning', 'incompetent'];
 
 function toMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
@@ -138,6 +156,19 @@ export default function WeeklyView() {
     dispatch({ type: 'SET_CURRENT_DATE', date: new Date() });
   }
 
+  // Weekly planning stats: count slots per status (filtered ones only)
+  const weekStats = useMemo(() => {
+    const counts: Record<SlotPlanningStatus, number> = {
+      ok: 0, unassigned: 0, dispo_issue: 0, learning: 0, incompetent: 0,
+    };
+    for (const dd of dayData) {
+      for (const s of dd.daySlots) {
+        counts[getSlotPlanningStatus(s, data)]++;
+      }
+    }
+    return counts;
+  }, [dayData, data]);
+
   return (
     <div className="view active">
       <div className="toolbar">
@@ -153,6 +184,15 @@ export default function WeeklyView() {
           <button className="btn btn-secondary" id="btn-today" onClick={goToToday}>
             Aujourd'hui
           </button>
+          {/* Weekly stats badge */}
+          <div className="week-stats" id="week-stats">
+            {STATUS_ORDER.map((st) => (
+              <span key={st} className={`week-stat week-stat-${st}`} title={STATUS_LABELS[st]}>
+                <span className="week-stat-dot" style={{ background: STATUS_BG[st] }}></span>
+                {weekStats[st]}
+              </span>
+            ))}
+          </div>
         </div>
         <div className="toolbar-right">
           <select
@@ -293,13 +333,7 @@ export default function WeeklyView() {
                   laneSlots.map((slot) => {
                     const offer = data.offers.find((o) => o.id === slot.offerId);
                     const mediator = data.mediators.find((m) => m.id === slot.mediatorIds[0]);
-                    const unassigned = slot.mediatorIds.length === 0;
-                    const available = mediator
-                      ? isMediatorAvailable(slot.mediatorIds[0], slot.date, slot.startTime, slot.endTime, data.absences, data.halfDayConfig)
-                      : true;
-                    const conflictIcon = available ? '' : ' ⚠️';
-                    const conflictClass = available ? '' : ' slot-conflict';
-                    const unassignedClass = unassigned ? ' slot-unassigned' : '';
+                    const planningStatus = getSlotPlanningStatus(slot, data);
                     const originIcon = slot.origin === 'imported' ? (slot.modifiedAfterImport ? ' 📥✏' : ' 📥') : ' ✋';
                     const mediatorColor = mediator ? mediator.color || '#ccc' : '#ccc';
                     const mediatorBadge = mediator ? (
@@ -313,18 +347,45 @@ export default function WeeklyView() {
                     const widthPct = laneCount > 1 ? 100 / laneCount : 100;
                     const leftPct = laneIdx * widthPct;
 
+                    // Native tooltip: everything a coordinator needs at a glance
+                    const statusDetail = (() => {
+                      if (planningStatus === 'unassigned') return 'Aucun médiateur assigné';
+                      const medNames = slot.mediatorIds
+                        .map((id) => {
+                          const m = data.mediators.find((mm) => mm.id === id);
+                          return m ? `${m.firstName} ${m.lastName}` : id;
+                        })
+                        .join(', ');
+                      if (planningStatus === 'dispo_issue')
+                        return `Médiateur(s) indisponible(s) : ${medNames}`;
+                      if (planningStatus === 'learning')
+                        return `En formation : ${medNames}`;
+                      if (planningStatus === 'incompetent')
+                        return `Aucun médiateur compétent : ${medNames}`;
+                      return medNames;
+                    })();
+                    const tooltip = [
+                      `${offer ? offer.name : '—'}`,
+                      `${slot.startTime} – ${slot.endTime}`,
+                      `État : ${STATUS_LABELS[planningStatus]}`,
+                      statusDetail,
+                      `Origine : ${slot.origin === 'imported' ? 'Importé' : 'Manuel'}`,
+                    ].join('\n');
+
                     return (
                       <div
                         key={slot.id}
-                        className={`cal-slot status-${slot.status}${conflictClass}${unassignedClass} origin-${slot.origin}`}
+                        className={`cal-slot pstatus-${planningStatus} origin-${slot.origin}`}
                         style={{
                           top: `${top}px`,
                           height: `${heightCalc - 2}px`,
                           width: `calc(${widthPct}% - 4px)`,
                           left: `calc(${leftPct}% + 2px)`,
+                          background: STATUS_BG[planningStatus],
                           borderLeftColor: mediatorColor,
                         }}
                         data-slot-id={slot.id}
+                        title={tooltip}
                         onClick={() => handleSlotClick(slot)}
                       >
                         <div className="slot-time">{slot.startTime} – {slot.endTime}</div>
@@ -332,7 +393,6 @@ export default function WeeklyView() {
                         <div className="slot-mediator">
                           {mediatorBadge}
                           {mediator ? `${mediator.firstName} ${mediator.lastName}` : 'Non assigné'}
-                          {conflictIcon}
                         </div>
                       </div>
                     );
@@ -341,6 +401,15 @@ export default function WeeklyView() {
               </div>
             );
           })}
+          {/* Legend: planning status colors (once, below the grid) */}
+          <div className="week-legend">
+            {STATUS_ORDER.map((st) => (
+              <span key={st} className="week-legend-item">
+                <span className="week-stat-dot" style={{ background: STATUS_BG[st] }}></span>
+                {STATUS_LABELS[st]}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 

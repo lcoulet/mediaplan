@@ -6,6 +6,7 @@ import type {
   Schedule,
   Slot,
   Absence,
+  AppData,
   SlotStatus,
   ScheduleStatus,
   SlotOrigin,
@@ -359,6 +360,52 @@ export function hasMediatorOverlap(
     }
   }
   return false;
+}
+
+// Planning status of a slot for the weekly view — mutually EXCLUSIVE states,
+// evaluated in priority order:
+//   unassigned    no mediator on the slot (top priority)
+//   dispo_issue   no assigned mediator is available (absence or overlap)
+//   learning      no confirmed mediator among the available ones,
+//                 but at least one is in 'learning' status
+//   incompetent   available mediators have no competence for the offer
+//   ok            at least one mediator is available AND confirmed
+// Availability is evaluated BEFORE competence: an absent mediator cannot
+// staff the slot, regardless of their competences.
+export type SlotPlanningStatus = 'ok' | 'unassigned' | 'dispo_issue' | 'learning' | 'incompetent';
+
+export function getSlotPlanningStatus(
+  slot: Slot,
+  data: AppData
+): SlotPlanningStatus {
+  if (slot.mediatorIds.length === 0) return 'unassigned';
+
+  // Mediators that exist and are active
+  const mediators = slot.mediatorIds
+    .map((id) => data.mediators.find((m) => m.id === id))
+    .filter((m): m is Mediator => !!m && m.active);
+
+  if (mediators.length === 0) return 'unassigned';
+
+  // Availability: absence or overlapping slot (exclude the slot itself)
+  const available = mediators.filter((m) =>
+    isMediatorAvailable(m.id, slot.date, slot.startTime, slot.endTime, data.absences, data.halfDayConfig) &&
+    !hasMediatorOverlap(m.id, slot.date, slot.startTime, slot.endTime, data.slots, slot.id)
+  );
+  if (available.length === 0) return 'dispo_issue';
+
+  // Competence among the AVAILABLE mediators
+  const hasConfirmed = available.some((m) =>
+    mediatorConfirmedForOffer(m, slot.offerId)
+  );
+  if (hasConfirmed) return 'ok';
+
+  const hasLearning = available.some((m) =>
+    mediatorLearningOffer(m, slot.offerId)
+  );
+  if (hasLearning) return 'learning';
+
+  return 'incompetent';
 }
 
 // Validate and normalize competences: ensure no duplicate offerId with different statuses

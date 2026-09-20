@@ -69,4 +69,53 @@ describe('WeeklyView', () => {
     const mh = parseFloat((dayCols[0] as HTMLElement).style.minHeight);
     expect(mh).toBeCloseTo(49.82 * 11, 0);
   });
+
+  it('renders the weekly stats badge with per-status counts', () => {
+    const { container } = render(
+      <DataProvider>
+        <WeeklyView />
+      </DataProvider>
+    );
+    const stats = container.querySelector('#week-stats');
+    expect(stats).toBeTruthy();
+    // The mock has 1 slot (s1, assigned to m1 without competence) -> incompetent: 1
+    const incompetent = stats!.querySelector('.week-stat-incompetent');
+    expect(incompetent!.textContent).toBe('1');
+  });
+
+  it('colors slot backgrounds by planning status and shows a detailed tooltip', () => {
+    const { container } = render(
+      <DataProvider>
+        <WeeklyView />
+      </DataProvider>
+    );
+    // s1: mediator m1 has NO competence for the offer -> incompetent (grey)
+    const slotEl = container.querySelector('.cal-slot') as HTMLElement;
+    expect(slotEl).toBeTruthy();
+    expect(slotEl.className).toContain('pstatus-incompetent');
+    expect(slotEl.style.background).toContain('rgb(226, 227, 229)'); // #e2e3e5
+
+    // Native tooltip carries the status and mediators
+    const title = slotEl.getAttribute('title') || '';
+    expect(title).toContain('État : Incompétent');
+    expect(title).toContain('10:00 – 12:00');
+    expect(title).toContain('Jean Dupont');
+  });
+
+  it('renders the planning status legend below the grid', () => {
+    const { container } = render(
+      <DataProvider>
+        <WeeklyView />
+      </DataProvider>
+    );
+    const legend = container.querySelector('.week-legend');
+    expect(legend).toBeTruthy();
+    const items = legend!.querySelectorAll('.week-legend-item');
+    expect(items.length).toBe(5);
+    expect(legend!.textContent).toContain('OK');
+    expect(legend!.textContent).toContain('À assigner');
+    expect(legend!.textContent).toContain('Indisponibilité');
+    expect(legend!.textContent).toContain('En formation');
+    expect(legend!.textContent).toContain('Incompétent');
+  });
 });
