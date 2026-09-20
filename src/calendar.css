@@ -300,16 +300,23 @@ body.edit-mode .cal-day-col:hover {
 }
 
 .daily-mediator-label {
-  min-width: 160px;
+  width: 200px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   padding: 8px 12px;
   border-right: 1px solid var(--color-border);
   background: #fafafa;
+  overflow: hidden;
 }
 
 .daily-mediator-name {
+  margin-left: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
   font-size: 13px;
   font-weight: 600;
 }
