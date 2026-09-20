@@ -545,13 +545,14 @@ body.edit-mode .cal-day-col:hover {
   white-space: nowrap;
 }
 
-/* Thin delimiters marking the real booking start/end inside the total block */
+/* Thin delimiters marking the real booking start/end inside the total block.
+   Red: must stand out from the grey time grid lines of the track. */
 .slot-boundary {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 1px;
-  background: rgba(0, 0, 0, 0.45);
+  width: 2px;
+  background: #e74c3c;
   pointer-events: none;
 }
 
@@ -560,9 +561,9 @@ body.edit-mode .cal-day-col:hover {
   position: absolute;
   top: 50%;
   left: -2px;
-  width: 5px;
-  height: 5px;
-  background: rgba(0, 0, 0, 0.45);
+  width: 6px;
+  height: 6px;
+  background: #e74c3c;
   border-radius: 50%;
   transform: translateY(-50%);
 }
