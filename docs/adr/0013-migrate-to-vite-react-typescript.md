@@ -44,9 +44,9 @@ Migrate the stack to Vite + React + TypeScript.
 - CSS files
 
 ### Deployment
-- Build runs locally on the VPS (npm run build → /home/loic/mediaplan/dist/)
-- Caddy serves /home/loic/mediaplan/dist/ as static files
-- Preview builds: feat/* branches → /home/loic/mediaplan/preview/
+- Build runs locally on the server (npm run build → dist/)
+- Caddy serves dist/ as static files (server details kept private)
+- Preview builds: feature branches get a separate route
 - GitHub Actions CI: added to TODO (not blocking local build)
 
 ## Consequences

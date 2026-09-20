@@ -17,7 +17,8 @@ The UI is in **French**. All documentation is in **English**.
 - **Vitest** — test runner (replaces node --test)
 - HTML5 / CSS3 (global stylesheets: style.css, calendar.css)
 - SheetJS (planned, not yet integrated — build dependency, not committed)
-- Caddy for serving static files in production
+- Caddy for serving static files in production (deployment details are kept
+  private, outside this repository)
 
 ## Project Structure
 
@@ -153,12 +154,13 @@ mediaplan/
 - Excel import/export (`src/infrastructure/excel.ts`) is a stub — not implemented.
 - The old `js/` directory is kept as reference for the vanilla→React migration.
   Do NOT modify it. New code goes in `src/`.
-- Caddy config not yet updated to serve `dist/` (still references old setup).
 
 ## Environment
 
-- VPS: Linux (RHEL/Rocky), public IP `31.70.143.152`
-- Caddy installed (v2.6.4) — to serve `dist/` as static files
+Environment and deployment details (VPS host, IP, Caddy version, paths) are
+deliberately **not** stored in this repository — it is public. The maintainer
+keeps them locally.
+
 - GitHub: `lcoulet/mediaplan`, branch `main`, MIT license
 - Local dev: `npm run dev` (Vite dev server on http://localhost:5173)
 - Production build: `npm run build` → `dist/` served by Caddy

@@ -9,7 +9,7 @@
 - [ ] Create a release script (tag + build + GitHub release via `gh`)
 - [ ] Add version number to `package.json` and inject into the app at build time
 - [ ] GitHub Actions CI: run tests on push (vitest) and build preview
-- [ ] GitHub Actions: deploy preview builds to VPS /home/loic/mediaplan/preview/
+- [ ] GitHub Actions: deploy preview builds to the server (details kept private)
 
 ## Export Format (V1 sharing)
 

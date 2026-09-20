@@ -137,9 +137,9 @@ MediaPlan project. Updated inline during grilling sessions.
 - State management: Context API + useReducer (no external store)
 - CSS kept as-is (style.css + calendar.css, no CSS Modules/Tailwind)
 - Same features and UI as vanilla JS — stack change only
-- Build runs locally on VPS → /home/loic/mediaplan/dist/
+- Build runs locally on the server (details kept private)
 - Caddy serves dist/ as static files
-- Preview builds: feat/* branches → /home/loic/mediaplan/preview/
+- Preview builds: feature branches get a separate route
 - GitHub Actions CI: added to TODO (not blocking)
 
 **Open questions:**

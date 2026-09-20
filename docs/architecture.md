@@ -47,8 +47,8 @@ Modern browsers only: Chrome, Firefox, Edge, Safari.
 ### Build & Deploy
 
 - Build: `npm run build` → `dist/`
-- Deploy: Caddy serves `/home/loic/mediaplan/dist/` as static files
-- Preview builds: `feat/*` branches → `/home/loic/mediaplan/preview/` (separate Caddy route)
+- Deploy: Caddy serves `dist/` as static files (server details kept private)
+- Preview builds: feature branches get a separate Caddy route (details kept private)
 - GitHub Actions CI: planned (tests on push, preview builds) — see TODO.md
 
 ## Future Architecture (v2+)
@@ -69,12 +69,9 @@ Modern browsers only: Chrome, Firefox, Edge, Safari.
 
 ## Deployment Environment
 
-### VPS
-
-- Host: Linux (RHEL / Rocky Linux)
-- Public IP: `31.70.143.152`
-- Caddy installed (`/usr/bin/caddy`, v2.6.4) — serves `dist/` as static files
-- Service: systemd (Caddy's own service handles restarts)
+Deployment infrastructure details (VPS host, IP address, Caddy version and
+paths) are kept private by the maintainer and are **not** stored in this
+public repository.
 
 ### GitHub
 
