@@ -1,6 +1,6 @@
 // DailyView.test.tsx — Tests for the "Plan Jour" (Day Planning View)
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import DailyView from '../src/presentation/DailyView';
 import { DataProvider } from '../src/presentation/DataContext';
 import type { AppData } from '../domain/types';
@@ -170,6 +170,57 @@ describe('DailyView', () => {
       </DataProvider>
     );
     expect(screen.getByText('Aujourd\'hui')).toBeInTheDocument();
+  });
+
+  it('should show drag indicator with times inside the track while dragging an offer', () => {
+    // Simulate: drag offer o1 (60 min) over a mediator track at 10:25
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+
+    const offer = container.querySelector('.daily-offer')!;
+    expect(offer).toBeTruthy();
+
+    // jsdom does not implement dataTransfer or DragEvent — mock both.
+    // fireEvent.dragOver creates a generic Event where clientX is undefined,
+    // so we dispatch a MouseEvent carrying clientX + our dataTransfer.
+    const dataTransfer = {
+      effectAllowed: 'move',
+      dropEffect: 'move',
+      setData: () => {},
+      getData: () => '',
+    };
+
+    // Start the drag on the offer
+    const dragStartEvent = new Event('dragstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragStartEvent, 'dataTransfer', { value: dataTransfer });
+    act(() => { offer.dispatchEvent(dragStartEvent); });
+
+    const track = container.querySelector('.daily-mediators-section .daily-mediator-track')!;
+    expect(track).toBeTruthy();
+
+    // dragOver at x = 145px (10:00 + 145px ≈ 145 min → 10:30 rounded to 10 min)
+    Object.defineProperty(track, 'getBoundingClientRect', {
+      value: () => ({ left: 0, top: 0, width: 660, height: 40 }),
+    });
+    const dragOverEvent = new MouseEvent('dragover', {
+      bubbles: true,
+      cancelable: true,
+      clientX: 145,
+      clientY: 20,
+    });
+    Object.defineProperty(dragOverEvent, 'dataTransfer', { value: dataTransfer });
+    act(() => { track.dispatchEvent(dragOverEvent); });
+    const indicator = container.querySelector('.daily-drag-indicator');
+    expect(indicator).toBeTruthy();
+
+    // The time label must exist and contain start and end times
+    const label = indicator!.querySelector('.drag-indicator-time');
+    expect(label).toBeTruthy();
+    expect(label!.textContent).toMatch(/10:30/);
+    expect(label!.textContent).toMatch(/11:30/); // 10:30 + 60 min duration
   });
 
   it('should open slot modal with mediatorOnly=false when clicking a slot', () => {
