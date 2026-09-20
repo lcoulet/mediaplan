@@ -292,12 +292,13 @@ describe('DailyView', () => {
     expect(slotEl.style.left).toBe('110px');
     expect(slotEl.style.width).toBe('140px');
 
-    // Delimiters at booking start (09:50 + 10 min setup = 10px) and booking end
-    // (12:00 = 130 min from block start)
+    // Delimiters at booking start (09:50 + 10 min setup = 10px, minus the
+    // 3px left border the absolute element is positioned after) and booking
+    // end (12:00 = 130 min from block start, minus 3px border)
     const boundaries = slotEl.querySelectorAll('.slot-boundary');
     expect(boundaries.length).toBe(2);
-    expect((boundaries[0] as HTMLElement).style.left).toBe('10px');
-    expect((boundaries[1] as HTMLElement).style.left).toBe('130px');
+    expect((boundaries[0] as HTMLElement).style.left).toBe('7px');
+    expect((boundaries[1] as HTMLElement).style.left).toBe('127px');
 
     // Tooltip mentions the real booking and setup/teardown
     const title = slotEl.getAttribute('title') || '';
@@ -382,16 +383,16 @@ describe('DailyView', () => {
     const indicator = container.querySelector('.daily-drag-indicator');
     expect(indicator).toBeTruthy();
 
-    // The time label must exist and contain the REAL BOOKING times.
-    // Cursor at 10:30 marks the start of the total block; the offer has
-    // setupTime 10 -> booking starts 10:40, duration 60 -> 11:40.
+    // The time label must show the BOOKING the cursor aims at.
+    // Cursor at 10:30 = booking start; offer setupTime 10 extends the block
+    // BEFORE it (10:20), teardown 10 after (11:40).
     const label = indicator!.querySelector('.drag-indicator-time');
     expect(label).toBeTruthy();
-    expect(label!.textContent).toMatch(/10:40/);
-    expect(label!.textContent).toMatch(/11:40/);
-    // The tooltip shows the total block (cursor position -> setup + booking + teardown)
-    expect(indicator!.getAttribute('title')).toContain('Bloc total : 10:30');
-    expect(indicator!.getAttribute('title')).toContain('11:50'); // teardown 10
+    expect(label!.textContent).toMatch(/10:30/);
+    expect(label!.textContent).toMatch(/11:30/);
+    // The tooltip shows the total block (booking ± setup/teardown)
+    expect(indicator!.getAttribute('title')).toContain('Bloc total : 10:20');
+    expect(indicator!.getAttribute('title')).toContain('11:40');
   });
 
   it('should create a slot from a drop using the indicator time and offer durations', () => {
@@ -448,14 +449,69 @@ describe('DailyView', () => {
     expect(createdEl).toBeTruthy();
 
     // Offer o1: setupTime 10, duration 60, teardownTime 10.
-    // Indicator block start 10:30 -> booking 10:40 - 11:40.
-    expect(createdEl!.textContent).toContain('10:40');
-    expect(createdEl!.textContent).toContain('11:40');
+    // Cursor at 10:30 aims at the BOOKING -> booking 10:30 - 11:30.
+    expect(createdEl!.textContent).toContain('10:30');
+    expect(createdEl!.textContent).toContain('11:30');
 
-    // The total block starts at the cursor position (10:30 = 150px from axis
-    // 8:00) and spans setup+duration+teardown = 80 min
-    expect((createdEl as HTMLElement).style.left).toBe('150px');
+    // The total block starts 10 min BEFORE the cursor (10:20 = 140px from
+    // axis 8:00) and spans setup+duration+teardown = 80 min
+    expect((createdEl as HTMLElement).style.left).toBe('140px');
     expect((createdEl as HTMLElement).style.width).toBe('80px');
+  });
+
+  it('snaps the BOOKING start to the 10-min grid when dragging an offer with setup', () => {
+    // Offer: duration 60, setupTime 15, teardownTime 5.
+    // Setup extends BEFORE the booking. When the user aims at a grid time
+    // (e.g. 10:00), the booking must land on the grid — the setup block
+    // starts 15 min earlier (09:45), possibly before the cursor.
+    const data15 = JSON.parse(JSON.stringify(mockData));
+    data15.offers[0] = {
+      ...data15.offers[0],
+      duration: 60, setupTime: 15, teardownTime: 5,
+    };
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(data15)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
+
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+
+    const dataTransfer = {
+      effectAllowed: 'move', dropEffect: 'move',
+      setData: () => {}, getData: () => '',
+    };
+    const offer = container.querySelector('.daily-offer')!;
+    const dragStartEvent = new Event('dragstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragStartEvent, 'dataTransfer', { value: dataTransfer });
+    act(() => { offer.dispatchEvent(dragStartEvent); });
+
+    const track = container.querySelector('.daily-mediators-section .daily-mediator-track')!;
+    Object.defineProperty(track, 'getBoundingClientRect', {
+      value: () => ({ left: 0, top: 0, width: 660, height: 40 }),
+    });
+
+    // Cursor at 10:00 (120px). The user aims at 10:00 -> booking at 10:00.
+    const dragOverEvent = new MouseEvent('dragover', {
+      bubbles: true, cancelable: true, clientX: 120, clientY: 20,
+    });
+    Object.defineProperty(dragOverEvent, 'dataTransfer', { value: dataTransfer });
+    act(() => { track.dispatchEvent(dragOverEvent); });
+
+    const indicator = container.querySelector('.daily-drag-indicator') as HTMLElement;
+    expect(indicator).toBeTruthy();
+    // Booking label: 10:00 - 11:00 (not 10:15)
+    const label = indicator.querySelector('.drag-indicator-time');
+    expect(label!.textContent).toContain('10:00');
+    expect(label!.textContent).toContain('11:00');
+    // Total block: 09:45 - 11:05 = 80 min = 80px, starting 15px BEFORE cursor
+    expect(indicator.style.width).toBe('80px');
+    expect(indicator.style.left).toBe('105px');
   });
 
   it('should open slot modal with mediatorOnly=false when clicking a slot', () => {

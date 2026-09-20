@@ -72,17 +72,17 @@ describe('drag & drop total duration', () => {
     // Total block width must be 110 min = 110px (HOUR_HEIGHT=60 -> 1px/min)
     expect(indicator.style.width).toBe('110px');
 
-    // Booking 10:15 - 11:45 shown in the label
+    // Cursor at 10:00 aims at the BOOKING -> booking 10:00 - 11:30
     const label = indicator.querySelector('.drag-indicator-time');
-    expect(label!.textContent).toContain('10:15');
-    expect(label!.textContent).toContain('11:45');
+    expect(label!.textContent).toContain('10:00');
+    expect(label!.textContent).toContain('11:30');
 
-    // Tooltip: total block 10:00 -> 11:50 (110 min)
+    // Tooltip: total block 09:45 -> 11:35 (booking ± setup/teardown)
     const title = indicator.getAttribute('title') || '';
-    expect(title).toContain('10:00');
-    expect(title).toContain('11:50');
+    expect(title).toContain('09:45');
+    expect(title).toContain('11:35');
 
-    // Drop creates the slot: rendered block 110px wide starting at 10:00
+    // Drop creates the slot: rendered block 110px wide starting at 09:45
     const dropEvent = new MouseEvent('drop', {
       bubbles: true, cancelable: true, clientX: 120, clientY: 20,
     });
@@ -92,9 +92,9 @@ describe('drag & drop total duration', () => {
     const createdSlot = container.querySelector('.daily-mediators-section .daily-slot') as HTMLElement;
     expect(createdSlot).toBeTruthy();
     expect(createdSlot.style.width).toBe('110px');   // 110 min block
-    expect(createdSlot.style.left).toBe('120px');    // 10:00
+    expect(createdSlot.style.left).toBe('105px');    // 09:45 (15 min before cursor)
     // Booking label inside the slot
-    expect(createdSlot.textContent).toContain('10:15');
-    expect(createdSlot.textContent).toContain('11:45');
+    expect(createdSlot.textContent).toContain('10:00');
+    expect(createdSlot.textContent).toContain('11:30');
   });
 });

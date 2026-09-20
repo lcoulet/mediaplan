@@ -4,7 +4,7 @@
 import { useState, useMemo } from 'react';
 import { useData, useCRUD } from './DataContext';
 import type { Slot, Mediator, Absence, AbsenceType } from '../domain/types';
-import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString, getSlotTotalRange, getOfferTotalDuration, slotBookingFromDropPosition } from '../domain/models';
+import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString, getSlotTotalRange } from '../domain/models';
 import { ABSENCE_TYPE_LABELS } from '../domain/models';
 import SlotModal from './SlotModal';
 
@@ -184,17 +184,26 @@ export default function DailyView() {
     const track = (e.currentTarget as HTMLElement).closest('.daily-mediator-track');
     if (!track) return;
 
-    // Use the exact time shown by the drag indicator when available
-    // (computed at the last dragover); fall back to recomputing from the
-    // drop coordinates with the same rounded calculation.
-    const cursorTime = dragIndicator ? dragIndicator.blockStart : getDropTimeFromX(track as HTMLElement, e.clientX);
+    // The drag indicator's BOOKING time (computed at the last dragover)
+    // is the time the user aims at; fall back to recomputing from the drop
+    // coordinates with the same rounded calculation.
+    const cursorTime = dragIndicator ? dragIndicator.startTime : getDropTimeFromX(track as HTMLElement, e.clientX);
 
     if (draggedItem.type === 'offer') {
       const offer = data.offers.find(o => o.id === draggedItem.id);
       if (offer) {
-        // Cursor marks the START OF THE TOTAL BLOCK (setup first).
-        // Stored hours are the real booking period.
-        const booking = slotBookingFromDropPosition(cursorTime, offer);
+        // Cursor aims at the BOOKING start (public time).
+        // Setup extends before it, teardown after it.
+        const toMin = (t: string) => {
+          const [h, m] = t.split(':').map(Number);
+          return h * 60 + m;
+        };
+        const bookingStartMin = toMin(cursorTime);
+        const bookingEndMin = bookingStartMin + offer.duration;
+        const booking = {
+          startTime: formatTime(Math.floor(bookingStartMin / 60), bookingStartMin % 60),
+          endTime: formatTime(Math.floor(bookingEndMin / 60), bookingEndMin % 60),
+        };
 
         const newSlot: Slot = {
           id: `slot_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -263,38 +272,49 @@ export default function DailyView() {
     const rect = track.getBoundingClientRect();
     const x = e.clientX - rect.left;
     
-    // Round to 10-minute precision
+    // Round to 10-minute precision: the cursor aims at the BOOKING start.
+    // The setup block extends BEFORE it (possibly left of the cursor).
     const totalMinutes = Math.round(x / (HOUR_HEIGHT / 60) / 10) * 10;
     const hour = START_HOUR + Math.floor(totalMinutes / 60);
-    const minute = Math.round((totalMinutes % 60) / 10) * 10;
-    
-    const startTime = formatTime(hour, minute);
-    
+    const minute = totalMinutes % 60;
+
+    const bookingStartTime = formatTime(hour, minute);
+
     // Get offer duration
     const offer = data.offers.find(o => o.id === draggedItem.id);
     if (!offer) return;
-    
-    // Total block: cursor = start of TOTAL block (setup first).
-    // Indicator spans setup + booking + teardown.
-    const totalDuration = getOfferTotalDuration(offer);
-    const blockEndMinutes = totalMinutes + totalDuration;
+
+    // Booking = cursor position, duration = offer duration (public time).
+    // The setup/teardown extend the block around it.
+    const setup = offer.setupTime || 0;
+    const teardown = offer.teardownTime || 0;
+    const bookingEndTime = formatTime(
+      START_HOUR + Math.floor((totalMinutes + offer.duration) / 60),
+      (totalMinutes + offer.duration) % 60
+    );
+
+    // Total block geometry: starts BEFORE the cursor by setup
+    const blockStartMinutes = totalMinutes - setup;
+    const blockEndMinutes = totalMinutes + offer.duration + teardown;
+    const blockStartTime = formatTime(
+      START_HOUR + Math.floor(blockStartMinutes / 60),
+      ((blockStartMinutes % 60) + 60) % 60
+    );
     const blockEndTime = formatTime(
       START_HOUR + Math.floor(blockEndMinutes / 60),
       blockEndMinutes % 60
     );
-    // Real booking times (for the label)
-    const booking = slotBookingFromDropPosition(startTime, offer);
-    
-    // Calculate position and width
-    const left = (totalMinutes) * (HOUR_HEIGHT / 60);
-    const width = totalDuration * (HOUR_HEIGHT / 60);
-    
+
+    // Indicator position and width (from block start)
+    const left = blockStartMinutes * (HOUR_HEIGHT / 60);
+    const width = (setup + offer.duration + teardown) * (HOUR_HEIGHT / 60);
+
     setDragIndicator({
       left,
       width,
-      startTime: booking.startTime,
-      endTime: booking.endTime,
-      blockStart: startTime,
+      startTime: bookingStartTime,
+      endTime: bookingEndTime,
+      blockStart: blockStartTime,
       blockEnd: blockEndTime,
     });
   }
@@ -583,9 +603,13 @@ export default function DailyView() {
                     const hasTeardown = effTeardown > 0;
                     const totalLeft = toMinutes(total.start) - START_HOUR * 60;
                     const totalWidth = toMinutes(total.end) - toMinutes(total.start);
-                    // Thin delimiters where the real booking starts/ends
-                    const bookingStartOffset = toMinutes(slot.startTime) - toMinutes(total.start);
-                    const bookingEndOffset = toMinutes(slot.endTime) - toMinutes(total.start);
+                    // Absolute children are positioned from the PADDING edge,
+                    // i.e. after the left border (3px, 4px for imported).
+                    // Compensate so the delimiters land exactly on the
+                    // minute-grid positions.
+                    const borderWidth = isImported ? 4 : 3;
+                    const bookingStartOffset = toMinutes(slot.startTime) - toMinutes(total.start) - borderWidth;
+                    const bookingEndOffset = toMinutes(slot.endTime) - toMinutes(total.start) - borderWidth;
 
                     return (
                       <div
