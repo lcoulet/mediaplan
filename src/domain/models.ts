@@ -171,6 +171,8 @@ interface AbsenceInput {
   halfDay?: AbsenceHalfDay;
   type?: AbsenceType;
   notes?: string;
+  startTime?: string;
+  endTime?: string;
 }
 
 export function createAbsence(data: AbsenceInput = {}): Absence {
@@ -182,6 +184,8 @@ export function createAbsence(data: AbsenceInput = {}): Absence {
     halfDay: data.halfDay || 'none',
     type: data.type || 'other',
     notes: data.notes || '',
+    startTime: data.startTime,
+    endTime: data.endTime,
   };
 }
 
@@ -239,6 +243,7 @@ export const ABSENCE_TYPE_LABELS = {
   training: 'Formation',
   sick: 'Maladie',
   other: 'Autre',
+  leave_request: 'Souhait de congés',
 } as const;
 
 // Origin labels (FR)
@@ -316,6 +321,57 @@ export function getDefaultHalfDayConfig() {
     morningEnd: '13:00',
     afternoonStart: '13:00',
   };
+}
+
+// Get time range for an absence based on halfDay and config
+export function getAbsenceTimeRange(
+  absence: Absence,
+  config?: { morningEnd: string; afternoonStart: string }
+): { startTime: string; endTime: string } {
+  const defaultConfig = getDefaultHalfDayConfig();
+  const morningEnd = config?.morningEnd || defaultConfig.morningEnd;
+  const afternoonStart = config?.afternoonStart || defaultConfig.afternoonStart;
+
+  // If absence already has explicit times, use them
+  if (absence.startTime && absence.endTime) {
+    return { startTime: absence.startTime, endTime: absence.endTime };
+  }
+
+  // Derive from halfDay
+  switch (absence.halfDay) {
+    case 'none':
+      return { startTime: '00:00', endTime: '23:59' };
+    case 'morning':
+      return { startTime: '00:00', endTime: morningEnd };
+    case 'afternoon':
+      return { startTime: afternoonStart, endTime: '23:59' };
+    default:
+      return { startTime: '00:00', endTime: '23:59' };
+  }
+}
+
+// Migrate all future absences to use new time config
+export function migrateAbsencesToConfig(
+  absences: Absence[],
+  config: { morningEnd: string; afternoonStart: string }
+): Absence[] {
+  const today = new Date().toISOString().slice(0, 10);
+  
+  return absences.map(abs => {
+    // Only migrate future absences (endDate >= today)
+    if (abs.endDate < today) {
+      return abs;
+    }
+    
+    // Get the time range based on current halfDay
+    const timeRange = getAbsenceTimeRange(abs, config);
+    
+    return {
+      ...abs,
+      startTime: timeRange.startTime,
+      endTime: timeRange.endTime,
+    };
+  });
 }
 
 // Get competence status for a mediator and offer

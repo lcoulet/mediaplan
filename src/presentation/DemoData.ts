@@ -331,6 +331,22 @@ export function seedDemoData(data: AppData): void {
   absencePatterns.forEach((p) => {
     const start = dayFromRef(p.startDay);
     const end = dayFromRef(p.startDay + p.duration - 1);
+    
+    // Compute startTime and endTime based on halfDay
+    let startTime: string | undefined;
+    let endTime: string | undefined;
+    
+    if (p.halfDay === 'morning') {
+      startTime = '00:00';
+      endTime = '13:00';
+    } else if (p.halfDay === 'afternoon') {
+      startTime = '13:00';
+      endTime = '23:59';
+    } else {
+      startTime = '00:00';
+      endTime = '23:59';
+    }
+    
     absences.push(
       createAbsence({
         mediatorId: mediators[p.mediator].id,
@@ -339,6 +355,8 @@ export function seedDemoData(data: AppData): void {
         halfDay: p.halfDay,
         type: p.type,
         notes: p.notes,
+        startTime,
+        endTime,
       })
     );
   });

@@ -3,14 +3,16 @@
 // unassigned lane, standard offers lane.
 import { useState, useMemo } from 'react';
 import { useData, useCRUD } from './DataContext';
-import type { Slot, Mediator } from '../domain/types';
-import { mediatorConfirmedForOffer, mediatorLearningOffer } from '../domain/models';
+import type { Slot, Mediator, Absence, AbsenceType } from '../domain/types';
+import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig } from '../domain/models';
+import { ABSENCE_TYPE_LABELS } from '../domain/models';
 import SlotModal from './SlotModal';
 
 const START_HOUR = 8;
 const END_HOUR = 19;
 const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + START_HOUR);
 const HOUR_HEIGHT = 60; // px per hour
+const TRACK_HEIGHT = 40; // Fixed height for mediator tracks
 
 function toMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
@@ -52,6 +54,23 @@ export default function DailyView() {
   // Drag and drop state
   const [draggedItem, setDraggedItem] = useState<{ type: 'offer' | 'slot'; id: string; data: any } | null>(null);
 
+  // Half-day configuration
+  const halfDayConfig = data.halfDayConfig || getDefaultHalfDayConfig();
+
+  // Absences for the selected day with computed time ranges
+  const dayAbsences = useMemo(() => {
+    return data.absences
+      .filter(a => a.startDate <= selectedDateStr && a.endDate >= selectedDateStr)
+      .map(abs => {
+        const timeRange = getAbsenceTimeRange(abs, halfDayConfig);
+        return { ...abs, startTime: timeRange.startTime, endTime: timeRange.endTime };
+      });
+  }, [data.absences, selectedDateStr, halfDayConfig]);
+
+  // Calculate minutes per pixel for the grid
+  const totalGridWidth = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
+  const minutesPerPx = HOUR_HEIGHT / 60;
+
   // Highlight offer: from selected slot (click) OR dragged item (drag)
   const highlightOfferId = useMemo(() => {
     if (draggedItem) {
@@ -65,20 +84,6 @@ export default function DailyView() {
     return selectedSlot?.offerId || null;
   }, [draggedItem, selectedSlot, data.slots]);
 
-  // Calculate time from drop position (x in pixels)
-  function getTimeFromPosition(x: number): { hour: number; minute: number } {
-    const totalMinutes = Math.floor(x / (HOUR_HEIGHT / 60));
-    return {
-      hour: START_HOUR + Math.floor(totalMinutes / 60),
-      minute: totalMinutes % 60,
-    };
-  }
-
-  // Format time as HH:mm
-  function formatTime(hour: number, minute: number): string {
-    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-  }
-
   // Get competence status for a mediator and offer
   function getMediatorCompetenceStatus(mediator: Mediator, offerId: string): 'confirmed' | 'learning' | 'none' {
     if (mediatorConfirmedForOffer(mediator, offerId)) return 'confirmed';
@@ -86,68 +91,22 @@ export default function DailyView() {
     return 'none';
   }
 
-  // Half-day configuration
-  const halfDayConfig = data.halfDayConfig || { morningEnd: '13:00', afternoonStart: '13:00' };
-
-  // Absences for the selected day
-  const dayAbsences = useMemo(() => {
-    return data.absences.filter(a =>
-      a.startDate <= selectedDateStr && a.endDate >= selectedDateStr
-    );
-  }, [data.absences, selectedDateStr]);
-
-  // Calculate minutes per pixel for the grid
-  const totalGridWidth = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
-  const totalGridHeight = totalGridWidth; // Square grid
-  const minutesPerPx = totalGridHeight / ((END_HOUR - START_HOUR) * 60);
-
-  // Get absence background style for a mediator track
-  function getAbsenceStyleForMediator(mediatorId: string): React.CSSProperties | null {
-    const mediatorAbsences = dayAbsences.filter(a => a.mediatorId === mediatorId);
-    if (mediatorAbsences.length === 0) return null;
-    
-    // Full-day takes precedence over half-day
-    const fullDayAbsence = mediatorAbsences.find(a => a.halfDay === 'none');
-    if (fullDayAbsence) {
-      return {
-        backgroundColor: getAbsenceColor(fullDayAbsence.type, 0.15),
-      };
-    }
-    
-    // For half-day absences, return partial background
-    const halfDayAbsence = mediatorAbsences.find(a => a.halfDay !== 'none');
-    if (halfDayAbsence) {
-      const morningEnd = halfDayConfig.morningEnd || '13:00';
-      const afternoonStart = halfDayConfig.afternoonStart || '13:00';
-      
-      const morningEndMinutes = toMinutes(morningEnd);
-      const afternoonStartMinutes = toMinutes(afternoonStart);
-      
-      if (halfDayAbsence.halfDay === 'morning') {
-        const height = (morningEndMinutes - START_HOUR * 60) * minutesPerPx;
-        return {
-          background: `linear-gradient(to bottom, ${getAbsenceColor(halfDayAbsence.type, 0.15)} 0 ${height}px, transparent ${height}px ${totalGridHeight}px)`,
-        };
-      } else if (halfDayAbsence.halfDay === 'afternoon') {
-        const startY = (afternoonStartMinutes - START_HOUR * 60) * minutesPerPx;
-        return {
-          background: `linear-gradient(to bottom, transparent 0 ${startY}px, ${getAbsenceColor(halfDayAbsence.type, 0.15)} ${startY}px ${totalGridHeight}px)`,
-        };
-      }
-    }
-    
-    return null;
+  // Get absence color for a given type
+  function getAbsenceColor(type: string): string {
+    const colors: Record<string, string> = {
+      leave: '#e74c3c',
+      mission: '#2ecc71',
+      training: '#9b59b6',
+      sick: '#e67e22',
+      other: '#95a5a6',
+      leave_request: '#1e90ff',
+    };
+    return colors[type] || '#95a5a6';
   }
 
-  function getAbsenceColor(type: string, opacity: number): string {
-    const colors: Record<string, string> = {
-      leave: `rgba(231, 76, 60, ${opacity})`,
-      mission: `rgba(52, 152, 219, ${opacity})`,
-      training: `rgba(155, 89, 182, ${opacity})`,
-      sick: `rgba(230, 126, 34, ${opacity})`,
-      other: `rgba(149, 165, 166, ${opacity})`,
-    };
-    return colors[type] || `rgba(149, 165, 166, ${opacity})`;
+  // Get absence label for a given type
+  function getAbsenceLabel(type: AbsenceType): string {
+    return ABSENCE_TYPE_LABELS[type] || type;
   }
 
   // Handle drop on mediator track
@@ -201,6 +160,20 @@ export default function DailyView() {
       }
     }
     setDraggedItem(null);
+  }
+
+  // Calculate time from drop position (x in pixels)
+  function getTimeFromPosition(x: number): { hour: number; minute: number } {
+    const totalMinutes = Math.floor(x / (HOUR_HEIGHT / 60));
+    return {
+      hour: START_HOUR + Math.floor(totalMinutes / 60),
+      minute: totalMinutes % 60,
+    };
+  }
+
+  // Format time as HH:mm
+  function formatTime(hour: number, minute: number): string {
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
   }
 
   // Handle drag start for offers
@@ -265,6 +238,19 @@ export default function DailyView() {
     return toMinutes(slot.endTime) - toMinutes(slot.startTime);
   }
 
+  function getAbsenceTop(absence: Absence): number {
+    return (toMinutes(absence.startTime || '00:00') - START_HOUR * 60);
+  }
+
+  function getAbsenceWidth(absence: Absence): number {
+    return toMinutes(absence.endTime || '23:59') - toMinutes(absence.startTime || '00:00');
+  }
+
+  // Filter absences for a specific mediator on the selected day
+  function getMediatorAbsences(mediatorId: string): Absence[] {
+    return dayAbsences.filter(a => a.mediatorId === mediatorId);
+  }
+
   return (
     <div className="view active">
       <div className="toolbar">
@@ -323,7 +309,7 @@ export default function DailyView() {
             </div>
             <div
               className="daily-mediator-track"
-              style={{ width: `${totalGridWidth}px`, position: 'relative' }}
+              style={{ width: `${totalGridWidth}px`, height: `${TRACK_HEIGHT}px`, position: 'relative' }}
             >
               {HOURS.map((hour, i) => (
                 <div
@@ -373,7 +359,8 @@ export default function DailyView() {
             const mediatorSlots = assignedSlots.filter(slot =>
               slot.mediatorIds.includes(mediator.id)
             );
-            
+            const mediatorAbsences = getMediatorAbsences(mediator.id);
+
             // Get competence status for the highlighted offer (drag or selection)
             const competenceStatus = highlightOfferId ? 
               getMediatorCompetenceStatus(mediator, highlightOfferId) : null;
@@ -391,8 +378,8 @@ export default function DailyView() {
                   className="daily-mediator-track"
                   style={{
                     width: `${totalGridWidth}px`,
+                    height: `${TRACK_HEIGHT}px`,
                     position: 'relative',
-                    ...(getAbsenceStyleForMediator(mediator.id) || {}),
                   }}
                   onDrop={(e) => handleDropOnMediator(e, mediator.id)}
                   onDragOver={handleDragOver}
@@ -406,6 +393,34 @@ export default function DailyView() {
                       style={{ left: `${i * HOUR_HEIGHT}px`, width: `${HOUR_HEIGHT}px` }}
                     />
                   ))}
+                  
+                  {/* Absence blocks */}
+                  {mediatorAbsences.map(abs => {
+                    const color = getAbsenceColor(abs.type);
+                    const label = getAbsenceLabel(abs.type);
+                    const left = getAbsenceTop(abs);
+                    const width = getAbsenceWidth(abs);
+                    
+                    // Only show if absence overlaps with visible time range
+                    if (width <= 0) return null;
+                    
+                    return (
+                      <div
+                        key={`abs_${abs.id}`}
+                        className="daily-absence-block"
+                        style={{
+                          left: `${left}px`,
+                          width: `${width}px`,
+                          backgroundColor: color + '40', // 25% opacity
+                          borderLeft: `3px solid ${color}`,
+                        }}
+                        title={`${label} (${abs.startTime || '00:00'} – ${abs.endTime || '23:59'})`}
+                      >
+                        <span className="absence-label">{label}</span>
+                      </div>
+                    );
+                  })}
+                  
                   {/* Slots */}
                   {mediatorSlots.map(slot => {
                     const offer = data.offers.find(o => o.id === slot.offerId);

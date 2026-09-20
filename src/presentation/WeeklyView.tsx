@@ -4,6 +4,8 @@ import { useData, getWeekStart } from './DataContext';
 import {
   isMediatorAvailable,
   ABSENCE_TYPE_LABELS,
+  getAbsenceTimeRange,
+  getDefaultHalfDayConfig,
 } from '../domain/models';
 import type { Slot, Absence } from '../domain/types';
 import SlotModal from './SlotModal';
@@ -66,10 +68,15 @@ export default function WeeklyView() {
 
       let dayAbsences: Absence[] = [];
       if (showAbsences) {
-        dayAbsences = data.absences.filter((a) => {
-          if (filters.mediatorId && a.mediatorId !== filters.mediatorId) return false;
-          return ds >= a.startDate && ds <= a.endDate;
-        });
+        dayAbsences = data.absences
+          .filter((a) => {
+            if (filters.mediatorId && a.mediatorId !== filters.mediatorId) return false;
+            return ds >= a.startDate && ds <= a.endDate;
+          })
+          .map(abs => {
+            const timeRange = getAbsenceTimeRange(abs, data.halfDayConfig);
+            return { ...abs, startTime: timeRange.startTime, endTime: timeRange.endTime };
+          });
       }
 
       days.push({ dateStr: ds, daySlots, dayAbsences });
@@ -246,17 +253,26 @@ export default function WeeklyView() {
                   const mediator = data.mediators.find((m) => m.id === abs.mediatorId);
                   const label = ABSENCE_TYPE_LABELS[abs.type] || abs.type;
                   const medName = mediator ? `${mediator.firstName} ${mediator.lastName}` : '—';
-                  const halfLabel = abs.halfDay === 'morning' ? ' (AM)' : abs.halfDay === 'afternoon' ? ' (PM)' : '';
-                  const top = abs.halfDay === 'afternoon' ? 200 : 0;
-                  const height = abs.halfDay === 'none' ? 440 : 200;
+                  
+                  // Calculate position based on startTime/endTime
+                  const startMinutes = toMinutes(abs.startTime || '00:00');
+                  const endMinutes = toMinutes(abs.endTime || '23:59');
+                  
+                  // Day column height: 8h-19h = 11 hours = 440px
+                  const DAY_HEIGHT = 440;
+                  const MINUTES_PER_PX = DAY_HEIGHT / (11 * 60);
+                  
+                  const top = (startMinutes - 8 * 60) * MINUTES_PER_PX;
+                  const height = (endMinutes - startMinutes) * MINUTES_PER_PX;
+                  
                   return (
                     <div
                       key={abs.id}
                       className={`cal-absence absence-${abs.type}`}
-                      style={{ top: `${top}px`, height: `${height - 4}px` }}
-                      title={`${medName} — ${label}${halfLabel}`}
+                      style={{ top: `${top}px`, height: `${Math.max(height - 4, 16)}px` }}
+                      title={`${medName} — ${label} (${abs.startTime || '00:00'} – ${abs.endTime || '23:59'})`}
                     >
-                      <span className="absence-label">🚫 {medName} — {label}{halfLabel}</span>
+                      <span className="absence-label">🚫 {medName} — {label}</span>
                     </div>
                   );
                 })}

@@ -85,7 +85,7 @@ export type Action =
   | { type: 'RESET_DATA'; data: AppData };
 
 export const SlotStatusValues: SlotStatus[] = ['planned', 'confirmed', 'cancelled', 'completed'];
-export const AbsenceTypeValues: AbsenceType[] = ['leave', 'mission', 'training', 'sick', 'other'];
+export const AbsenceTypeValues: AbsenceType[] = ['leave', 'mission', 'training', 'sick', 'other', 'leave_request'];
 export const AbsenceHalfDayValues: AbsenceHalfDay[] = ['none', 'morning', 'afternoon'];
 
 export const HALF_DAY_LABELS: Record<AbsenceHalfDay, string> = {

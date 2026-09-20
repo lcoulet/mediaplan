@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useData, useCRUD } from './DataContext';
 import type { ViewName } from './types';
-import { getDefaultHalfDayConfig } from '../domain/models';
+import { getDefaultHalfDayConfig, migrateAbsencesToConfig } from '../domain/models';
+import type { Absence } from '../domain/types';
 
 const NAV_ITEMS: { view: ViewName; label: string }[] = [
   { view: 'weekly', label: 'Plan Hebdo' },
@@ -43,7 +44,9 @@ export default function Header({ onOpenUserGuide }: HeaderProps) {
   const { state, dispatch, canUndo, canRedo, undo, redo, resetData } = useData();
   const crud = useCRUD();
   const [showConfig, setShowConfig] = useState(false);
-  
+  const [showMigrationWarning, setShowMigrationWarning] = useState(false);
+  const [pendingConfig, setPendingConfig] = useState<{ morningEnd: string; afternoonStart: string } | null>(null);
+
   const halfDayConfig = state.data.halfDayConfig || getDefaultHalfDayConfig();
 
   function handleSaveConfig() {
@@ -55,6 +58,46 @@ export default function Header({ onOpenUserGuide }: HeaderProps) {
     const defaultConfig = getDefaultHalfDayConfig();
     crud({ type: 'SET_HALF_DAY_CONFIG', config: defaultConfig });
     setShowConfig(false);
+  }
+
+  function handleConfigChange(newConfig: { morningEnd: string; afternoonStart: string }) {
+    // Check if we need to migrate absences
+    const hasFutureAbsences = state.data.absences.some((a: Absence) => a.endDate >= new Date().toISOString().slice(0, 10));
+    if (hasFutureAbsences) {
+      setPendingConfig(newConfig);
+      setShowMigrationWarning(true);
+      // Store the new config temporarily in state
+      dispatch({ type: 'SET_HALF_DAY_CONFIG', config: newConfig });
+    } else {
+      crud({ type: 'SET_HALF_DAY_CONFIG', config: newConfig });
+    }
+  }
+
+  function handleMigrationConfirm() {
+    setShowMigrationWarning(false);
+    if (!pendingConfig) return;
+    
+    // Apply migration and save
+    const config = pendingConfig;
+    const newAbsences = migrateAbsencesToConfig(state.data.absences, config);
+    
+    // Update config first
+    crud({ type: 'SET_HALF_DAY_CONFIG', config });
+    
+    // Update absences
+    newAbsences.forEach(abs => {
+      crud({ type: 'UPDATE_ABSENCE', absence: abs });
+    });
+    
+    setPendingConfig(null);
+    setShowConfig(false);
+  }
+
+  function handleMigrationCancel() {
+    setShowMigrationWarning(false);
+    setPendingConfig(null);
+    // Revert the config change
+    dispatch({ type: 'SET_HALF_DAY_CONFIG', config: state.data.halfDayConfig || getDefaultHalfDayConfig() });
   }
 
   return (
@@ -116,20 +159,14 @@ export default function Header({ onOpenUserGuide }: HeaderProps) {
               <span>Fin matin :</span>
               <TimeSelector
                 value={halfDayConfig.morningEnd}
-                onChange={(v) => {
-                  const newConfig = { ...halfDayConfig, morningEnd: v };
-                  crud({ type: 'SET_HALF_DAY_CONFIG', config: newConfig });
-                }}
+                onChange={(v) => handleConfigChange({ ...halfDayConfig, morningEnd: v })}
               />
             </div>
             <div className="config-row">
               <span>Début après-midi :</span>
               <TimeSelector
                 value={halfDayConfig.afternoonStart}
-                onChange={(v) => {
-                  const newConfig = { ...halfDayConfig, afternoonStart: v };
-                  crud({ type: 'SET_HALF_DAY_CONFIG', config: newConfig });
-                }}
+                onChange={(v) => handleConfigChange({ ...halfDayConfig, afternoonStart: v })}
               />
             </div>
             <div className="config-actions">
@@ -139,6 +176,25 @@ export default function Header({ onOpenUserGuide }: HeaderProps) {
               <button className="btn btn-primary" onClick={handleSaveConfig}>
                 Fermer
               </button>
+            </div>
+          </div>
+        )}
+        {showMigrationWarning && (
+          <div className="modal-overlay" onClick={() => setShowMigrationWarning(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <h3>Mettre à jour les absences ?</h3>
+              <p>
+                Les horaires des absences non terminées vont être mis à jour avec les nouveaux paramètres de demi-journée.
+              </p>
+              <p>Souhaitez-vous continuer ?</p>
+              <div className="modal-actions">
+                <button className="btn btn-secondary" onClick={handleMigrationCancel}>
+                  Annuler
+                </button>
+                <button className="btn btn-primary" onClick={handleMigrationConfirm}>
+                  Mettre à jour
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -57,7 +57,7 @@ export interface Slot {
 }
 
 export type AbsenceHalfDay = 'none' | 'morning' | 'afternoon';
-export type AbsenceType = 'leave' | 'mission' | 'training' | 'sick' | 'other';
+export type AbsenceType = 'leave' | 'mission' | 'training' | 'sick' | 'other' | 'leave_request';
 
 export interface Absence {
   id: string;
@@ -67,6 +67,9 @@ export interface Absence {
   halfDay: AbsenceHalfDay;
   type: AbsenceType;
   notes: string;
+  // Hidden time properties for display as slots
+  startTime?: string; // HH:mm
+  endTime?: string;   // HH:mm
 }
 
 export interface AppData {

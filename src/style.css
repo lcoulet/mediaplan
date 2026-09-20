@@ -266,6 +266,11 @@ body {
 .data-table td {
     padding: 10px 16px;
     border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+}
+
+.data-table tr {
+    height: 48px;
 }
 
 .data-table tbody tr:hover {
@@ -275,6 +280,8 @@ body {
 .data-table .actions-cell {
     display: flex;
     gap: 4px;
+    align-items: center;
+    justify-content: center;
 }
 
 .data-table .action-btn {
@@ -285,6 +292,8 @@ body {
     padding: 4px;
     border-radius: 4px;
     opacity: 0.6;
+    line-height: 1;
+    vertical-align: middle;
 }
 
 .data-table .action-btn:hover {

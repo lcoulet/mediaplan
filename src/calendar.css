@@ -183,10 +183,11 @@
 
 /* Absence colors by type */
 .cal-absence.absence-leave { background: #e74c3c; border-color: #c0392b; }
-.cal-absence.absence-mission { background: #3498db; border-color: #2980b9; }
+.cal-absence.absence-mission { background: #2ecc71; border-color: #27ae60; }
 .cal-absence.absence-training { background: #9b59b6; border-color: #8e44ad; }
 .cal-absence.absence-sick { background: #e67e22; border-color: #d35400; }
 .cal-absence.absence-other { background: #95a5a6; border-color: #7f8c8d; }
+.cal-absence.absence-leave_request { background: #1e90ff; border-color: #1565c0; }
 
 /* Conflict indicator on slots */
 .cal-slot.slot-conflict {
@@ -216,12 +217,13 @@ body.edit-mode .cal-day-col:hover {
     background: rgba(44, 110, 73, 0.03);
 }
 
-/* Absence badges in table */
+// Absence badges in table
 .badge.absence-badge-leave { background: #fdecea; color: #c0392b; }
-.badge.absence-badge-mission { background: #ebf5fb; color: #2980b9; }
+.badge.absence-badge-mission { background: #e8f5e9; color: #2ecc71; }
 .badge.absence-badge-training { background: #f5eef8; color: #8e44ad; }
 .badge.absence-badge-sick { background: #fef5e7; color: #d35400; }
 .badge.absence-badge-other { background: #f4f6f6; color: #7f8c8d; }
+.badge.absence-badge-leave_request { background: #e6f2ff; color: #1e90ff; }
 
 /* ===== Origin badges ===== */
 .origin-badge-manual { background: #e8f8f5; color: #1abc9c; }
@@ -351,22 +353,25 @@ body.edit-mode .cal-day-col:hover {
 
 /* Absence background on mediator tracks */
 .daily-mediator-track.absence-leave { background: rgba(231, 76, 60, 0.15); }
-.daily-mediator-track.absence-mission { background: rgba(52, 152, 219, 0.15); }
+.daily-mediator-track.absence-mission { background: rgba(46, 204, 113, 0.15); }
 .daily-mediator-track.absence-training { background: rgba(155, 89, 182, 0.15); }
 .daily-mediator-track.absence-sick { background: rgba(230, 126, 34, 0.15); }
 .daily-mediator-track.absence-other { background: rgba(149, 165, 166, 0.15); }
+.daily-mediator-track.absence-leave_request { background: rgba(30, 144, 255, 0.15); }
 
 /* Half-day absence backgrounds */
 .daily-mediator-track.absence-leave-morning { background: linear-gradient(to bottom, rgba(231, 76, 60, 0.15) 50%, transparent 50%); }
 .daily-mediator-track.absence-leave-afternoon { background: linear-gradient(to bottom, transparent 50%, rgba(231, 76, 60, 0.15) 50%); }
-.daily-mediator-track.absence-mission-morning { background: linear-gradient(to bottom, rgba(52, 152, 219, 0.15) 50%, transparent 50%); }
-.daily-mediator-track.absence-mission-afternoon { background: linear-gradient(to bottom, transparent 50%, rgba(52, 152, 219, 0.15) 50%); }
+.daily-mediator-track.absence-mission-morning { background: linear-gradient(to bottom, rgba(46, 204, 113, 0.15) 50%, transparent 50%); }
+.daily-mediator-track.absence-mission-afternoon { background: linear-gradient(to bottom, transparent 50%, rgba(46, 204, 113, 0.15) 50%); }
 .daily-mediator-track.absence-training-morning { background: linear-gradient(to bottom, rgba(155, 89, 182, 0.15) 50%, transparent 50%); }
 .daily-mediator-track.absence-training-afternoon { background: linear-gradient(to bottom, transparent 50%, rgba(155, 89, 182, 0.15) 50%); }
 .daily-mediator-track.absence-sick-morning { background: linear-gradient(to bottom, rgba(230, 126, 34, 0.15) 50%, transparent 50%); }
 .daily-mediator-track.absence-sick-afternoon { background: linear-gradient(to bottom, transparent 50%, rgba(230, 126, 34, 0.15) 50%); }
 .daily-mediator-track.absence-other-morning { background: linear-gradient(to bottom, rgba(149, 165, 166, 0.15) 50%, transparent 50%); }
 .daily-mediator-track.absence-other-afternoon { background: linear-gradient(to bottom, transparent 50%, rgba(149, 165, 166, 0.15) 50%); }
+.daily-mediator-track.absence-leave_request-morning { background: linear-gradient(to bottom, rgba(30, 144, 255, 0.15) 50%, transparent 50%); }
+.daily-mediator-track.absence-leave_request-afternoon { background: linear-gradient(to bottom, transparent 50%, rgba(30, 144, 255, 0.15) 50%); }
 
 /* Hour grid lines inside tracks */
 .daily-hour-line {
@@ -480,12 +485,33 @@ body.edit-mode .cal-day-col:hover {
   color: var(--color-text-secondary);
 }
 
-/* Empty state */
-.daily-empty {
+/* Absence blocks in daily view */
+.daily-absence-block {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 4px;
   display: flex;
   align-items: center;
-  padding: 12px;
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  font-style: italic;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 0 4px;
+  box-sizing: border-box;
 }
+
+.absence-label {
+  background: rgba(0,0,0,0.1);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  color: white;
+  white-space: nowrap;
+}
+
