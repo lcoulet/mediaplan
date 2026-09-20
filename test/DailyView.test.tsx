@@ -61,8 +61,9 @@ describe('DailyView', () => {
         <DailyView />
       </DataProvider>
     );
-    expect(screen.getByText('Jean Dupont')).toBeInTheDocument();
-    expect(screen.getByText('Marie Martin')).toBeInTheDocument();
+    // Now displays as "Dupont Jean" and "Martin Marie" (lastName firstName)
+    expect(screen.getByText('Dupont Jean')).toBeInTheDocument();
+    expect(screen.getByText('Martin Marie')).toBeInTheDocument();
     expect(screen.queryByText('Inactif Test')).not.toBeInTheDocument();
   });
 

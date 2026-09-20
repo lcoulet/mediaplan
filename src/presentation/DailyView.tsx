@@ -1,7 +1,7 @@
 // DailyView.tsx — Day Planning View (Vue planning du jour)
 // Layout per LEXICON.md: mediators as rows, time as columns (10-min grid lines),
 // unassigned lane, standard offers lane.
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useData, useCRUD } from './DataContext';
 import type { Slot, Mediator, Absence, AbsenceType } from '../domain/types';
 import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig } from '../domain/models';
@@ -24,18 +24,40 @@ export default function DailyView() {
   const crud = useCRUD();
   const { data, locked } = state;
 
-  // Local state for the selected day (defaults to today)
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  // Get date from URL if present, otherwise use today
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const dateParam = urlParams.get('date');
+    if (dateParam && !isNaN(new Date(dateParam).getTime())) {
+      return new Date(dateParam);
+    }
+    return new Date();
+  });
+
   const selectedDateStr = selectedDate.toISOString().slice(0, 10);
+
+  // Update URL when date changes
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('date', selectedDateStr);
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+    window.history.pushState({}, '', newUrl);
+  }, [selectedDateStr]);
 
   // Slots for the selected day
   const daySlots = useMemo(() => {
     return data.slots.filter(slot => slot.date === selectedDateStr);
   }, [data.slots, selectedDateStr]);
 
-  // Active mediators only
+  // Active mediators only - sorted alphabetically by lastName, then firstName
   const activeMediators = useMemo(() => {
-    return data.mediators.filter(m => m.active);
+    return data.mediators
+      .filter(m => m.active)
+      .sort((a, b) => {
+        const aName = `${a.lastName} ${a.firstName}`.toLowerCase();
+        const bName = `${b.lastName} ${b.firstName}`.toLowerCase();
+        return aName.localeCompare(bName);
+      });
   }, [data.mediators]);
 
   // Assigned vs unassigned
@@ -255,10 +277,10 @@ export default function DailyView() {
     <div className="view active">
       <div className="toolbar">
         <div className="toolbar-left">
-          <h2>Plan Jour — {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
           <button className="btn btn-secondary" onClick={() => goToDay(-1)}>←</button>
           <button className="btn btn-secondary" onClick={goToToday}>Aujourd'hui</button>
           <button className="btn btn-secondary" onClick={() => goToDay(1)}>→</button>
+          <h2>Plan Jour — {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
         </div>
         <div className="toolbar-right">
           <label className="toggle-switch">
@@ -372,7 +394,7 @@ export default function DailyView() {
               >
                 <div className="daily-mediator-label">
                   <span className="daily-mediator-color" style={{ backgroundColor: mediator.color || '#ccc' }}></span>
-                  <span className="daily-mediator-name">{mediator.firstName} {mediator.lastName}</span>
+                  <span className="daily-mediator-name">{mediator.lastName} {mediator.firstName}</span>
                 </div>
                 <div
                   className="daily-mediator-track"

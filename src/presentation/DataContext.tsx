@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { AppData, Mediator } from '../domain/types';
+import type { ViewName } from './types';
 import { createMediator, normalizeCompetences } from '../domain/models';
 import { createHistory, DEFAULT_HISTORY_SIZE } from '../domain/history';
 import { load, save } from '../infrastructure/store';
@@ -51,9 +52,32 @@ function getInitialState(): AppState {
     seedDemoData(data);
     save(data);
   }
+  
+  // Read view from URL if present
+  let initialView: ViewName = 'daily';
+  if (typeof window !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewParam = urlParams.get('view');
+    const viewMap: Record<string, ViewName> = {
+      'jour': 'daily',
+      'journee': 'daily',
+      'day': 'daily',
+      'hebdo': 'weekly',
+      'week': 'weekly',
+      'semaine': 'weekly',
+      'mediateurs': 'mediators',
+      'offres': 'offers',
+      'absences': 'absences',
+      'import-export': 'import-export',
+    };
+    if (viewParam && viewMap[viewParam]) {
+      initialView = viewMap[viewParam];
+    }
+  }
+  
   return {
     data,
-    currentView: 'weekly',
+    currentView: initialView,
     currentWeekStart: getWeekStart(new Date()),
     filters: { mediatorId: '', offerId: '' },
     absenceFilter: { mediatorId: '' },
