@@ -131,6 +131,20 @@ export function seedDemoData(data: AppData): void {
     mediators[i].competences = skills.map((offIdx) => ({ offerId: offers[offIdx].id, status: 'confirmed' as const }));
   });
 
+  // Learning competences: for offers that actually appear in the demo
+  // patterns, give one mediator a 'learning' competence. Offers are picked
+  // deterministically so the weekly view shows some learning-status slots
+  // while most assigned slots stay OK.
+  const patternOfferIdx = [0, 2, 5, 7, 8, 12, 13, 16, 17, 20, 22, 24, 34, 35, 38, 40, 42, 44, 46, 56, 57, 58, 60, 61, 62, 63, 64, 66];
+  patternOfferIdx.forEach((offIdx, k) => {
+    if (offIdx >= offers.length) return;
+    // One learning mediator per pattern offer, rotating among mediators
+    const med = mediators[(k * 3) % mediators.length];
+    if (!med.competences.some((c) => c.offerId === offers[offIdx].id)) {
+      med.competences.push({ offerId: offers[offIdx].id, status: 'learning' as const });
+    }
+  });
+
   // Reference date: start of previous month
   const now = new Date();
   const refDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -141,7 +155,8 @@ export function seedDemoData(data: AppData): void {
     return fmt(d);
   };
 
-  const totalDays = 90;
+  // ~15 months: previous month + current month + one year ahead
+  const totalDays = 455;
   const slots: typeof data.slots = [];
   const absences: typeof data.absences = [];
 
@@ -244,17 +259,44 @@ export function seedDemoData(data: AppData): void {
 
     const patternStart = dayPatternOffsets[dow];
     const weekNum = Math.floor(day / 7);
-    const medOffset = weekNum % mediators.length;
+
+    // Mediators CONFIRMED for each offer, precomputed once per offer index.
+    // Patterns rotate within this pool so most assigned slots are OK.
+    const confirmedPool = (offIdx: number) =>
+      mediators.filter((m) =>
+        m.competences.some((c) => c.offerId === offers[offIdx].id && c.status === 'confirmed')
+      );
+    const confirmedPools = offers.map((_, i) => confirmedPool(i));
+    // Learning pool: mediators with a 'learning' competence on the offer
+    const learningPools = offers.map((o) =>
+      mediators.filter((m) =>
+        m.competences.some((c) => c.offerId === o.id && c.status === 'learning')
+      )
+    );
 
     for (let p = 0; p < 14; p++) {
       const patternIdx = patternStart + p;
       if (patternIdx >= weekdayPatterns.length) break;
       const pattern = weekdayPatterns[patternIdx];
       const [offIdx, medIdx, start, end, status, participants, origin, source, modified, unassigned, extraMed] = pattern;
+      const offerIdx = offIdx as number;
 
       let mediatorId = '';
       if (!unassigned) {
-        mediatorId = mediators[((medIdx as number) + medOffset) % mediators.length].id;
+        // Deterministic pattern rotation, mostly OK statuses:
+        // - 1 slot in 7 uses a LEARNING mediator on that offer (learning pool,
+        //   rotating) so the weekly view shows some learning states
+        // - otherwise pick from the CONFIRMED pool, rotating weekly
+        const useLearning = p % 7 === 6 && learningPools[offerIdx].length > 0;
+        const pool = useLearning ? learningPools[offerIdx] : confirmedPools[offerIdx];
+        const fallbackPool = pool.length > 0 ? pool : mediators;
+        mediatorId = fallbackPool[(weekNum + (medIdx as number)) % fallbackPool.length].id;
+      } else if ((day + p) % 2 === 0 && confirmedPools[offerIdx].length > 0) {
+        // Half of the "unassigned" pattern occurrences get a CONFIRMED
+        // mediator anyway (alternating deterministically): the planning is
+        // mostly OK, while still showing a steady stream of slots to assign.
+        const pool = confirmedPools[offerIdx];
+        mediatorId = pool[(weekNum + p) % pool.length].id;
       }
 
       const slotData: Record<string, unknown> = {
@@ -280,7 +322,9 @@ export function seedDemoData(data: AppData): void {
       slots.push(createSlot(slotData as Parameters<typeof createSlot>[0]));
 
       if (extraMed !== undefined && extraMed !== null) {
-        const traineeId = mediators[((extraMed as number) + medOffset) % mediators.length].id;
+        // Tutorat: the extra mediator is LEARNING on this offer (mentorat)
+        const learnPool = learningPools[offerIdx].length > 0 ? learningPools[offerIdx] : mediators;
+        const traineeId = learnPool[(weekNum + (extraMed as number)) % learnPool.length].id;
         if (traineeId !== mediatorId) {
           const traineeSlot = createSlot({
             ...(slotData as Parameters<typeof createSlot>[0]),
@@ -308,7 +352,9 @@ export function seedDemoData(data: AppData): void {
     }
   });
 
-  // Generate ~20 absences
+  // Generate ~20 base absence patterns, REPEATED across the full 15-month
+  // span so absences appear all year (each repetition shifted by ~3 months
+  // with a deterministic day offset)
   const absencePatterns = [
     { mediator: 0, startDay: 7, duration: 1, halfDay: 'morning' as const, type: 'leave' as const, notes: 'RTT' },
     { mediator: 1, startDay: 12, duration: 2, halfDay: 'none' as const, type: 'mission' as const, notes: 'Déplacement Lyon — colloque' },
@@ -333,13 +379,17 @@ export function seedDemoData(data: AppData): void {
   ];
 
   absencePatterns.forEach((p) => {
-    const start = dayFromRef(p.startDay);
-    const end = dayFromRef(p.startDay + p.duration - 1);
+    // Repeat each pattern every ~95 days across the whole seed span
+    for (let rep = 0; rep * 95 < totalDays; rep++) {
+      const dayOffset = p.startDay + rep * 95 + (rep % 3) * 11; // deterministic jitter
+      if (dayOffset >= totalDays) break;
+      const start = dayFromRef(dayOffset);
+      const end = dayFromRef(dayOffset + p.duration - 1);
     
     // Compute startTime and endTime based on halfDay
     let startTime: string | undefined;
     let endTime: string | undefined;
-    
+
     if (p.halfDay === 'morning') {
       startTime = '00:00';
       endTime = '13:00';
@@ -350,7 +400,7 @@ export function seedDemoData(data: AppData): void {
       startTime = '00:00';
       endTime = '23:59';
     }
-    
+
     absences.push(
       createAbsence({
         mediatorId: mediators[p.mediator].id,
@@ -363,6 +413,7 @@ export function seedDemoData(data: AppData): void {
         endTime,
       })
     );
+    }
   });
 
   data.mediators = mediators;

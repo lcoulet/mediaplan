@@ -196,7 +196,20 @@ export default function WeeklyView() {
           <button className="btn btn-secondary" id="btn-prev-week" onClick={() => changeWeek(-1)}>
             ←
           </button>
-          <span className="period-label" id="period-label">{periodLabel}</span>
+          <label className="period-label date-picker-label" title="Aller à la semaine du…">
+            {periodLabel}
+            <input
+              type="date"
+              className="date-picker-input"
+              value={toLocalDateString(currentDate)}
+              onChange={(e) => {
+                if (e.target.value) {
+                  const [y, m, d] = e.target.value.split('-').map(Number);
+                  dispatch({ type: 'SET_CURRENT_DATE', date: new Date(y, m - 1, d) });
+                }
+              }}
+            />
+          </label>
           <button className="btn btn-secondary" id="btn-next-week" onClick={() => changeWeek(1)}>
             →
           </button>

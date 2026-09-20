@@ -44,6 +44,11 @@ describe('DailyView', () => {
       }
       static now() { return MOCK_DATE.getTime(); }
     });
+    // Reset the URL: DataProvider's URL-sync effect persists across tests
+    // (replaceState on the shared jsdom window), and getInitialState()
+    // reads ?date= — a leftover date would start the next test on the
+    // wrong day.
+    window.history.replaceState({}, '', '/');
   });
 
   it('should render the daily view title with today\'s date', () => {
@@ -608,5 +613,21 @@ describe('DailyView', () => {
     );
     // 2026-09-19 is a Saturday in French locale
     expect(screen.getByText(/samedi 19 septembre/i)).toBeInTheDocument();
+  });
+
+  it('offers a date picker in the title to jump to any date', () => {
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+    const input = container.querySelector('.date-picker-input') as HTMLInputElement;
+    expect(input).toBeTruthy();
+    expect(input.type).toBe('date');
+    // Current selected date as value (mocked today = 2026-09-19)
+    expect(input.value).toBe('2026-09-19');
+    // Changing the date updates the title
+    fireEvent.change(input, { target: { value: '2026-10-08' } });
+    expect(screen.getByText(/jeudi 8 octobre/i)).toBeInTheDocument();
   });
 });

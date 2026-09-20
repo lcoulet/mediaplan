@@ -396,7 +396,22 @@ export default function DailyView() {
           <button className="btn btn-secondary" onClick={() => goToDay(-1)}>←</button>
           <button className="btn btn-secondary" onClick={goToToday}>Aujourd'hui</button>
           <button className="btn btn-secondary" onClick={() => goToDay(1)}>→</button>
-          <h2>Plan Jour — {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
+          <h2>
+            <label className="date-picker-label" title="Changer la date">
+              Plan Jour — {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              <input
+                type="date"
+                className="date-picker-input"
+                value={toLocalDateString(selectedDate)}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const [y, m, d] = e.target.value.split('-').map(Number);
+                    setSelectedDate(new Date(y, m - 1, d));
+                  }
+                }}
+              />
+            </label>
+          </h2>
         </div>
         <div className="toolbar-right">
           <label className="filter-label" htmlFor="daily-mediator-filter">

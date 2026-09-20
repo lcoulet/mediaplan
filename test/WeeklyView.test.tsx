@@ -1,6 +1,6 @@
 // WeeklyView.test.tsx — Tests pour la vue "Plan Hebdo"
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import WeeklyView from '../src/presentation/WeeklyView';
 import { DataProvider } from '../src/presentation/DataContext';
 import type { AppData } from '../src/domain/types';
@@ -28,6 +28,11 @@ describe('WeeklyView', () => {
       getItem: vi.fn(() => JSON.stringify(mockData)),
       setItem: vi.fn(),
     });
+    // Reset the URL: DataProvider's URL-sync effect persists across tests
+    // (replaceState on the shared jsdom window), and getInitialState()
+    // reads ?date= — a leftover date would start the next test on the
+    // wrong week.
+    window.history.replaceState({}, '', '/');
   });
 
   it('should render the weekly view with the period label', () => {
@@ -68,6 +73,23 @@ describe('WeeklyView', () => {
     const dayCols = container.querySelectorAll('.cal-day-col');
     const mh = parseFloat((dayCols[0] as HTMLElement).style.minHeight);
     expect(mh).toBeCloseTo(49.82 * 11, 0);
+  });
+
+  it('offers a date picker on the period label to jump to any week', () => {
+    const { container } = render(
+      <DataProvider>
+        <WeeklyView />
+      </DataProvider>
+    );
+    const input = container.querySelector('.date-picker-input') as HTMLInputElement;
+    expect(input).toBeTruthy();
+    expect(input.type).toBe('date');
+
+    // Changing the date moves the displayed week (period label updates)
+    fireEvent.change(input, { target: { value: '2027-03-10' } });
+    // Week containing 2027-03-10 (Wednesday) = Monday 8 → Sunday 14 March 2027
+    expect(screen.getByText(/8 mars/i)).toBeInTheDocument();
+    expect(screen.getByText(/14 mars/i)).toBeInTheDocument();
   });
 
   it('renders the weekly stats badge with per-status counts', () => {

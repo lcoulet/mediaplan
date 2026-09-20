@@ -575,6 +575,31 @@ body {
     display: inline-block;
 }
 
+/* ===== Date picker in view titles (daily date / weekly period) ===== */
+.date-picker-label {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.date-picker-input {
+    /* Nearly invisible: clicking the date text opens the native picker */
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 1px dashed var(--color-border);
+    border-radius: 3px;
+    background: transparent;
+    cursor: pointer;
+    opacity: 0.45;
+}
+
+.date-picker-input:hover,
+.date-picker-label:hover .date-picker-input {
+    opacity: 1;
+}
+
 /* ===== Mediator color glyph ===== */
 /* Replaced the old CSS dot (10px box) with a UTF ● colored via `color`:
    text-metric rendering aligns with adjacent text/emoji on the same
