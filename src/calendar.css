@@ -522,3 +522,27 @@ body.edit-mode .cal-day-col:hover {
   white-space: nowrap;
 }
 
+/* Drag indicator (red bar) */
+.daily-drag-indicator {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background-color: rgba(255, 0, 0, 0.3);
+  border: 2px dashed #ff0000;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.daily-drag-indicator .drag-indicator-time {
+  position: absolute;
+  top: -25px;
+  left: 0;
+  background-color: #ff0000;
+  color: white;
+  padding: 2px 6px;
+  font-size: 11px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+

@@ -40,6 +40,7 @@ export default function DailyView() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.set('date', selectedDateStr);
+    urlParams.set('display', 'day');
     const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
     window.history.pushState({}, '', newUrl);
   }, [selectedDateStr]);
@@ -70,11 +71,19 @@ export default function DailyView() {
   // Standard offers (catalog — all offers available for drag-and-drop)
   const allOffers = data.offers;
 
-  // Selected slot for competence highlighting (click → modal)
+  // Selected slot for competence highlighting (click -> modal)
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
 
   // Drag and drop state
   const [draggedItem, setDraggedItem] = useState<{ type: 'offer' | 'slot'; id: string; data: any } | null>(null);
+  
+  // Drag indicator state (red bar showing drop position)
+  const [dragIndicator, setDragIndicator] = useState<{
+    left: number;
+    width: number;
+    startTime: string;
+    endTime: string;
+  } | null>(null);
 
   // Half-day configuration
   const halfDayConfig = data.halfDayConfig || getDefaultHalfDayConfig();
@@ -148,8 +157,8 @@ export default function DailyView() {
       const offer = data.offers.find(o => o.id === draggedItem.id);
       if (offer) {
         const duration = offer.duration;
-        const endHour = hour + Math.floor(duration / 60);
-        const endMinute = minute + (duration % 60);
+        const endHour = hour + Math.floor((minute + duration) / 60);
+        const endMinute = (minute + duration) % 60;
         const endTime = formatTime(endHour, endMinute);
 
         const newSlot: Slot = {
@@ -182,6 +191,7 @@ export default function DailyView() {
       }
     }
     setDraggedItem(null);
+    setDragIndicator(null);
   }
 
   // Calculate time from drop position (x in pixels)
@@ -209,20 +219,55 @@ export default function DailyView() {
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    // Add visual feedback
+    
+    // Only show indicator for offer drags (not for slot drags)
+    if (!draggedItem || draggedItem.type !== 'offer') {
+      const track = (e.currentTarget as HTMLElement);
+      track.classList.add('drag-over');
+      return;
+    }
+    
     const track = (e.currentTarget as HTMLElement);
     track.classList.add('drag-over');
+    
+    // Calculate drop position
+    const rect = track.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    
+    // Round to 10-minute precision
+    const totalMinutes = Math.round(x / (HOUR_HEIGHT / 60) / 10) * 10;
+    const hour = START_HOUR + Math.floor(totalMinutes / 60);
+    const minute = Math.round((totalMinutes % 60) / 10) * 10;
+    
+    const startTime = formatTime(hour, minute);
+    
+    // Get offer duration
+    const offer = data.offers.find(o => o.id === draggedItem.id);
+    if (!offer) return;
+    
+    const duration = offer.duration;
+    const endHour = hour + Math.floor((minute + duration) / 60);
+    const endMinute = (minute + duration) % 60;
+    const endTime = formatTime(endHour, endMinute);
+    
+    // Calculate position and width
+    const left = (totalMinutes) * (HOUR_HEIGHT / 60);
+    const width = duration * (HOUR_HEIGHT / 60);
+    
+    setDragIndicator({ left, width, startTime, endTime });
   }
 
   // Handle drag leave mediator track
   function handleDragLeave(e: React.DragEvent) {
     const track = (e.currentTarget as HTMLElement);
     track.classList.remove('drag-over');
+    setDragIndicator(null);
   }
 
   // Handle drag end
   function handleDragEnd() {
     setDraggedItem(null);
+    setDragIndicator(null);
     // Remove drag-over class from all tracks
     document.querySelectorAll('.daily-mediator-track').forEach(track => {
       track.classList.remove('drag-over');
@@ -415,6 +460,21 @@ export default function DailyView() {
                       style={{ left: `${i * HOUR_HEIGHT}px`, width: `${HOUR_HEIGHT}px` }}
                     />
                   ))}
+                  
+                  {/* Drag indicator (red bar) */}
+                  {dragIndicator && (
+                    <div
+                      className="daily-drag-indicator"
+                      style={{
+                        left: `${dragIndicator.left}px`,
+                        width: `${dragIndicator.width}px`,
+                      }}
+                    >
+                      <div className="drag-indicator-time">
+                        {dragIndicator.startTime} – {dragIndicator.endTime}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Absence blocks */}
                   {mediatorAbsences.map(abs => {

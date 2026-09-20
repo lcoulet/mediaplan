@@ -1,5 +1,5 @@
 // WeeklyView.tsx — Vue hebdomadaire (anciennement CalendarView)
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useData, getWeekStart } from './DataContext';
 import {
   isMediatorAvailable,
@@ -118,6 +118,15 @@ export default function WeeklyView() {
     setSlotModal({ slot: null, mediatorOnly: false, defaultDate: dateStr });
   }
 
+  // Update URL when week changes
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('display', 'week');
+    urlParams.set('date', currentWeekStart.toISOString().slice(0, 10));
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+    window.history.pushState({}, '', newUrl);
+  }, [currentWeekStart]);
+
   function changeWeek(delta: number) {
     const d = new Date(currentWeekStart);
     d.setDate(d.getDate() + delta * 7);
@@ -125,7 +134,8 @@ export default function WeeklyView() {
   }
 
   function goToToday() {
-    dispatch({ type: 'SET_WEEK_START', date: getWeekStart(new Date()) });
+    const todayWeekStart = getWeekStart(new Date());
+    dispatch({ type: 'SET_WEEK_START', date: todayWeekStart });
   }
 
   return (

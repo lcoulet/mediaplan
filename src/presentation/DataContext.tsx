@@ -55,9 +55,13 @@ function getInitialState(): AppState {
   
   // Read view from URL if present
   let initialView: ViewName = 'daily';
+  let initialWeekStart = getWeekStart(new Date());
+  
   if (typeof window !== 'undefined') {
     const urlParams = new URLSearchParams(window.location.search);
-    const viewParam = urlParams.get('view');
+    const viewParam = urlParams.get('view') || urlParams.get('display');
+    const dateParam = urlParams.get('date');
+    
     const viewMap: Record<string, ViewName> = {
       'jour': 'daily',
       'journee': 'daily',
@@ -70,15 +74,22 @@ function getInitialState(): AppState {
       'absences': 'absences',
       'import-export': 'import-export',
     };
+    
     if (viewParam && viewMap[viewParam]) {
       initialView = viewMap[viewParam];
+    }
+    
+    // If date is provided, calculate week start for weekly view
+    if (dateParam && !isNaN(new Date(dateParam).getTime())) {
+      const targetDate = new Date(dateParam);
+      initialWeekStart = getWeekStart(targetDate);
     }
   }
   
   return {
     data,
     currentView: initialView,
-    currentWeekStart: getWeekStart(new Date()),
+    currentWeekStart: initialWeekStart,
     filters: { mediatorId: '', offerId: '' },
     absenceFilter: { mediatorId: '' },
     locked: true,
