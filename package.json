@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "docs:serve": "node scripts/docs-serve.mjs",
-    "docs:generate": "echo 'TODO: intégrer puppeteer/playwright pour captures' && node scripts/docs-serve.mjs"
+    "docs:generate": "node scripts/docs-capture.mjs && node scripts/docs-serve.mjs"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",
@@ -20,6 +20,7 @@
     "@vitejs/plugin-react": "^4.2.1",
     "@vitest/coverage-v8": "^1.6.1",
     "jsdom": "^24.0.0",
+    "playwright": "^1.63.0",
     "typescript": "^5.3.3",
     "vite": "^5.1.0",
     "vitest": "^1.2.2"
