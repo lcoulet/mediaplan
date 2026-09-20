@@ -19,3 +19,5 @@ coverage/
 
 # Logs
 *.log
+# User guide synced from docs/ at build time (scripts/sync-guide.mjs)
+public/guide/

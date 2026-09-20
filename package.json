@@ -6,11 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/sync-guide.mjs && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "docs:serve": "node scripts/docs-serve.mjs",
-    "docs:generate": "node scripts/docs-capture.mjs && node scripts/docs-serve.mjs"
+    "docs:generate": "node scripts/docs-capture.mjs && node scripts/sync-guide.mjs"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",
