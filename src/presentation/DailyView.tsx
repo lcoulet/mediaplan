@@ -53,8 +53,7 @@ export default function DailyView() {
     return { assignedSlots: assigned, unassignedSlots: unassigned };
   }, [daySlots]);
 
-  // Standard offers (catalog — all offers available for drag-and-drop)
-  const allOffers = data.offers;
+  // Standard offers: rendering uses visibleOffers (search-filtered catalog)
 
   // Selected slot for competence highlighting (click -> modal)
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
@@ -82,6 +81,43 @@ export default function DailyView() {
         return { ...abs, startTime: timeRange.startTime, endTime: timeRange.endTime };
       });
   }, [data.absences, selectedDateStr, halfDayConfig]);
+
+  // Mediator filter: 'libres' | 'occupes' | 'tous' | <mediatorId>
+  const [mediatorFilter, setMediatorFilter] = useState<string>('tous');
+
+  // Offer search filter (case-insensitive)
+  const [offerSearch, setOfferSearch] = useState<string>('');
+
+  // Mediators displayed after applying the filter.
+  // "Libres" = no slot AND no absence that day (absent ≠ libre).
+  const visibleMediators = useMemo(() => {
+    if (mediatorFilter === 'tous') return activeMediators;
+    if (mediatorFilter === 'libres') {
+      return activeMediators.filter(m => {
+        const hasSlot = assignedSlots.some(s => s.mediatorIds.includes(m.id));
+        const hasAbsence = dayAbsences.some(a => a.mediatorId === m.id);
+        return !hasSlot && !hasAbsence;
+      });
+    }
+    if (mediatorFilter === 'occupes') {
+      return activeMediators.filter(m =>
+        assignedSlots.some(s => s.mediatorIds.includes(m.id))
+      );
+    }
+    // Specific mediator selected
+    return activeMediators.filter(m => m.id === mediatorFilter);
+  }, [activeMediators, mediatorFilter, assignedSlots, dayAbsences]);
+
+  // Offers displayed after applying the search filter
+  const visibleOffers = useMemo(() => {
+    const q = offerSearch.trim().toLowerCase();
+    if (!q) return data.offers;
+    return data.offers.filter(o =>
+      o.name.toLowerCase().includes(q) ||
+      (o.description || '').toLowerCase().includes(q) ||
+      (o.location || '').toLowerCase().includes(q)
+    );
+  }, [data.offers, offerSearch]);
 
   // Calculate minutes per pixel for the grid
   const totalGridWidth = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
@@ -313,6 +349,24 @@ export default function DailyView() {
           <h2>Plan Jour — {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
         </div>
         <div className="toolbar-right">
+          <label className="filter-label" htmlFor="daily-mediator-filter">
+            Médiateurs
+          </label>
+          <select
+            id="daily-mediator-filter"
+            className="select"
+            value={mediatorFilter}
+            onChange={(e) => setMediatorFilter(e.target.value)}
+          >
+            <option value="libres">Libres</option>
+            <option value="occupes">Occupés</option>
+            <option value="tous">Tous</option>
+            {activeMediators.map(m => (
+              <option key={m.id} value={m.id}>
+                {m.lastName} {m.firstName}
+              </option>
+            ))}
+          </select>
           <label className="toggle-switch">
             <input
               type="checkbox"
@@ -407,7 +461,10 @@ export default function DailyView() {
         {/* Mediator rows — below unassigned */}
         <div className="daily-mediators-section">
           <div className="daily-section-title">Médiateurs</div>
-          {activeMediators.map(mediator => {
+          {visibleMediators.length === 0 && (
+            <div className="daily-empty">Aucun médiateur ne correspond au filtre.</div>
+          )}
+          {visibleMediators.map(mediator => {
             const mediatorSlots = assignedSlots.filter(slot =>
               slot.mediatorIds.includes(mediator.id)
             );
@@ -527,11 +584,23 @@ export default function DailyView() {
         {/* Standard offers lane — no time positioning */}
         <div className="daily-offers-section">
           <div className="daily-section-title">Offres libres (glissables)</div>
+          <input
+            id="daily-offer-search"
+            type="text"
+            className="daily-offer-search"
+            placeholder="Rechercher une offre…"
+            value={offerSearch}
+            onChange={(e) => setOfferSearch(e.target.value)}
+          />
           <div className="daily-offers-list">
-            {allOffers.length === 0 ? (
-              <div className="daily-empty">Aucune offre libre disponible.</div>
+            {visibleOffers.length === 0 ? (
+              <div className="daily-empty">
+                {data.offers.length === 0
+                  ? 'Aucune offre libre disponible.'
+                  : 'Aucune offre ne correspond à la recherche.'}
+              </div>
             ) : (
-              allOffers.map(offer => (
+              visibleOffers.map(offer => (
                 <div key={offer.id} className="daily-offer" draggable
                   onDragStart={(e) => handleDragStart(e, 'offer', offer.id)}
                   onDragEnd={handleDragEnd}>

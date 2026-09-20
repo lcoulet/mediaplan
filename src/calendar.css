@@ -452,9 +452,32 @@ body.edit-mode .cal-day-col:hover {
   min-height: 50px;
 }
 
+/* Mediator filter label in daily view toolbar */
+.filter-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text, #333);
+  white-space: nowrap;
+}
+
 /* Offers lane */
 .daily-offers-section {
   padding-bottom: 8px;
+}
+
+.daily-offer-search {
+  margin: 0 12px 8px 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius, 4px);
+  font-size: 13px;
+  width: calc(100% - 24px);
+  box-sizing: border-box;
+}
+
+.daily-offer-search:focus {
+  outline: 2px solid var(--color-primary, #0064ff);
+  outline-offset: -1px;
 }
 
 .daily-offers-list {

@@ -56,15 +56,17 @@ describe('DailyView', () => {
   });
 
   it('should render active mediators as rows (not inactive ones)', () => {
-    render(
+    const { container } = render(
       <DataProvider>
         <DailyView />
       </DataProvider>
     );
     // Now displays as "Dupont Jean" and "Martin Marie" (lastName firstName)
-    expect(screen.getByText('Dupont Jean')).toBeInTheDocument();
-    expect(screen.getByText('Martin Marie')).toBeInTheDocument();
-    expect(screen.queryByText('Inactif Test')).not.toBeInTheDocument();
+    const rowNames = Array.from(container.querySelectorAll('.daily-mediator-row'))
+      .map(r => r.textContent);
+    expect(rowNames.some(t => t!.includes('Dupont Jean'))).toBe(true);
+    expect(rowNames.some(t => t!.includes('Martin Marie'))).toBe(true);
+    expect(rowNames.some(t => t!.includes('Inactif Test'))).toBe(false);
   });
 
   it('should render time columns header (hours 8-19)', () => {
@@ -78,6 +80,140 @@ describe('DailyView', () => {
     expect(hourLabels.length).toBe(12); // 8h to 19h
     expect(hourLabels[0].textContent).toBe('8:00');
     expect(hourLabels[11].textContent).toBe('19:00');
+  });
+
+  describe('mediator filter', () => {
+    it('should render the mediator filter select with Libres/Occupés/Tous then mediator options', () => {
+      const { container } = render(
+        <DataProvider>
+          <DailyView />
+        </DataProvider>
+      );
+      const select = container.querySelector('#daily-mediator-filter') as HTMLSelectElement;
+      expect(select).toBeTruthy();
+
+      const options = Array.from(select.options).map(o => o.textContent);
+      expect(options[0]).toBe('Libres');
+      expect(options[1]).toBe('Occupés');
+      expect(options[2]).toBe('Tous');
+      // Then the individual mediators, alphabetically (Dupont before Martin)
+      expect(options[3]).toBe('Dupont Jean');
+      expect(options[4]).toBe('Martin Marie');
+    });
+
+    it('should show only free mediators (no slot AND no absence) when "Libres" is selected', () => {
+      // m1 (Dupont) has a slot today -> occupied
+      // m2 (Martin) has no slot, no absence -> free
+      const { container } = render(
+        <DataProvider>
+          <DailyView />
+        </DataProvider>
+      );
+      const select = container.querySelector('#daily-mediator-filter') as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: 'libres' } });
+
+      const rows = container.querySelectorAll('.daily-mediator-row');
+      expect(rows.length).toBe(1);
+      expect(rows[0].textContent).toContain('Martin Marie');
+      expect(rows[0].textContent).not.toContain('Dupont');
+    });
+
+    it('should show only occupied mediators when "Occupés" is selected', () => {
+      const { container } = render(
+        <DataProvider>
+          <DailyView />
+        </DataProvider>
+      );
+      const select = container.querySelector('#daily-mediator-filter') as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: 'occupes' } });
+
+      const rows = container.querySelectorAll('.daily-mediator-row');
+      expect(rows.length).toBe(1);
+      expect(rows[0].textContent).toContain('Dupont Jean');
+    });
+
+    it('should show a specific mediator when one is selected', () => {
+      const { container } = render(
+        <DataProvider>
+          <DailyView />
+        </DataProvider>
+      );
+      const select = container.querySelector('#daily-mediator-filter') as HTMLSelectElement;
+      const m2Option = Array.from(select.options).find(o => o.textContent === 'Martin Marie');
+      fireEvent.change(select, { target: { value: m2Option!.value } });
+
+      const rows = container.querySelectorAll('.daily-mediator-row');
+      expect(rows.length).toBe(1);
+      expect(rows[0].textContent).toContain('Martin Marie');
+    });
+
+    it('should consider a mediator with an absence today as NOT free', () => {
+      const dataWithAbsence = JSON.parse(JSON.stringify(mockData));
+      dataWithAbsence.absences.push({
+        id: 'a1', mediatorId: 'm2', type: 'leave', halfDay: 'none',
+        startDate: '2026-09-19', endDate: '2026-09-19',
+      });
+      vi.stubGlobal('localStorage', {
+        getItem: vi.fn(() => JSON.stringify(dataWithAbsence)),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      });
+
+      const { container } = render(
+        <DataProvider>
+          <DailyView />
+        </DataProvider>
+      );
+      const select = container.querySelector('#daily-mediator-filter') as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: 'libres' } });
+
+      const rows = container.querySelectorAll('.daily-mediator-row');
+      expect(rows.length).toBe(0); // m1 occupied (slot), m2 absent
+    });
+  });
+
+  describe('offer search filter', () => {
+    it('should render a case-insensitive text filter above the offers list', () => {
+      const { container } = render(
+        <DataProvider>
+          <DailyView />
+        </DataProvider>
+      );
+      const searchInput = container.querySelector('#daily-offer-search') as HTMLInputElement;
+      expect(searchInput).toBeTruthy();
+      // Offers section contains both offers initially
+      expect(container.querySelectorAll('.daily-offer').length).toBe(2);
+
+      fireEvent.change(searchInput, { target: { value: 'VISITE' } });
+      const offers = container.querySelectorAll('.daily-offer');
+      expect(offers.length).toBe(1);
+      expect(offers[0].textContent).toContain('Visite guidée');
+    });
+
+    it('should filter offers on partial case-insensitive match', () => {
+      const { container } = render(
+        <DataProvider>
+          <DailyView />
+        </DataProvider>
+      );
+      const searchInput = container.querySelector('#daily-offer-search') as HTMLInputElement;
+      fireEvent.change(searchInput, { target: { value: 'atelier' } });
+      const offers = container.querySelectorAll('.daily-offer');
+      expect(offers.length).toBe(1);
+      expect(offers[0].textContent).toContain('Atelier créatif');
+    });
+
+    it('should show empty state message when no offer matches', () => {
+      const { container } = render(
+        <DataProvider>
+          <DailyView />
+        </DataProvider>
+      );
+      const searchInput = container.querySelector('#daily-offer-search') as HTMLInputElement;
+      fireEvent.change(searchInput, { target: { value: 'zzz-no-match' } });
+      expect(container.querySelector('.daily-empty')).toBeTruthy();
+    });
   });
 
   it('should render unassigned lane ABOVE mediators section', () => {
