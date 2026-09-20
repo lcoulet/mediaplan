@@ -2,68 +2,110 @@
 
 ## 📌 Accès rapide
 
-- **Bouton "?"** dans le header → ouvre la documentation dans un nouvel onglet
-- **Fichier** : `docs/user-guide.md` (mis à jour automatiquement)
+- **Bouton "?"** dans le header → ouvre la documentation
+- **Bandeau de statut** (bas de page) : version de l'application, espace utilisé, date de dernière mise à jour des données
 
-## 📱 Fonctionnalités principales
+---
 
-### 1. Planning
-- Vue hebdomadaire des réservations
-- Filtres : médiateurs, offres, dates
-- **Verrouillage** : par défaut, cliquez sur le cadenas pour verrouiller/déverrouiller
-- **Création de réservation** : cliquez sur une case vide → sélectionnez un médiateur et une offre
-- **Modification** : cliquez sur une réservation existante
-- **Suppression** : cliquez sur une réservation → Supprimer
+## 🗓️ Gérer le planning — le workflow
 
-### 2. Médiateurs
-- Liste des médiateurs avec leurs couleurs
-- Ajouter / modifier / supprimer un médiateur
-- **Couleur** : chaque médiateur a une couleur visible dans le planning et les réservations
+La gestion du planning se fait en quatre temps : **repérer**, **assigner**, **vérifier**, **protéger**.
 
-### 3. Offres
-- Liste des offres de médiation (visites guidées, ateliers…)
-- Chaque offre a une couleur visible dans le planning et les réservations
-- Ajouter / modifier / supprimer une offre
-- **Couleur** : choisissez une couleur via le sélecteur dans le formulaire d'offre
+### Étape 1 — Repérer ce qui demande une action (vue Hebdo)
 
-### 4. Absences
-- Liste des absences (congés, missions, formations…)
-- Ajouter / modifier / supprimer une absence
-- Les absences sont affichées en gris sur le planning (non cliquables)
+La vue **Plan Hebdo** est votre tableau de bord : chaque créneau porte une **couleur et un symbole d'état**.
 
-### 5. Import / Export
-- **Export** : sauvegarde JSON + Excel (stub)
-- **Import** : restauration depuis JSON
-- **Reset** : 🔄 → réinitialise avec les données de démonstration
+| Symbole | État | Signification | Gravité |
+|---------|------|---------------|---------|
+| ❌ | À assigner | réservation sans médiateur | 🔴 la plus urgente |
+| 🚫 | Indisponibilité | le médiateur assigné est absent ou a un chevauchement | 🔴 |
+| ⚠️ | Incompétent | aucun médiateur assigné n'est compétent sur l'offre | 🟠 warning |
+| 📚 | En apprentissage | aucun médiateur confirmé, mais un en formation | 🟡 info |
+| ✔️ | OK | au moins un médiateur disponible et confirmé | 🟢 |
 
-### 6. Raccourcis clavier
+- Le **badge compteur** dans la barre d'outils totalise chaque état pour la semaine affichée
+- La **légende** sous la grille rappelle les couleurs et symboles
+- **Survolez un créneau** : le tooltip affiche l'offre, l'horaire, l'état, les médiateurs concernés et l'origine
+- Changer de semaine : flèches **← →**, bouton **Aujourd'hui**, ou **clic sur la période** (sélecteur de date)
+
+### Étape 2 — Assigner les médiateurs (vue Jour)
+
+La vue **Plan Jour** est la vue de travail : un médiateur par ligne, le temps en colonnes.
+
+- **Glisser une offre** depuis le bandeau « Offres libres » sur la ligne d'un médiateur :
+  - la position du curseur définit le **début de la réservation** (arrondi à 10 minutes, affiché en temps réel dans la barre rouge)
+  - les **durées de mise en place / rangement** de l'offre s'étendent avant/après (elles ne comptent PAS dans la réservation)
+  - le bloc total est dessiné avec des **traits rouges** marquant le début et la fin de la vraie réservation
+- **Glisser une réservation non affectée** (bande du haut) sur un médiateur pour l'assigner
+- **Filtre Médiateurs** (barre d'outils) : *Libres* (aucun créneau ni absence ce jour-là), *Occupés*, *Tous*, ou un médiateur précis
+- **Recherche d'offre** : champ texte au-dessus des offres libres, insensible à la casse
+- Changer de jour : flèches, **Aujourd'hui**, ou **clic sur la date** dans le titre
+
+### Étape 3 — Vérifier et corriger
+
+- Cliquez sur un créneau pour l'ouvrir :
+  - **planning verrouillé** : formulaire restreint — assignation de médiateurs, participants, statut, notes, et **durées de mise en place / rangement** (ajustables sans déverrouiller)
+  - **planning déverrouillé** : édition complète (offre, date, horaires, suppression)
+- Les avertissements en direct dans le formulaire signalent les **chevauchements** et les **absences**
+- Dans la vue Hebdo, un créneau devient ✔️ dès qu'au moins un médiateur assigné est disponible **et** confirmé sur l'offre
+- Compétences : visibles dans le sélecteur de médiateurs (✅ confirmé, 📚 en formation, ⚠️ incompétent)
+
+### Étape 4 — Protéger le planning
+
+- Le planning est **verrouillé par défaut** : les réservations importées (Secutix) ne peuvent pas être modifiées dans leur durée ou leur horaire
+- Le verrou **ne bloque pas** l'assignation de médiateurs, ni le catalogue d'offres (création/modification/suppression toujours possibles)
+- Déverrouillez (toggle « Mode modification ») uniquement pour toucher aux horaires — une confirmation est demandée
+- Une réservation importée modifiée est marquée « ✏ Modifié après import » (traçabilité)
+
+---
+
+## 📱 Les autres vues
+
+### Médiateurs
+- Liste, ajout, modification, suppression ; **couleur** et **compétences** par médiateur
+- Tri par colonne, recherche texte, filtre « Actifs seulement »
+
+### Offres
+- Catalogue des activités : durée (celle du public), capacité, lieu, **couleur**
+- **Mise en place / rangement** : durées logistiques par défaut en minutes — utilisées par les créneaux, modifiables à tout moment
+- Tri par colonne et recherche
+
+### Absences
+- Congés, missions, formations, maladie, autres, **souhaits de congés** (bleu)
+- **Demi-journées** : matin / après-midi, frontières configurables (⚙️ dans le header)
+- Tri par colonne, filtre par médiateur, toggle « Absences passées »
+- Affichées dans les deux vues de planning (bandes de fond dans la vue Jour, bannières dans la vue Hebdo)
+
+### Import / Export
+- **Export JSON.gz** : sauvegarde compressée avec date dans le nom de fichier — à partager entre coordinatrices
+- **Import** : restauration ; un avertissement compare les dates de dernière modification
+- **🔄 Reset** : régénère les données de démonstration (~15 mois, tous les états de planning représentés)
+
+---
+
+## ⌨️ Raccourcis clavier
+
 - **Ctrl+Z** : Annuler
 - **Ctrl+Shift+Z** : Rétablir
 
 ---
 
-## 🎨 Couleurs
+## 🔗 Liens et URLs
 
-- **Médiateurs** : chaque médiateur a une couleur unique (visible dans les pills)
-- **Offres** : chaque offre a une couleur unique (visible dans les pills)
-- **Absences** : affichées en gris
-
----
-
-## 🔧 Administration
-
-- **Verrouillage** : le planning est verrouillé par défaut. Déverrouillez pour modifier.
-- **Réservations modifiées après import** : marquées comme modifiées (pas de retour en arrière automatique)
-- **Recouvrement** : les réservations qui se chevauchent sont affichées côte à côte dans le planning
+- `?display=day&date=2026-10-08` — vue Jour sur une date précise
+- `?display=week&date=2026-10-08` — vue Hebdo contenant cette date
+- Sans paramètre : vue Jour, aujourd'hui
 
 ---
 
-## 📌 Bonnes pratiques
+## 🎨 Repères visuels
 
-- **Sauvegardez** régulièrement via Import/Export
-- **Vérifiez les conflits** avant d'assigner un médiateur à une réservation
-- **Utilisez les couleurs** pour repérer rapidement les médiateurs/offres
+- **● point coloré** : couleur du médiateur (partout : planning, tableaux, formulaires)
+- **Pills colorées** : offres
+- **Bandeaux de fond** : absences (couleur selon le type)
+- **Traits rouges** : début/fin de la vraie réservation dans un bloc avec mise en place/rangement
+- **Bordure gauche double** : réservation importée (Secutix)
 
 ---
 
-*Documentation générée automatiquement. Dernière mise à jour : aujourd'hui.*
+*Documentation mise à jour avec la version 0.1.0. Le bandeau de statut en bas de page affiche la version courante.*

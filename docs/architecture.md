@@ -23,7 +23,9 @@ Frontend-only web application. No backend, no database server.
   persistence, gzip export/import, Excel stub. Uses browser APIs.
 - **Presentation** (`src/presentation/`): React components. UI glue. State
   managed via Context API + useReducer. Not unit-tested (logic extracted to
-  domain when testable).
+  domain when testable). Includes `StatusBar` (version, storage usage,
+  last-modified — app-wide footer) and `useElementWidth.ts` (responsive
+  grid scaling).
 
 ### Browser Compatibility
 

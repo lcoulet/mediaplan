@@ -130,25 +130,37 @@ mediaplan/
 
 - A mediator **cannot** be assigned to two overlapping slots on the same date
   (`hasMediatorOverlap()` enforces this).
+- Each slot carries a **planning status** (weekly view): unassigned >
+  dispo issue > incompetent > learning > OK — mutually exclusive,
+  availability before competence (`getSlotPlanningStatus()`).
 - Absences are **non-interactive** on the calendar (visual only,
   `pointer-events: none`).
 - Mediator assignment is always allowed (even when planning is locked) —
   opens a mediator-only modal in locked mode.
 - Modifying an imported slot marks it `modifiedAfterImport: true`.
 - The planning is **locked by default**. Unlocking requires a confirmation
-  warning. Locking is instant.
+  warning. Locking is instant. The lock protects reservations, NOT the
+  offer catalog.
+- Per-slot setup/teardown durations are editable **regardless of lock
+  state**; stored slot hours always remain the real booking period.
 - Overlapping slots are displayed **side-by-side** in parallel lanes within
-  day columns.
+  day columns (emoji-only summary when lanes are narrow).
 
 ### Demo Data
 
-- Generated relative to the current date: from start of previous month to end
-  of next month (~3 months).
-- 20 mediators, 70 offers, ~7 slots per weekday (weekdays only).
-- Majority of slots are origin `imported` from "Secutix".
-- 20 absences spread across the timeline.
+- Generated relative to the current date: from start of previous month to
+  **one year ahead** (~15 months).
+- 20 mediators, 70 offers, ~14 slots per weekday (weekdays only), ~4600 slots.
+- Slot mediators are picked from the pool of mediators **confirmed on the
+  offer** (mostly OK status); a deterministic subset is unassigned,
+  learning, or hits absences (all statuses represented).
+- Offers carry `setupTime`/`teardownTime` within {0, 5, 10, 15} min; slots
+  copy their offer's values. Slot booking hours equal the offer duration.
+- Absence patterns repeat across the whole span (~95-day cycles).
 - Some slots are unassigned, some are modified after import.
 - Reset button (🔄) in the header clears localStorage and regenerates demo data.
+- A distribution regression test (`test/seed-distribution.test.tsx`) guards
+  the OK-dominant, one-year-span invariants.
 
 ## Known Issues & Pitfalls
 

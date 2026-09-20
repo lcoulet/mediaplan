@@ -12,9 +12,13 @@ planned. The UI is in **French** by default.
 
 ## Features
 
+- **Weekly planning dashboard**: slot planning status (OK / to assign /
+  availability issue / learning / incompetent) with severity colors, emojis,
+  weekly stats badge and legend; native tooltip details
 - Daily planning view: mediators as rows, time as columns, drag-and-drop of
-  offers onto mediator tracks, booking vs. setup/teardown blocks
-- Weekly planning view with absence banners and conflict indicators
+  offers onto mediator tracks, booking vs. setup/teardown blocks, mediator
+  filter (free/busy/all), offer search
+- Date pickers on both views (click the date / the period label)
 - Manage mediators (add, edit, delete, colors, competences)
 - Manage offers (catalog fully editable regardless of lock state)
 - Manage reservations (slots) with multi-mediator assignment
@@ -25,6 +29,7 @@ planned. The UI is in **French** by default.
 - URL routing: `?display=day|week&date=YYYY-MM-DD`
 - Responsive planning grids (fill the screen width/height, clamped to readable
   scales)
+- App-wide status bar (version, localStorage usage, last data update)
 - JSON backup/restore with gzip compression
 - Undo/redo (Ctrl+Z / Ctrl+Shift+Z)
 - Data persistence via `localStorage`

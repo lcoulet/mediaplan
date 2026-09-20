@@ -50,6 +50,21 @@ at display time by `getSlotTotalRange()` (slot values override offer
 values), never stored. Rendered as one block with red delimiters marking
 the booking start/end inside it.
 
+### Planning Status (État du planning)
+The single most important piece of information on a slot, displayed on the
+weekly view. Mutually exclusive states computed by
+`getSlotPlanningStatus()` in priority order:
+- **Unassigned** (❌, hatched red): no mediator on the slot
+- **Dispo issue** (🚫, red): no assigned mediator is available (absence
+  or overlap) — availability is evaluated BEFORE competence
+- **Incompetent** (⚠️, amber): available mediators hold no competence for
+  the offer
+- **Learning** (📚, pale yellow): no confirmed mediator, but a learning one
+- **OK** (✔️, green): at least one mediator available AND confirmed
+
+The weekly view shows a per-status count badge (toolbar), a legend below
+the grid, and slot details in a native tooltip.
+
 ### Slot (Créneau)
 An instance of an offer assigned to a date, time, and one or more
 mediators. This is the atomic unit of the planning. Time granularity is
