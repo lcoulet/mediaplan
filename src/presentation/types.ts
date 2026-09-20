@@ -25,7 +25,7 @@ export interface AbsenceFilter {
 export interface AppState {
   data: AppData;
   currentView: ViewName;
-  currentWeekStart: Date;
+  currentDate: Date;
   filters: Filters;
   absenceFilter: AbsenceFilter;
   locked: boolean;
@@ -59,7 +59,7 @@ export interface ModalState {
 export type Action =
   | { type: 'SET_DATA'; data: AppData }
   | { type: 'SET_VIEW'; view: ViewName }
-  | { type: 'SET_WEEK_START'; date: Date }
+  | { type: 'SET_CURRENT_DATE'; date: Date }
   | { type: 'SET_FILTER_MEDIATOR'; mediatorId: string }
   | { type: 'SET_FILTER_OFFER'; offerId: string }
   | { type: 'SET_ABSENCE_FILTER_MEDIATOR'; mediatorId: string }

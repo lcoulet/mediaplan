@@ -31,6 +31,14 @@ export function toLocalDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+// Parse a YYYY-MM-DD string as LOCAL midnight.
+// new Date('YYYY-MM-DD') parses as UTC midnight, which shifts the day
+// in non-UTC timezones — use this for URL params and ISO dates.
+export function parseLocalDate(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d, 0, 0, 0, 0);
+}
+
 // Mediator
 const MEDIATOR_COLORS = [
   '#2c6e49', '#d68c45', '#2980b9', '#8e44ad',

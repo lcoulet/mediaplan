@@ -1,5 +1,5 @@
 // WeeklyView.tsx — Vue hebdomadaire (anciennement CalendarView)
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useData, getWeekStart } from './DataContext';
 import {
   isMediatorAvailable,
@@ -22,7 +22,10 @@ function toMinutes(time: string): number {
 
 export default function WeeklyView() {
   const { state, dispatch } = useData();
-  const { data, currentWeekStart, filters, locked, showAbsences } = state;
+  const { data, currentDate, filters, locked, showAbsences } = state;
+
+  // Week displayed = week containing the global currentDate
+  const currentWeekStart = useMemo(() => getWeekStart(currentDate), [currentDate]);
 
   // Modal state
   const [slotModal, setSlotModal] = useState<{
@@ -119,24 +122,16 @@ export default function WeeklyView() {
     setSlotModal({ slot: null, mediatorOnly: false, defaultDate: dateStr });
   }
 
-  // Update URL when week changes
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set('display', 'week');
-    urlParams.set('date', toLocalDateString(currentWeekStart));
-    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-    window.history.pushState({}, '', newUrl);
-  }, [currentWeekStart]);
-
   function changeWeek(delta: number) {
-    const d = new Date(currentWeekStart);
+    // Move the global date by whole weeks, keeping the same weekday.
+    // The displayed week is derived from currentDate.
+    const d = new Date(currentDate);
     d.setDate(d.getDate() + delta * 7);
-    dispatch({ type: 'SET_WEEK_START', date: d });
+    dispatch({ type: 'SET_CURRENT_DATE', date: d });
   }
 
   function goToToday() {
-    const todayWeekStart = getWeekStart(new Date());
-    dispatch({ type: 'SET_WEEK_START', date: todayWeekStart });
+    dispatch({ type: 'SET_CURRENT_DATE', date: new Date() });
   }
 
   return (

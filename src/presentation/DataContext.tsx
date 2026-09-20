@@ -11,7 +11,7 @@ import {
 } from 'react';
 import type { AppData, Mediator } from '../domain/types';
 import type { ViewName } from './types';
-import { createMediator, normalizeCompetences } from '../domain/models';
+import { createMediator, normalizeCompetences, parseLocalDate, toLocalDateString } from '../domain/models';
 import { createHistory, DEFAULT_HISTORY_SIZE } from '../domain/history';
 import { load, save } from '../infrastructure/store';
 import type { AppState, Action } from './types';
@@ -53,15 +53,15 @@ function getInitialState(): AppState {
     save(data);
   }
   
-  // Read view from URL if present
+  // Read view and date from URL if present
   let initialView: ViewName = 'daily';
-  let initialWeekStart = getWeekStart(new Date());
-  
+  let initialDate = new Date();
+
   if (typeof window !== 'undefined') {
     const urlParams = new URLSearchParams(window.location.search);
     const viewParam = urlParams.get('view') || urlParams.get('display');
     const dateParam = urlParams.get('date');
-    
+
     const viewMap: Record<string, ViewName> = {
       'jour': 'daily',
       'journee': 'daily',
@@ -79,17 +79,16 @@ function getInitialState(): AppState {
       initialView = viewMap[viewParam];
     }
     
-    // If date is provided, calculate week start for weekly view
-    if (dateParam && !isNaN(new Date(dateParam).getTime())) {
-      const targetDate = new Date(dateParam);
-      initialWeekStart = getWeekStart(targetDate);
+    // If date is provided, use it (parsed as LOCAL midnight, no UTC shift)
+    if (dateParam && !isNaN(parseLocalDate(dateParam).getTime())) {
+      initialDate = parseLocalDate(dateParam);
     }
   }
   
   return {
     data,
     currentView: initialView,
-    currentWeekStart: initialWeekStart,
+    currentDate: initialDate,
     filters: { mediatorId: '', offerId: '' },
     absenceFilter: { mediatorId: '' },
     locked: true,
@@ -105,8 +104,8 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, data: action.data };
     case 'SET_VIEW':
       return { ...state, currentView: action.view };
-    case 'SET_WEEK_START':
-      return { ...state, currentWeekStart: action.date };
+    case 'SET_CURRENT_DATE':
+      return { ...state, currentDate: action.date };
     case 'SET_FILTER_MEDIATOR':
       return { ...state, filters: { ...state.filters, mediatorId: action.mediatorId } };
     case 'SET_FILTER_OFFER':
@@ -251,6 +250,27 @@ const DataContext = createContext<DataContextValue | null>(null);
 export function DataProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, getInitialState);
   const history = useMemo(() => createHistory<AppData>(DEFAULT_HISTORY_SIZE), []);
+
+  // Keep the URL in sync with view + date (single source of truth).
+  // Changing the view does NOT touch the date — the date param only
+  // changes when the user navigates dates or weeks.
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const displayMap: Record<ViewName, string> = {
+      'daily': 'day',
+      'weekly': 'week',
+      'mediators': 'mediateurs',
+      'offers': 'offres',
+      'absences': 'absences',
+      'import-export': 'import-export',
+    };
+    urlParams.set('display', displayMap[state.currentView]);
+    urlParams.set('date', toLocalDateString(state.currentDate));
+    // Remove legacy 'view' param to avoid conflicting sources
+    urlParams.delete('view');
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  }, [state.currentView, state.currentDate]);
 
   // Track undo/redo capability
   const [undoRedo, setUndoRedo] = useReducer(

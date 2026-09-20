@@ -40,7 +40,7 @@ describe('DailyView', () => {
     vi.stubGlobal('Date', class extends Date {
       constructor(...args: any[]) {
         if (args.length === 0) super(MOCK_DATE.getTime());
-        else super(args[0] as any);
+        else super(...(args as [any]));
       }
       static now() { return MOCK_DATE.getTime(); }
     });

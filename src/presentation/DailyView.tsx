@@ -1,7 +1,7 @@
 // DailyView.tsx — Day Planning View (Vue planning du jour)
 // Layout per LEXICON.md: mediators as rows, time as columns (10-min grid lines),
 // unassigned lane, standard offers lane.
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useData, useCRUD } from './DataContext';
 import type { Slot, Mediator, Absence, AbsenceType } from '../domain/types';
 import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString } from '../domain/models';
@@ -24,26 +24,11 @@ export default function DailyView() {
   const crud = useCRUD();
   const { data, locked } = state;
 
-  // Get date from URL if present, otherwise use today
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const dateParam = urlParams.get('date');
-    if (dateParam && !isNaN(new Date(dateParam).getTime())) {
-      return new Date(dateParam);
-    }
-    return new Date();
-  });
+  // Single source of truth: global currentDate (URL-synced by DataProvider)
+  const selectedDate = state.currentDate;
+  const setSelectedDate = (d: Date) => dispatch({ type: 'SET_CURRENT_DATE', date: d });
 
   const selectedDateStr = toLocalDateString(selectedDate);
-
-  // Update URL when date changes
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set('date', selectedDateStr);
-    urlParams.set('display', 'day');
-    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-    window.history.pushState({}, '', newUrl);
-  }, [selectedDateStr]);
 
   // Slots for the selected day
   const daySlots = useMemo(() => {
@@ -469,6 +454,7 @@ export default function DailyView() {
                         left: `${dragIndicator.left}px`,
                         width: `${dragIndicator.width}px`,
                       }}
+                      title={`${dragIndicator.startTime} – ${dragIndicator.endTime}`}
                     >
                       <div className="drag-indicator-time">
                         {dragIndicator.startTime} – {dragIndicator.endTime}

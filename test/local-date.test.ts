@@ -1,5 +1,26 @@
 import { describe, it, expect } from 'vitest';
-import { toLocalDateString } from '../src/domain/models';
+import { toLocalDateString, parseLocalDate } from '../src/domain/models';
+
+describe('parseLocalDate', () => {
+  it('round-trips through toLocalDateString without day shift', () => {
+    const s = '2026-10-08';
+    expect(toLocalDateString(parseLocalDate(s))).toBe(s);
+  });
+
+  it('parses as local midnight, not UTC', () => {
+    // toISOString() of UTC-parsed '2026-10-08' shifts a day in UTC+2;
+    // parseLocalDate must keep local day 8
+    const d = parseLocalDate('2026-10-08');
+    expect(d.getDate()).toBe(8);
+    expect(d.getHours()).toBe(0);
+  });
+
+  it('round-trips a Monday for week-start computation', () => {
+    const s = '2026-09-14'; // Monday
+    const d = parseLocalDate(s);
+    expect(d.getDay()).toBe(1);
+  });
+});
 
 describe('toLocalDateString', () => {
   it('formats a local midnight date without UTC shift', () => {

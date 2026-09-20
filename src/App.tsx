@@ -1,8 +1,7 @@
 // App.tsx — Root component: composes header + view router
 
-import { useState, useEffect } from 'react';
-import { DataProvider, useData, getWeekStart } from './presentation/DataContext';
-import { toLocalDateString } from './domain/models';
+import { useState } from 'react';
+import { DataProvider, useData } from './presentation/DataContext';
 import Header from './presentation/Header';
 import WeeklyView from './presentation/WeeklyView';
 import DailyView from './presentation/DailyView';
@@ -13,42 +12,7 @@ import ImportExportView from './presentation/ImportExportView';
 import UserGuideModal from './presentation/UserGuideModal';
 
 function ViewRouter() {
-  const { state, dispatch } = useData();
-
-  // Handle URL routing for view changes
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const viewParam = urlParams.get('view') || urlParams.get('display');
-    const dateParam = urlParams.get('date');
-    
-    // Map URL view to our view names
-    const viewMap: Record<string, any> = {
-      'jour': 'daily',
-      'journee': 'daily',
-      'day': 'daily',
-      'hebdo': 'weekly',
-      'week': 'weekly',
-      'semaine': 'weekly',
-      'mediateurs': 'mediators',
-      'offres': 'offers',
-      'absences': 'absences',
-      'import-export': 'import-export',
-    };
-    
-    if (viewParam && viewMap[viewParam] && viewMap[viewParam] !== state.currentView) {
-      dispatch({ type: 'SET_VIEW', view: viewMap[viewParam] });
-      return; // wait for view state to settle before touching the date
-    }
-    
-    // If date is provided and we're in weekly view, update week start
-    if (dateParam && state.currentView === 'weekly' && !isNaN(new Date(dateParam).getTime())) {
-      const targetDate = new Date(dateParam);
-      const weekStart = getWeekStart(targetDate);
-      if (toLocalDateString(weekStart) !== toLocalDateString(state.currentWeekStart)) {
-        dispatch({ type: 'SET_WEEK_START', date: weekStart });
-      }
-    }
-  }, [dispatch, state.currentView, state.currentWeekStart]);
+  const { state } = useData();
 
   switch (state.currentView) {
     case 'weekly':
@@ -72,7 +36,6 @@ function App() {
   const [showUserGuide, setShowUserGuide] = useState(false);
 
   const handleOpenUserGuide = () => {
-    console.log('handleOpenUserGuide called from App');
     setShowUserGuide(true);
   };
 
