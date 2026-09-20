@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import DailyView from '../src/presentation/DailyView';
 import { DataProvider } from '../src/presentation/DataContext';
-import type { AppData } from '../domain/types';
+import type { AppData } from '../src/domain/types';
 
 // Test data matching AppData interface
 const mockData: AppData = {

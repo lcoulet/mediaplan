@@ -44,7 +44,8 @@ mediaplan/
 │   └── presentation/        # React components (UI glue)
 │       ├── DataContext.tsx  # Global state (Context API + useReducer)
 │       ├── Header.tsx
-│       ├── CalendarView.tsx
+│       ├── DailyView.tsx    # Day planning: mediators as rows, drag & drop
+│       ├── WeeklyView.tsx   # Weekly calendar grid
 │       ├── MediatorsView.tsx
 │       ├── OffersView.tsx
 │       ├── AbsencesView.tsx
@@ -55,6 +56,9 @@ mediaplan/
 │       ├── SlotModal.tsx
 │       ├── SlotDetailModal.tsx
 │       ├── AbsenceModal.tsx
+│       ├── MultiSelect.tsx
+│       ├── OfferPill.tsx
+│       ├── useElementWidth.ts # Responsive grid scaling hooks
 │       ├── DemoData.ts
 │       └── types.ts
 ├── test/                   # Vitest tests (domain + infrastructure)

@@ -24,15 +24,31 @@ instances.
 
 ### Setup Time (Temps de mise en place)
 The time needed before an offer to prepare the activity (room, equipment).
-Part of the offer definition. When a mediator is assigned to a slot, the
-setup time extends the mediator's occupied time range before the offer
-start. Used for overlap detection.
+Defined on the offer (default value) and OVERRIDABLE PER SLOT: a slot created
+from an offer copies the offer's setup time, and coordinators can adjust it
+per reservation without touching the booking hours or unlocking the planning.
+The setup time extends the mediator's occupied block BEFORE the booking start.
+Used for overlap detection and planning display.
 
 ### Teardown Time (Temps de démontage)
 The time needed after an offer to clean up and store equipment.
-Part of the offer definition. When a mediator is assigned to a slot, the
-teardown time extends the mediator's occupied time range after the offer
-end. Used for overlap detection.
+Same per-slot override rules as setup time. Extends the mediator's occupied
+block AFTER the booking end.
+
+### Booking (Réservation)
+The PUBLIC-FACING time of a slot: the period during which visitors benefit
+from the offer. Stored as `slot.startTime`/`slot.endTime`, ALWAYS distinct
+from setup/teardown — the offer's `duration` is the booking duration,
+logistics extend around it and are never included in it. When dragging an
+offer onto the planning, the cursor aims at the booking start (snapped to the
+10-minute grid); the setup block extends before the cursor and the teardown
+block after the booking.
+
+### Total Block (Bloc total)
+The full planning footprint of a slot: setup + booking + teardown. Derived
+at display time by `getSlotTotalRange()` (slot values override offer
+values), never stored. Rendered as one block with red delimiters marking
+the booking start/end inside it.
 
 ### Slot (Créneau)
 An instance of an offer assigned to a date, time, and one or more

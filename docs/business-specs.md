@@ -83,6 +83,11 @@ Excel export or paper printout).
 - `date`: slot date (ISO 8601, e.g. `2026-09-15`)
 - `startTime`: start time (10-minute increments, e.g. `09:00`, `09:10`)
 - `endTime`: end time (10-minute increments)
+- `setupTime`: setup duration in minutes (optional). Defaults to the offer's
+  `setupTime` at creation; editable per slot regardless of lock state.
+  `0` is a real override; undefined (legacy) falls back to the offer.
+- `teardownTime`: teardown duration in minutes (optional). Same rules as
+  `setupTime`.
 - `participantCount`: number of participants (optional)
 - `status`: `planned` | `confirmed` | `cancelled` | `completed`
 - `notes`: free-form notes (optional)
@@ -93,6 +98,21 @@ Excel export or paper printout).
 - `contractNumber`: unique identifier from Secutix for deduplication
   (reserved slots only)
 
+The stored `startTime`/`endTime` are always the REAL booking period (the
+public-facing time). Setup extends the planning block BEFORE the booking,
+teardown AFTER it — this geometry is derived at display time
+(`getSlotTotalRange()`), never stored on the booking hours.
+
+### Mediation Offer
+
+- `id`, `name`, `description`
+- `duration`: booking duration in minutes (public time — setup/teardown
+  excluded)
+- `capacity`, `location`
+- `setupTime`: default setup duration in minutes (optional)
+- `teardownTime`: default teardown duration in minutes (optional)
+- `color`: display color (hex)
+
 ### Mediator Unavailability (Absence)
 
 - `id`: unique identifier
@@ -100,8 +120,11 @@ Excel export or paper printout).
 - `startDate`: absence start date
 - `endDate`: absence end date (inclusive)
 - `halfDay`: `none` (full day) | `morning` | `afternoon`
-- `type`: `leave` | `mission` | `training` | `sick` | `other`
+- `type`: `leave` | `mission` | `training` | `sick` | `other` | `leave_request`
 - `notes`: free-form notes (optional)
+- `startTime`/`endTime`: display-only time range derived from `halfDay` and
+  the configurable half-day boundaries (`halfDayConfig` in AppData:
+  `morningEnd`, default `13:00`; `afternoonStart`, default `13:00`)
 
 ## Features
 

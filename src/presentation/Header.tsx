@@ -41,7 +41,7 @@ function TimeSelector({ value, onChange }: { value: string; onChange: (value: st
 }
 
 export default function Header({ onOpenUserGuide }: HeaderProps) {
-  const { state, dispatch, canUndo, canRedo, undo, redo, resetData } = useData();
+  const { state, dispatch, canUndo, canRedo, undo, redo } = useData();
   const crud = useCRUD();
   const [showConfig, setShowConfig] = useState(false);
   const [showMigrationWarning, setShowMigrationWarning] = useState(false);

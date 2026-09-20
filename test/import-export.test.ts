@@ -2,8 +2,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock URL.createObjectURL for Node.js environment
-global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
-global.URL.revokeObjectURL = vi.fn();
+(globalThis as any).URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+(globalThis as any).URL.revokeObjectURL = vi.fn();
 
 // Mock CompressionStream and DecompressionStream for Node.js environment
 class MockCompressionStream {

@@ -5,7 +5,6 @@ import {
   isMediatorAvailable,
   ABSENCE_TYPE_LABELS,
   getAbsenceTimeRange,
-  getDefaultHalfDayConfig,
   toLocalDateString,
 } from '../domain/models';
 import type { Slot, Absence } from '../domain/types';
