@@ -402,6 +402,9 @@ body.edit-mode .cal-day-col:hover {
   background: var(--color-primary-light, #e3f2fd);
   border-left: 3px solid var(--color-primary);
   z-index: 1;
+  /* The block width must include the left border: slot geometry is
+     computed in minutes and must not drift by the border width. */
+  box-sizing: border-box;
 }
 
 .daily-slot.assigned {
