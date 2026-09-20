@@ -5,9 +5,9 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/sync-guide.mjs && vite",
     "build": "node scripts/sync-guide.mjs && vite build",
-    "preview": "vite preview",
+    "preview": "node scripts/sync-guide.mjs && vite preview",
     "test": "vitest run",
     "docs:serve": "node scripts/docs-serve.mjs",
     "docs:generate": "node scripts/docs-capture.mjs && node scripts/sync-guide.mjs"
