@@ -33,8 +33,17 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
 
   const [form, setForm] = useState<Slot>(() => slot || createSlot({ date: defaultDate }));
 
+  // Default setup/teardown from the offer when the slot has none yet
+  const currentOffer = state.data.offers.find((o) => o.id === form.offerId);
+  const setupDefault = form.setupTime ?? currentOffer?.setupTime ?? 0;
+  const teardownDefault = form.teardownTime ?? currentOffer?.teardownTime ?? 0;
+
   // Mediator warning: overlap or absence for the first selected mediator
   const [selectedMediators, setSelectedMediators] = useState<string[]>(form.mediatorIds);
+
+  // Setup/teardown inputs (string for the number inputs; '' = use default)
+  const [setupTimeInput, setSetupTimeInput] = useState<string>(String(setupDefault));
+  const [teardownTimeInput, setTeardownTimeInput] = useState<string>(String(teardownDefault));
 
   const warning = useMemo(() => {
     const firstMed = selectedMediators[0];
@@ -63,6 +72,10 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    // Setup/teardown are editable regardless of lock state
+    const setupVal = setupTimeInput !== '' ? parseInt(setupTimeInput) || 0 : setupDefault;
+    const teardownVal = teardownTimeInput !== '' ? parseInt(teardownTimeInput) || 0 : teardownDefault;
+
     const updated: Slot = {
       ...form,
       offerId: form.offerId,
@@ -73,6 +86,8 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
       participantCount: parseInt(String(form.participantCount)) || 0,
       status: form.status,
       notes: form.notes.trim(),
+      setupTime: setupVal,
+      teardownTime: teardownVal,
     };
 
     if (isEdit) {
@@ -162,6 +177,32 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
             <div className="detail-row">
               <span className="detail-label">Horaire</span>
               <span className="detail-value">{form.startTime} – {form.endTime}</span>
+            </div>
+            <div className="form-row" style={{ marginTop: '12px' }}>
+              <div className="form-group">
+                <label>Mise en place (min)</label>
+                <input
+                  type="number"
+                  value={setupTimeInput}
+                  min={0}
+                  step={5}
+                  onChange={(e) => setSetupTimeInput(e.target.value)}
+                  title="Durée de préparation avant la réservation"
+                />
+                <div className="form-hint">Par défaut : {setupDefault} min (offre)</div>
+              </div>
+              <div className="form-group">
+                <label>Rangement (min)</label>
+                <input
+                  type="number"
+                  value={teardownTimeInput}
+                  min={0}
+                  step={5}
+                  onChange={(e) => setTeardownTimeInput(e.target.value)}
+                  title="Durée de rangement après la réservation"
+                />
+                <div className="form-hint">Par défaut : {teardownDefault} min (offre)</div>
+              </div>
             </div>
             <div className="detail-row">
               <span className="detail-label">Statut</span>
@@ -315,6 +356,32 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
                 <option key={val} value={val}>{STATUS_LABELS.slot[val]}</option>
               ))}
             </select>
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Mise en place (min)</label>
+            <input
+              type="number"
+              value={setupTimeInput}
+              min={0}
+              step={5}
+              onChange={(e) => setSetupTimeInput(e.target.value)}
+              title="Durée de préparation avant la réservation"
+            />
+            <div className="form-hint">Par défaut : {setupDefault} min (offre)</div>
+          </div>
+          <div className="form-group">
+            <label>Rangement (min)</label>
+            <input
+              type="number"
+              value={teardownTimeInput}
+              min={0}
+              step={5}
+              onChange={(e) => setTeardownTimeInput(e.target.value)}
+              title="Durée de rangement après la réservation"
+            />
+            <div className="form-hint">Par défaut : {teardownDefault} min (offre)</div>
           </div>
         </div>
         <div className="form-group">

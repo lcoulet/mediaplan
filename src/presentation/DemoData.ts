@@ -267,6 +267,10 @@ export function seedDemoData(data: AppData): void {
         participantCount: participants,
         origin,
       };
+      // Per-slot logistics durations: default to the offer's values
+      const slotOffer = offers[offIdx as number];
+      if (slotOffer.setupTime !== undefined) slotData.setupTime = slotOffer.setupTime;
+      if (slotOffer.teardownTime !== undefined) slotData.teardownTime = slotOffer.teardownTime;
       if (source) {
         slotData.importSource = source;
         slotData.importedAt = source === 'Secutix' ? secutixImport : coordinationImport;

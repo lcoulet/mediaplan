@@ -54,6 +54,11 @@ export interface Slot {
   importedAt: string;
   modifiedAfterImport: boolean;
   contractNumber?: string;
+  // Logistics durations in minutes, editable per-slot regardless of lock
+  // state. Default to the offer's values at creation. When undefined
+  // (legacy data), the offer's values are used.
+  setupTime?: number;
+  teardownTime?: number;
 }
 
 export type AbsenceHalfDay = 'none' | 'morning' | 'afternoon';

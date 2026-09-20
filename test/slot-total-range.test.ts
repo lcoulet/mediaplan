@@ -47,6 +47,28 @@ describe('getSlotTotalRange', () => {
     expect(r.end).toBe('11:10');
   });
 
+  it('slot durations override the offer durations', () => {
+    // Offer says 15/10 but the slot overrides with 5/5
+    const s = { ...slot('10:00', '11:00'), setupTime: 5, teardownTime: 5 };
+    const r = getSlotTotalRange(s, offer(15, 10));
+    expect(r.start).toBe('09:55');
+    expect(r.end).toBe('11:05');
+  });
+
+  it('slot setupTime overrides only setup when teardown undefined', () => {
+    const s = { ...slot('10:00', '11:00'), setupTime: 0 };
+    const r = getSlotTotalRange(s, offer(15, 10));
+    expect(r.start).toBe('10:00'); // slot overrides setup to 0
+    expect(r.end).toBe('11:10');   // teardown still from offer
+  });
+
+  it('slot durations of 0 are honored (not treated as missing)', () => {
+    const s = { ...slot('10:00', '11:00'), setupTime: 0, teardownTime: 0 };
+    const r = getSlotTotalRange(s, offer(30, 20));
+    expect(r.start).toBe('10:00');
+    expect(r.end).toBe('11:00');
+  });
+
   it('extends with setup only', () => {
     const r = getSlotTotalRange(slot('10:00', '11:00'), offer(30));
     expect(r.start).toBe('09:30');

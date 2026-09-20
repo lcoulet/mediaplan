@@ -198,6 +198,9 @@ export default function DailyView() {
           importSource: '',
           importedAt: '',
           modifiedAfterImport: false,
+          // Initialize per-slot durations from the offer (editable later)
+          ...(offer.setupTime !== undefined ? { setupTime: offer.setupTime } : {}),
+          ...(offer.teardownTime !== undefined ? { teardownTime: offer.teardownTime } : {}),
         };
         crud({ type: 'ADD_SLOT', slot: newSlot });
       }
@@ -567,10 +570,13 @@ export default function DailyView() {
                     const isSelected = selectedSlot?.id === slot.id;
                     const isImported = slot.origin === 'imported';
 
-                    // Total block = setup + booking + teardown (from offer)
+                    // Total block = setup + booking + teardown.
+                    // Durations: slot values override offer values (per-slot editable)
                     const total = getSlotTotalRange(slot, offer);
-                    const hasSetup = !!offer?.setupTime;
-                    const hasTeardown = !!offer?.teardownTime;
+                    const effSetup = slot.setupTime ?? offer?.setupTime ?? 0;
+                    const effTeardown = slot.teardownTime ?? offer?.teardownTime ?? 0;
+                    const hasSetup = effSetup > 0;
+                    const hasTeardown = effTeardown > 0;
                     const totalLeft = toMinutes(total.start) - START_HOUR * 60;
                     const totalWidth = toMinutes(total.end) - toMinutes(total.start);
                     // Thin delimiters where the real booking starts/ends
@@ -593,7 +599,7 @@ export default function DailyView() {
                         draggable
                         onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
                         onDragEnd={handleDragEnd}
-                        title={`Réservation : ${slot.startTime} – ${slot.endTime}${hasSetup ? ` (mise en place ${offer!.setupTime} min avant)` : ''}${hasTeardown ? ` (rangement ${offer!.teardownTime} min après)` : ''}`}
+                        title={`Réservation : ${slot.startTime} – ${slot.endTime}${hasSetup ? ` (mise en place ${effSetup} min avant)` : ''}${hasTeardown ? ` (rangement ${effTeardown} min après)` : ''}`}
                       >
                         {hasSetup && (
                           <div

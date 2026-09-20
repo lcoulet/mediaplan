@@ -59,13 +59,16 @@ export function getOfferTotalDuration(offer: Offer): number {
 
 // Total block covered by a slot on the planning: setup starts before the
 // booking, teardown ends after it. The stored slot hours remain the REAL
-// booking period; this is display/collision geometry derived from the offer.
+// booking period; this is display/collision geometry.
+// Durations: the SLOT's own values take precedence (editable per slot,
+// regardless of lock state); when absent (legacy data) the OFFER's values
+// apply.
 export function getSlotTotalRange(
   slot: Slot,
   offer: Offer | undefined
 ): { start: string; end: string } {
-  const setup = offer?.setupTime || 0;
-  const teardown = offer?.teardownTime || 0;
+  const setup = slot.setupTime ?? offer?.setupTime ?? 0;
+  const teardown = slot.teardownTime ?? offer?.teardownTime ?? 0;
   const startMin = timeToMinutes(slot.startTime);
   const endMin = timeToMinutes(slot.endTime);
   // Guard against invalid/missing slot hours: don't derive negative times
@@ -205,6 +208,8 @@ interface SlotInput {
   importedAt?: string;
   modifiedAfterImport?: boolean;
   contractNumber?: string;
+  setupTime?: number;
+  teardownTime?: number;
 }
 
 export function createSlot(data: SlotInput = {}): Slot {
@@ -233,6 +238,10 @@ export function createSlot(data: SlotInput = {}): Slot {
     importSource: data.importSource || '',
     importedAt: data.importedAt || '',
     modifiedAfterImport: data.modifiedAfterImport !== undefined ? data.modifiedAfterImport : false,
+    // Optional per-slot logistics durations (minutes). Left undefined on
+    // purpose when not provided: the offer's values apply (legacy behavior).
+    ...(data.setupTime !== undefined ? { setupTime: data.setupTime } : {}),
+    ...(data.teardownTime !== undefined ? { teardownTime: data.teardownTime } : {}),
   };
 }
 
