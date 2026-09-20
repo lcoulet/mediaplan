@@ -168,10 +168,11 @@ describe('WeeklyView', () => {
     expect(first.textContent).not.toContain('✋');
     // No time or title text in compact mode
     expect(first.textContent).not.toContain('10:00');
-    // Structure: emoji first, mediator dot second (rendered below in column)
+    // Structure: emoji first, colored ● mediator glyph second (below)
     const children = first.children;
     expect(children.length).toBe(2);
     expect(children[0].className).toContain('slot-badge-emoji');
-    expect(children[1].className).toContain('slot-mediator-dot-below');
+    expect(children[1].className).toContain('slot-mediator-glyph');
+    expect(children[1].textContent).toBe('●');
   });
 });

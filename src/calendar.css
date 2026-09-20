@@ -137,10 +137,12 @@
   text-align: center;
 }
 
-/* Mediator dot below the status emoji in compact lanes */
-.slot-mediator-dot-below {
-  margin-top: 0;
-  flex-shrink: 0;
+/* Colored ● mediator glyph (text-based, aligns with the emoji above) */
+.slot-mediator-glyph {
+  font-size: 10px;
+  line-height: 1;
+  width: 16px;
+  text-align: center;
 }
 
 .calendar-grid {
