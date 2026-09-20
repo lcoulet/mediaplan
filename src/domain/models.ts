@@ -20,6 +20,17 @@ export function generateId(prefix = 'id'): string {
   return `${prefix}_${Date.now().toString(36)}_${idCounter.toString(36)}`;
 }
 
+// Format a Date as local-timezone ISO date (YYYY-MM-DD).
+// toISOString() returns UTC and shifts the day for non-UTC timezones
+// (e.g. Toulouse UTC+2: local Monday 00:00 becomes Sunday 22:00 UTC),
+// which corrupted week-start calculations and URL date params.
+export function toLocalDateString(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 // Mediator
 const MEDIATOR_COLORS = [
   '#2c6e49', '#d68c45', '#2980b9', '#8e44ad',

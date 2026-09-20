@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { DataProvider, useData, getWeekStart } from './presentation/DataContext';
+import { toLocalDateString } from './domain/models';
 import Header from './presentation/Header';
 import WeeklyView from './presentation/WeeklyView';
 import DailyView from './presentation/DailyView';
@@ -36,13 +37,14 @@ function ViewRouter() {
     
     if (viewParam && viewMap[viewParam] && viewMap[viewParam] !== state.currentView) {
       dispatch({ type: 'SET_VIEW', view: viewMap[viewParam] });
+      return; // wait for view state to settle before touching the date
     }
     
     // If date is provided and we're in weekly view, update week start
     if (dateParam && state.currentView === 'weekly' && !isNaN(new Date(dateParam).getTime())) {
       const targetDate = new Date(dateParam);
       const weekStart = getWeekStart(targetDate);
-      if (weekStart.getTime() !== state.currentWeekStart.getTime()) {
+      if (toLocalDateString(weekStart) !== toLocalDateString(state.currentWeekStart)) {
         dispatch({ type: 'SET_WEEK_START', date: weekStart });
       }
     }

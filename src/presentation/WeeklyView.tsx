@@ -6,6 +6,7 @@ import {
   ABSENCE_TYPE_LABELS,
   getAbsenceTimeRange,
   getDefaultHalfDayConfig,
+  toLocalDateString,
 } from '../domain/models';
 import type { Slot, Absence } from '../domain/types';
 import SlotModal from './SlotModal';
@@ -60,7 +61,7 @@ export default function WeeklyView() {
     for (let i = 0; i < 7; i++) {
       const d = new Date(currentWeekStart);
       d.setDate(d.getDate() + i);
-      const ds = d.toISOString().slice(0, 10);
+      const ds = toLocalDateString(d);
 
       const daySlots = filteredSlots
         .filter((s) => s.date === ds)
@@ -122,7 +123,7 @@ export default function WeeklyView() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.set('display', 'week');
-    urlParams.set('date', currentWeekStart.toISOString().slice(0, 10));
+    urlParams.set('date', toLocalDateString(currentWeekStart));
     const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
     window.history.pushState({}, '', newUrl);
   }, [currentWeekStart]);

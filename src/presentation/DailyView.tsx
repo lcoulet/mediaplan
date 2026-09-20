@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useData, useCRUD } from './DataContext';
 import type { Slot, Mediator, Absence, AbsenceType } from '../domain/types';
-import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig } from '../domain/models';
+import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString } from '../domain/models';
 import { ABSENCE_TYPE_LABELS } from '../domain/models';
 import SlotModal from './SlotModal';
 
@@ -34,7 +34,7 @@ export default function DailyView() {
     return new Date();
   });
 
-  const selectedDateStr = selectedDate.toISOString().slice(0, 10);
+  const selectedDateStr = toLocalDateString(selectedDate);
 
   // Update URL when date changes
   useEffect(() => {
