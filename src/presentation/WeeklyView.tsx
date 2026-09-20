@@ -90,7 +90,7 @@ export default function WeeklyView() {
   const periodLabel = useMemo(() => {
     const end = new Date(currentWeekStart);
     end.setDate(end.getDate() + 6);
-    const fmt = (d: Date) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    const fmt = (d: Date) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
     return `${fmt(currentWeekStart)} – ${fmt(end)}`;
   }, [currentWeekStart]);
 

@@ -398,7 +398,7 @@ export default function DailyView() {
           <button className="btn btn-secondary" onClick={() => goToDay(1)}>→</button>
           <h2>
             <label className="date-picker-label" title="Changer la date">
-              Plan Jour — {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              Plan Jour — {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               <input
                 type="date"
                 className="date-picker-input"
