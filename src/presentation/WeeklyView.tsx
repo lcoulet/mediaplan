@@ -9,11 +9,13 @@ import {
   toLocalDateString,
 } from '../domain/models';
 import type { Slot, Absence } from '../domain/types';
+import { useViewportPxPerHour } from './useElementWidth';
 import SlotModal from './SlotModal';
 import SlotDetailModal from './SlotDetailModal';
 
 const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 8); // 8h à 19h
+const FALLBACK_PX_PER_HOUR_V = 40; // before measurement / jsdom
 
 function toMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
@@ -26,6 +28,9 @@ export default function WeeklyView() {
 
   // Week displayed = week containing the global currentDate
   const currentWeekStart = useMemo(() => getWeekStart(currentDate), [currentDate]);
+
+  // Responsive vertical scale: fill the viewport height with the 11h day grid
+  const pxPerHourV = useViewportPxPerHour(HOURS.length - 1, FALLBACK_PX_PER_HOUR_V);
 
   // Modal state
   const [slotModal, setSlotModal] = useState<{
@@ -236,7 +241,7 @@ export default function WeeklyView() {
           {/* Time column */}
           <div className="cal-time-col">
             {HOURS.map((h) => (
-              <div key={h} className="cal-time-label">
+              <div key={h} className="cal-time-label" style={{ height: `${pxPerHourV}px` }}>
                 {h.toString().padStart(2, '0')}:00
               </div>
             ))}
@@ -252,6 +257,7 @@ export default function WeeklyView() {
                 key={dd.dateStr}
                 className="cal-day-col"
                 data-date={dd.dateStr}
+                style={{ minHeight: `${(HOURS.length - 1) * pxPerHourV}px` }}
                 onClick={(e) => handleDayClick(dd.dateStr, e)}
               >
                 {/* Absence banners */}
@@ -263,11 +269,11 @@ export default function WeeklyView() {
                   // Calculate position based on startTime/endTime
                   const startMinutes = toMinutes(abs.startTime || '00:00');
                   const endMinutes = toMinutes(abs.endTime || '23:59');
-                  
-                  // Day column height: 8h-19h = 11 hours = 440px
-                  const DAY_HEIGHT = 440;
+
+                  // Day column height scales with the viewport
+                  const DAY_HEIGHT = (HOURS.length - 1) * pxPerHourV;
                   const MINUTES_PER_PX = DAY_HEIGHT / (11 * 60);
-                  
+
                   const top = (startMinutes - 8 * 60) * MINUTES_PER_PX;
                   const height = (endMinutes - startMinutes) * MINUTES_PER_PX;
                   
@@ -301,10 +307,10 @@ export default function WeeklyView() {
                       <span className="slot-mediator-dot" style={{ background: mediatorColor }}></span>
                     ) : null;
 
-                    const top = (parseInt(slot.startTime) - 8) * 40 + (parseInt(slot.startTime.split(':')[1]) / 60) * 40;
-                    const heightCalc =
-                      (parseInt(slot.endTime) - parseInt(slot.startTime)) * 40 +
-                      ((parseInt(slot.endTime.split(':')[1]) - parseInt(slot.startTime.split(':')[1])) / 60) * 40;
+                    const startMin = toMinutes(slot.startTime);
+                    const endMin = toMinutes(slot.endTime);
+                    const top = (startMin - 8 * 60) * (pxPerHourV / 60);
+                    const heightCalc = (endMin - startMin) * (pxPerHourV / 60);
                     const widthPct = laneCount > 1 ? 100 / laneCount : 100;
                     const leftPct = laneIdx * widthPct;
 

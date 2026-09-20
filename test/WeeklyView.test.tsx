@@ -51,4 +51,22 @@ describe('WeeklyView', () => {
     expect(screen.getAllByText('Jean Dupont')[1]).toBeInTheDocument(); // Le 2e élément pour éviter le select
     expect(screen.getByText('Visite guidée')).toBeInTheDocument();
   });
+
+  it('scales the vertical hour grid to the viewport height', () => {
+    // jsdom default innerHeight is 768: (768 - 220) / 11h = 49.81px/h
+    const { container } = render(
+      <DataProvider>
+        <WeeklyView />
+      </DataProvider>
+    );
+    const timeLabels = container.querySelectorAll('.cal-time-label');
+    expect(timeLabels.length).toBe(12);
+    const first = (timeLabels[0] as HTMLElement).style.height;
+    expect(parseFloat(first)).toBeCloseTo(49.82, 1);
+
+    // Day column min-height = 11h * scale
+    const dayCols = container.querySelectorAll('.cal-day-col');
+    const mh = parseFloat((dayCols[0] as HTMLElement).style.minHeight);
+    expect(mh).toBeCloseTo(49.82 * 11, 0);
+  });
 });

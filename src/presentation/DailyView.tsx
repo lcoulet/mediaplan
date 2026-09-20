@@ -6,12 +6,13 @@ import { useData, useCRUD } from './DataContext';
 import type { Slot, Mediator, Absence, AbsenceType } from '../domain/types';
 import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString, getSlotTotalRange } from '../domain/models';
 import { ABSENCE_TYPE_LABELS } from '../domain/models';
+import { useElementWidth, pxPerHourFromWidth } from './useElementWidth';
 import SlotModal from './SlotModal';
 
 const START_HOUR = 8;
 const END_HOUR = 19;
 const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + START_HOUR);
-const HOUR_HEIGHT = 60; // px per hour
+const FALLBACK_PX_PER_HOUR = 60; // used until the container is measured
 const TRACK_HEIGHT = 40; // Fixed height for mediator tracks
 
 function toMinutes(time: string): number {
@@ -121,9 +122,17 @@ export default function DailyView() {
     );
   }, [data.offers, offerSearch]);
 
+  // Responsive scale: measure the grid container and fill the width.
+  // The 200px mediator-label column is subtracted from the available width.
+  const { ref: gridRef, width: gridWidth } = useElementWidth();
+  const MEDIATOR_LABEL_WIDTH = 200;
+  const pxPerHour = gridWidth > 0
+    ? pxPerHourFromWidth(gridWidth - MEDIATOR_LABEL_WIDTH, END_HOUR - START_HOUR)
+    : FALLBACK_PX_PER_HOUR;
+  const pxPerMin = pxPerHour / 60;
+
   // Calculate minutes per pixel for the grid
-  const totalGridWidth = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
-  const minutesPerPx = HOUR_HEIGHT / 60;
+  const totalGridWidth = (END_HOUR - START_HOUR) * pxPerHour;
 
   // Highlight offer: from selected slot (click) OR dragged item (drag)
   const highlightOfferId = useMemo(() => {
@@ -170,7 +179,7 @@ export default function DailyView() {
     const rect = track.getBoundingClientRect();
     const x = clientX - rect.left;
     // Round to 10-minute precision
-    const totalMinutes = Math.round(x / (HOUR_HEIGHT / 60) / 10) * 10;
+    const totalMinutes = Math.round(x / pxPerMin / 10) * 10;
     const hour = START_HOUR + Math.floor(totalMinutes / 60);
     const minute = totalMinutes % 60;
     return formatTime(hour, minute);
@@ -274,7 +283,7 @@ export default function DailyView() {
     
     // Round to 10-minute precision: the cursor aims at the BOOKING start.
     // The setup block extends BEFORE it (possibly left of the cursor).
-    const totalMinutes = Math.round(x / (HOUR_HEIGHT / 60) / 10) * 10;
+    const totalMinutes = Math.round(x / pxPerMin / 10) * 10;
     const hour = START_HOUR + Math.floor(totalMinutes / 60);
     const minute = totalMinutes % 60;
 
@@ -306,8 +315,8 @@ export default function DailyView() {
     );
 
     // Indicator position and width (from block start)
-    const left = blockStartMinutes * (HOUR_HEIGHT / 60);
-    const width = (setup + offer.duration + teardown) * (HOUR_HEIGHT / 60);
+    const left = blockStartMinutes * pxPerMin;
+    const width = (setup + offer.duration + teardown) * pxPerMin;
 
     setDragIndicator({
       left,
@@ -360,19 +369,19 @@ export default function DailyView() {
   }
 
   function getSlotTop(slot: Slot): number {
-    return (toMinutes(slot.startTime) - START_HOUR * 60);
+    return (toMinutes(slot.startTime) - START_HOUR * 60) * pxPerMin;
   }
 
   function getSlotHeight(slot: Slot): number {
-    return toMinutes(slot.endTime) - toMinutes(slot.startTime);
+    return (toMinutes(slot.endTime) - toMinutes(slot.startTime)) * pxPerMin;
   }
 
   function getAbsenceTop(absence: Absence): number {
-    return (toMinutes(absence.startTime || '00:00') - START_HOUR * 60);
+    return (toMinutes(absence.startTime || '00:00') - START_HOUR * 60) * pxPerMin;
   }
 
   function getAbsenceWidth(absence: Absence): number {
-    return toMinutes(absence.endTime || '23:59') - toMinutes(absence.startTime || '00:00');
+    return (toMinutes(absence.endTime || '23:59') - toMinutes(absence.startTime || '00:00')) * pxPerMin;
   }
 
   // Filter absences for a specific mediator on the selected day
@@ -436,7 +445,7 @@ export default function DailyView() {
         </div>
       </div>
 
-      <div className="daily-grid">
+      <div className="daily-grid" ref={gridRef}>
         {/* Time axis — horizontal, hours as columns */}
         <div className="daily-time-axis">
           <div className="daily-time-spacer"></div>
@@ -462,7 +471,7 @@ export default function DailyView() {
                 <div
                   key={hour}
                   className="daily-hour-line"
-                  style={{ left: `${i * HOUR_HEIGHT}px`, width: `${HOUR_HEIGHT}px` }}
+                  style={{ left: `${i * pxPerHour}px`, width: `${pxPerHour}px` }}
                 />
               ))}
               {unassignedSlots.length === 0 ? (
@@ -540,7 +549,7 @@ export default function DailyView() {
                     <div
                       key={hour}
                       className="daily-hour-line"
-                      style={{ left: `${i * HOUR_HEIGHT}px`, width: `${HOUR_HEIGHT}px` }}
+                      style={{ left: `${i * pxPerHour}px`, width: `${pxPerHour}px` }}
                     />
                   ))}
                   
@@ -601,15 +610,15 @@ export default function DailyView() {
                     const effTeardown = slot.teardownTime ?? offer?.teardownTime ?? 0;
                     const hasSetup = effSetup > 0;
                     const hasTeardown = effTeardown > 0;
-                    const totalLeft = toMinutes(total.start) - START_HOUR * 60;
-                    const totalWidth = toMinutes(total.end) - toMinutes(total.start);
+                    const totalLeft = (toMinutes(total.start) - START_HOUR * 60) * pxPerMin;
+                    const totalWidth = (toMinutes(total.end) - toMinutes(total.start)) * pxPerMin;
                     // Absolute children are positioned from the PADDING edge,
                     // i.e. after the left border (3px, 4px for imported).
                     // Compensate so the delimiters land exactly on the
                     // minute-grid positions.
                     const borderWidth = isImported ? 4 : 3;
-                    const bookingStartOffset = toMinutes(slot.startTime) - toMinutes(total.start) - borderWidth;
-                    const bookingEndOffset = toMinutes(slot.endTime) - toMinutes(total.start) - borderWidth;
+                    const bookingStartOffset = (toMinutes(slot.startTime) - toMinutes(total.start)) * pxPerMin - borderWidth;
+                    const bookingEndOffset = (toMinutes(slot.endTime) - toMinutes(total.start)) * pxPerMin - borderWidth;
 
                     return (
                       <div
