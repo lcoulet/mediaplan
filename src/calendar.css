@@ -131,11 +131,16 @@
 .slot-badge-emoji {
   font-size: 11px;
   line-height: 1;
+  /* Fixed-width centered glyph so the emoji and the dot below it
+     align on the same vertical axis regardless of emoji bearings */
+  width: 16px;
+  text-align: center;
 }
 
 /* Mediator dot below the status emoji in compact lanes */
 .slot-mediator-dot-below {
   margin-top: 0;
+  flex-shrink: 0;
 }
 
 .calendar-grid {
