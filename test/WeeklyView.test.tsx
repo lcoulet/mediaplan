@@ -89,11 +89,15 @@ describe('WeeklyView', () => {
         <WeeklyView />
       </DataProvider>
     );
-    // s1: mediator m1 has NO competence for the offer -> incompetent (grey)
+    // s1: mediator m1 has NO competence for the offer -> incompetent (amber)
     const slotEl = container.querySelector('.cal-slot') as HTMLElement;
     expect(slotEl).toBeTruthy();
     expect(slotEl.className).toContain('pstatus-incompetent');
-    expect(slotEl.style.background).toContain('rgb(226, 227, 229)'); // #e2e3e5
+    expect(slotEl.style.background).toContain('rgb(255, 233, 199)'); // #ffe9c7
+
+    // Compact badges: time + title + status with ⚠
+    expect(slotEl.textContent).toContain('⚠');
+    expect(slotEl.textContent).toContain('Incompétent');
 
     // Native tooltip carries the status and mediators
     const title = slotEl.getAttribute('title') || '';
@@ -112,10 +116,15 @@ describe('WeeklyView', () => {
     expect(legend).toBeTruthy();
     const items = legend!.querySelectorAll('.week-legend-item');
     expect(items.length).toBe(5);
-    expect(legend!.textContent).toContain('OK');
-    expect(legend!.textContent).toContain('À assigner');
-    expect(legend!.textContent).toContain('Indisponibilité');
-    expect(legend!.textContent).toContain('En formation');
-    expect(legend!.textContent).toContain('Incompétent');
+    // Severity order: À assigner, Indisponibilité, Incompétent, En apprentissage, OK
+    const badges = Array.from(items).map((i) => i.textContent);
+    expect(badges[0]).toContain('À assigner');
+    expect(badges[1]).toContain('Indisponibilité');
+    expect(badges[2]).toContain('Incompétent');
+    expect(badges[3]).toContain('En apprentissage');
+    expect(badges[4]).toContain('OK');
+    // Error statuses carry the ⚠ badge in the legend
+    expect(badges[0]).toContain('⚠');
+    expect(badges[3]).not.toContain('⚠');
   });
 });

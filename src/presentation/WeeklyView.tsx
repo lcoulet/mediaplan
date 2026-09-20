@@ -17,22 +17,32 @@ const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dima
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 8); // 8h à 19h
 const FALLBACK_PX_PER_HOUR_V = 40; // before measurement / jsdom
 
-// Planning status labels and colors (weekly view)
+// Planning status labels, colors and severity (weekly view).
+// Severity order drives legend, stats AND visual weight:
+//   À assigner (hatched red) > Indisponibilité (red) > Incompétent (amber)
+//   > En apprentissage (pale yellow info) > OK (quiet green)
 const STATUS_LABELS: Record<SlotPlanningStatus, string> = {
   ok: 'OK',
   unassigned: 'À assigner',
   dispo_issue: 'Indisponibilité',
-  learning: 'En formation',
+  learning: 'En apprentissage',
   incompetent: 'Incompétent',
 };
 const STATUS_BG: Record<SlotPlanningStatus, string> = {
-  ok: '#e8f5e9',          // green tint
-  unassigned: '#fff3cd',  // amber tint
-  dispo_issue: '#f8d7da', // red tint
-  learning: '#fff8e1',   // pale yellow
-  incompetent: '#e2e3e5', // grey tint
+  ok: '#e8f5e9',          // quiet green
+  unassigned: '#f8d7da',  // red base (hatched via CSS class)
+  dispo_issue: '#f8d7da', // red
+  learning: '#fff8e1',    // pale yellow (info)
+  incompetent: '#ffe9c7', // amber warning
 };
-const STATUS_ORDER: SlotPlanningStatus[] = ['ok', 'unassigned', 'dispo_issue', 'learning', 'incompetent'];
+const STATUS_ORDER: SlotPlanningStatus[] = ['unassigned', 'dispo_issue', 'incompetent', 'learning', 'ok'];
+const STATUS_SHORT: Record<SlotPlanningStatus, string> = {
+  ok: 'OK',
+  unassigned: 'À assigner',
+  dispo_issue: 'Indispo.',
+  learning: 'Apprentissage',
+  incompetent: 'Incompétent',
+};
 
 function toMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
@@ -388,12 +398,24 @@ export default function WeeklyView() {
                         title={tooltip}
                         onClick={() => handleSlotClick(slot)}
                       >
-                        <div className="slot-time">{slot.startTime} – {slot.endTime}</div>
-                        <div className="slot-title">{offer ? offer.name : '—'}{originIcon}</div>
-                        <div className="slot-mediator">
-                          {mediatorBadge}
-                          {mediator ? `${mediator.firstName} ${mediator.lastName}` : 'Non assigné'}
+                        <div className="slot-badges">
+                          <span className="slot-badge slot-badge-time">{slot.startTime}–{slot.endTime}</span>
+                          <span className="slot-badge slot-badge-title">
+                            {offer ? offer.name : '—'}{originIcon}
+                          </span>
+                          {laneCount === 1 && (
+                            <span className={`slot-badge slot-badge-status sb-${planningStatus}`}>
+                              {(planningStatus === 'unassigned' || planningStatus === 'dispo_issue' || planningStatus === 'incompetent') && '⚠ '}
+                              {STATUS_SHORT[planningStatus]}
+                            </span>
+                          )}
                         </div>
+                        {laneCount === 1 && mediator && (
+                          <div className="slot-mediator">
+                            {mediatorBadge}
+                            {mediator.firstName} {mediator.lastName}
+                          </div>
+                        )}
                       </div>
                     );
                   })
@@ -401,12 +423,17 @@ export default function WeeklyView() {
               </div>
             );
           })}
-          {/* Legend: planning status colors (once, below the grid) */}
+          {/* Legend: planning status badges (same style as in slots) */}
           <div className="week-legend">
             {STATUS_ORDER.map((st) => (
               <span key={st} className="week-legend-item">
-                <span className="week-stat-dot" style={{ background: STATUS_BG[st] }}></span>
-                {STATUS_LABELS[st]}
+                <span
+                  className={`slot-badge slot-badge-status sb-${st}`}
+                  style={{ background: STATUS_BG[st] }}
+                >
+                  {(st === 'unassigned' || st === 'dispo_issue' || st === 'incompetent') && '⚠ '}
+                  {STATUS_LABELS[st]}
+                </span>
               </span>
             ))}
           </div>
