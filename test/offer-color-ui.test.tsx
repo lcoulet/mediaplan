@@ -1,9 +1,19 @@
 // test/offer-color-ui.test.tsx — Offer color: picker in OfferModal, pills in views/modals
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { DataProvider } from '../src/presentation/DataContext';
+import React from 'react';
+import { DataProvider, useData } from '../src/presentation/DataContext';
 import OfferModal from '../src/presentation/OfferModal';
 import type { AppData, Offer } from '../src/domain/types';
+
+// Unlock helper: OfferModal only allows full editing when unlocked
+function Unlocker({ children }: { children: React.ReactNode }) {
+  const { dispatch } = useData();
+  React.useEffect(() => {
+    dispatch({ type: 'SET_LOCKED', locked: false });
+  }, [dispatch]);
+  return <>{children}</>;
+}
 
 // Minimal localStorage mock (jsdom doesn't provide localStorage)
 class LocalStorageMock {
@@ -62,7 +72,9 @@ describe('OfferModal — color picker', () => {
     seedStorage([storedOffer('#123456')]);
     render(
       <DataProvider>
-        <OfferModal offer={storedOffer('#123456')} onClose={() => {}} />
+        <Unlocker>
+          <OfferModal offer={storedOffer('#123456')} onClose={() => {}} />
+        </Unlocker>
       </DataProvider>
     );
     const input = document.querySelector('input[type="color"]') as HTMLInputElement;
@@ -87,7 +99,9 @@ describe('OfferModal — color picker', () => {
     );
     render(
       <DataProvider>
-        <OfferModal offer={null} onClose={() => {}} />
+        <Unlocker>
+          <OfferModal offer={null} onClose={() => {}} />
+        </Unlocker>
       </DataProvider>
     );
     const input = document.querySelector('input[type="color"]') as HTMLInputElement;

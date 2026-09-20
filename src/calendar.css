@@ -545,6 +545,28 @@ body.edit-mode .cal-day-col:hover {
   white-space: nowrap;
 }
 
+/* Thin delimiters marking the real booking start/end inside the total block */
+.slot-boundary {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.slot-boundary::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -2px;
+  width: 5px;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
 /* Drag indicator (red bar) */
 .daily-drag-indicator {
   position: absolute;

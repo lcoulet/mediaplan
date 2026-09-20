@@ -110,9 +110,11 @@ export default function OffersView() {
           )}
         </div>
         <div className="toolbar-right">
-          <button className="btn btn-primary" id="btn-add-offer" onClick={openAdd}>
-            + Ajouter une offre
-          </button>
+          {!state.locked && (
+            <button className="btn btn-primary" id="btn-add-offer" onClick={openAdd}>
+              + Ajouter une offre
+            </button>
+          )}
         </div>
       </div>
 
@@ -160,8 +162,14 @@ export default function OffersView() {
                   <td>{o.capacity}</td>
                   <td>{o.location || '—'}</td>
                   <td className="actions-cell">
-                    <button className="action-btn" title="Modifier" onClick={() => openEdit(o)}>✏</button>
-                    <button className="action-btn" title="Supprimer" onClick={() => handleDelete(o.id)}>🗑</button>
+                    <button
+                      className="action-btn"
+                      title={state.locked ? 'Durées mise en place / rangement' : 'Modifier'}
+                      onClick={() => openEdit(o)}
+                    >{state.locked ? '⏱' : '✏'}</button>
+                    {!state.locked && (
+                      <button className="action-btn" title="Supprimer" onClick={() => handleDelete(o.id)}>🗑</button>
+                    )}
                   </td>
                 </tr>
               ))

@@ -4,7 +4,7 @@
 import { useState, useMemo } from 'react';
 import { useData, useCRUD } from './DataContext';
 import type { Slot, Mediator, Absence, AbsenceType } from '../domain/types';
-import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString } from '../domain/models';
+import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString, getSlotTotalRange, getOfferTotalDuration, slotBookingFromDropPosition } from '../domain/models';
 import { ABSENCE_TYPE_LABELS } from '../domain/models';
 import SlotModal from './SlotModal';
 
@@ -67,6 +67,8 @@ export default function DailyView() {
     width: number;
     startTime: string;
     endTime: string;
+    blockStart: string;
+    blockEnd: string;
   } | null>(null);
 
   // Half-day configuration
@@ -177,17 +179,16 @@ export default function DailyView() {
     if (draggedItem.type === 'offer') {
       const offer = data.offers.find(o => o.id === draggedItem.id);
       if (offer) {
-        const duration = offer.duration;
-        const endHour = hour + Math.floor((minute + duration) / 60);
-        const endMinute = (minute + duration) % 60;
-        const endTime = formatTime(endHour, endMinute);
+        // Cursor marks the START OF THE TOTAL BLOCK (setup first).
+        // Stored hours are the real booking period.
+        const booking = slotBookingFromDropPosition(startTime, offer);
 
         const newSlot: Slot = {
           id: `slot_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
           scheduleId: '',
           date: selectedDateStr,
-          startTime,
-          endTime,
+          startTime: booking.startTime,
+          endTime: booking.endTime,
           offerId: offer.id,
           mediatorIds: [mediatorId],
           status: 'planned',
@@ -266,16 +267,29 @@ export default function DailyView() {
     const offer = data.offers.find(o => o.id === draggedItem.id);
     if (!offer) return;
     
-    const duration = offer.duration;
-    const endHour = hour + Math.floor((minute + duration) / 60);
-    const endMinute = (minute + duration) % 60;
-    const endTime = formatTime(endHour, endMinute);
+    // Total block: cursor = start of TOTAL block (setup first).
+    // Indicator spans setup + booking + teardown.
+    const totalDuration = getOfferTotalDuration(offer);
+    const blockEndMinutes = totalMinutes + totalDuration;
+    const blockEndTime = formatTime(
+      START_HOUR + Math.floor(blockEndMinutes / 60),
+      blockEndMinutes % 60
+    );
+    // Real booking times (for the label)
+    const booking = slotBookingFromDropPosition(startTime, offer);
     
     // Calculate position and width
     const left = (totalMinutes) * (HOUR_HEIGHT / 60);
-    const width = duration * (HOUR_HEIGHT / 60);
+    const width = totalDuration * (HOUR_HEIGHT / 60);
     
-    setDragIndicator({ left, width, startTime, endTime });
+    setDragIndicator({
+      left,
+      width,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+      blockStart: startTime,
+      blockEnd: blockEndTime,
+    });
   }
 
   // Handle drag leave mediator track
@@ -511,7 +525,7 @@ export default function DailyView() {
                         left: `${dragIndicator.left}px`,
                         width: `${dragIndicator.width}px`,
                       }}
-                      title={`${dragIndicator.startTime} – ${dragIndicator.endTime}`}
+                      title={`Bloc total : ${dragIndicator.blockStart} – ${dragIndicator.blockEnd}\nRéservation : ${dragIndicator.startTime} – ${dragIndicator.endTime}`}
                     >
                       <div className="drag-indicator-time">
                         {dragIndicator.startTime} – {dragIndicator.endTime}
@@ -553,13 +567,23 @@ export default function DailyView() {
                     const isSelected = selectedSlot?.id === slot.id;
                     const isImported = slot.origin === 'imported';
 
+                    // Total block = setup + booking + teardown (from offer)
+                    const total = getSlotTotalRange(slot, offer);
+                    const hasSetup = !!offer?.setupTime;
+                    const hasTeardown = !!offer?.teardownTime;
+                    const totalLeft = toMinutes(total.start) - START_HOUR * 60;
+                    const totalWidth = toMinutes(total.end) - toMinutes(total.start);
+                    // Thin delimiters where the real booking starts/ends
+                    const bookingStartOffset = toMinutes(slot.startTime) - toMinutes(total.start);
+                    const bookingEndOffset = toMinutes(slot.endTime) - toMinutes(total.start);
+
                     return (
                       <div
                         key={slot.id}
                         className={`daily-slot assigned${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}`}
                         style={{
-                          left: `${getSlotTop(slot)}px`,
-                          width: `${getSlotHeight(slot)}px`,
+                          left: `${totalLeft}px`,
+                          width: `${totalWidth}px`,
                           borderLeftColor: mediatorColor,
                         }}
                         onClick={() => {
@@ -569,9 +593,22 @@ export default function DailyView() {
                         draggable
                         onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
                         onDragEnd={handleDragEnd}
+                        title={`Réservation : ${slot.startTime} – ${slot.endTime}${hasSetup ? ` (mise en place ${offer!.setupTime} min avant)` : ''}${hasTeardown ? ` (rangement ${offer!.teardownTime} min après)` : ''}`}
                       >
+                        {hasSetup && (
+                          <div
+                            className="slot-boundary setup-boundary"
+                            style={{ left: `${bookingStartOffset}px` }}
+                          ></div>
+                        )}
                         <div className="slot-time">{slot.startTime} – {slot.endTime}</div>
                         <div className="slot-title">{offer?.name || '—'}</div>
+                        {hasTeardown && (
+                          <div
+                            className="slot-boundary teardown-boundary"
+                            style={{ left: `${bookingEndOffset}px` }}
+                          ></div>
+                        )}
                       </div>
                     );
                   })}

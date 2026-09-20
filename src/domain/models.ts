@@ -39,6 +39,61 @@ export function parseLocalDate(s: string): Date {
   return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
 
+// ---- Slot total range (setup + booking + teardown) ----
+
+function timeToMinutes(t: string): number {
+  const [h, m] = (t || '0:0').split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+function minutesToTime(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+// Total duration an offer occupies: booking + setup before + teardown after.
+export function getOfferTotalDuration(offer: Offer): number {
+  return offer.duration + (offer.setupTime || 0) + (offer.teardownTime || 0);
+}
+
+// Total block covered by a slot on the planning: setup starts before the
+// booking, teardown ends after it. The stored slot hours remain the REAL
+// booking period; this is display/collision geometry derived from the offer.
+export function getSlotTotalRange(
+  slot: Slot,
+  offer: Offer | undefined
+): { start: string; end: string } {
+  const setup = offer?.setupTime || 0;
+  const teardown = offer?.teardownTime || 0;
+  const startMin = timeToMinutes(slot.startTime);
+  const endMin = timeToMinutes(slot.endTime);
+  // Guard against invalid/missing slot hours: don't derive negative times
+  if (!slot.startTime || !slot.endTime) {
+    return { start: '00:00', end: '00:00' };
+  }
+  return {
+    start: minutesToTime(Math.max(0, startMin - setup)),
+    end: minutesToTime(Math.max(0, endMin + teardown)),
+  };
+}
+
+// When a user drops an offer at a cursor position, the cursor marks the
+// START OF THE TOTAL BLOCK. The real booking starts after setup and its
+// duration is the offer's booking duration.
+export function slotBookingFromDropPosition(
+  cursorTime: string,
+  offer: Offer
+): { startTime: string; endTime: string } {
+  const cursorMin = timeToMinutes(cursorTime);
+  const setup = offer.setupTime || 0;
+  const bookingStart = cursorMin + setup;
+  return {
+    startTime: minutesToTime(bookingStart),
+    endTime: minutesToTime(bookingStart + offer.duration),
+  };
+}
+
 // Mediator
 const MEDIATOR_COLORS = [
   '#2c6e49', '#d68c45', '#2980b9', '#8e44ad',

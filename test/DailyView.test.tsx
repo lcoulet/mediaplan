@@ -276,6 +276,36 @@ describe('DailyView', () => {
     expect(firstRowSlots[0].textContent).toContain('Visite guidée');
   });
 
+  it('should render assigned slots as TOTAL blocks (setup + booking + teardown) with booking delimiters', () => {
+    // Offer o1: duration 60, setupTime 10, teardownTime 10.
+    // Slot s1: booking 10:00-12:00 -> total block 09:50 to 12:10.
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+    const row = container.querySelectorAll('.daily-mediator-row')[0];
+    const slotEl = row.querySelector('.daily-slot') as HTMLElement;
+
+    // Total block geometry: block 09:50-12:10 -> left = 110 min from 8:00 axis,
+    // width = 140 min (60 booking + 10 setup + 10 teardown)
+    expect(slotEl.style.left).toBe('110px');
+    expect(slotEl.style.width).toBe('140px');
+
+    // Delimiters at booking start (09:50 + 10 min setup = 10px) and booking end
+    // (12:00 = 130 min from block start)
+    const boundaries = slotEl.querySelectorAll('.slot-boundary');
+    expect(boundaries.length).toBe(2);
+    expect((boundaries[0] as HTMLElement).style.left).toBe('10px');
+    expect((boundaries[1] as HTMLElement).style.left).toBe('130px');
+
+    // Tooltip mentions the real booking and setup/teardown
+    const title = slotEl.getAttribute('title') || '';
+    expect(title).toContain('10:00 – 12:00');
+    expect(title).toContain('mise en place');
+    expect(title).toContain('rangement');
+  });
+
   it('should navigate to previous day with ← button', () => {
     render(
       <DataProvider>
@@ -352,11 +382,16 @@ describe('DailyView', () => {
     const indicator = container.querySelector('.daily-drag-indicator');
     expect(indicator).toBeTruthy();
 
-    // The time label must exist and contain start and end times
+    // The time label must exist and contain the REAL BOOKING times.
+    // Cursor at 10:30 marks the start of the total block; the offer has
+    // setupTime 10 -> booking starts 10:40, duration 60 -> 11:40.
     const label = indicator!.querySelector('.drag-indicator-time');
     expect(label).toBeTruthy();
-    expect(label!.textContent).toMatch(/10:30/);
-    expect(label!.textContent).toMatch(/11:30/); // 10:30 + 60 min duration
+    expect(label!.textContent).toMatch(/10:40/);
+    expect(label!.textContent).toMatch(/11:40/);
+    // The tooltip shows the total block (cursor position -> setup + booking + teardown)
+    expect(indicator!.getAttribute('title')).toContain('Bloc total : 10:30');
+    expect(indicator!.getAttribute('title')).toContain('11:50'); // teardown 10
   });
 
   it('should open slot modal with mediatorOnly=false when clicking a slot', () => {
