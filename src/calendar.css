@@ -120,14 +120,22 @@
 
 /* Narrow parallel lanes: emoji-only summary */
 .slot-badges-compact {
+  flex-direction: column;
   flex-wrap: nowrap;
   justify-content: center;
-  gap: 3px;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
 }
 
 .slot-badge-emoji {
   font-size: 11px;
   line-height: 1;
+}
+
+/* Mediator dot below the status emoji in compact lanes */
+.slot-mediator-dot-below {
+  margin-top: 0;
 }
 
 .calendar-grid {

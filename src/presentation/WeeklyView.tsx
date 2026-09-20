@@ -427,13 +427,13 @@ export default function WeeklyView() {
                           </>
                         ) : (
                           // Narrow parallel lane: emoji summary only —
-                          // status emoji + mediator dot (no origin badge)
+                          // status emoji on top, mediator dot BELOW it
                           <div className="slot-badges slot-badges-compact">
                             <span className="slot-badge-emoji" title={STATUS_LABELS[planningStatus]}>
                               {STATUS_EMOJI[planningStatus]}
                             </span>
                             {mediator && (
-                              <span className="slot-mediator-dot" style={{ background: mediatorColor }}></span>
+                              <span className="slot-mediator-dot slot-mediator-dot-below" style={{ background: mediatorColor }}></span>
                             )}
                           </div>
                         )}

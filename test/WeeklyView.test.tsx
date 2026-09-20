@@ -161,12 +161,17 @@ describe('WeeklyView', () => {
     const compactSlots = container.querySelectorAll('.slot-badges-compact');
     expect(compactSlots.length).toBe(2);
 
-    // Each compact lane: status emoji + mediator dot, NO origin emoji
+    // Each compact lane: status emoji with mediator dot BELOW (after in DOM)
     const first = compactSlots[0];
     expect(first.textContent).toMatch(/❌|🚫|⚠️|📚|✔️/);
     expect(first.textContent).not.toContain('📥');
     expect(first.textContent).not.toContain('✋');
     // No time or title text in compact mode
     expect(first.textContent).not.toContain('10:00');
+    // Structure: emoji first, mediator dot second (rendered below in column)
+    const children = first.children;
+    expect(children.length).toBe(2);
+    expect(children[0].className).toContain('slot-badge-emoji');
+    expect(children[1].className).toContain('slot-mediator-dot-below');
   });
 });
