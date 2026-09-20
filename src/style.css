@@ -575,7 +575,21 @@ body {
     display: inline-block;
 }
 
-/* ===== Date picker in view titles (daily date / weekly period) ===== */
+/* ===== Status bar (app-wide footer) ===== */
+.status-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 4px 16px;
+    font-size: 11px;
+    color: var(--color-text-muted, #888);
+    background: var(--color-surface, #fafafa);
+    border-top: 1px solid var(--color-border, #e0e0e0);
+}
+
+.status-item {
+    white-space: nowrap;
+}
 .date-picker-label {
     cursor: pointer;
     display: inline-flex;

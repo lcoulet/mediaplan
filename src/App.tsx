@@ -10,6 +10,7 @@ import OffersView from './presentation/OffersView';
 import AbsencesView from './presentation/AbsencesView';
 import ImportExportView from './presentation/ImportExportView';
 import UserGuideModal from './presentation/UserGuideModal';
+import StatusBar from './presentation/StatusBar';
 
 function ViewRouter() {
   const { state } = useData();
@@ -45,6 +46,7 @@ function App() {
       <main className="app-main">
         <ViewRouter />
       </main>
+      <StatusBar />
       {showUserGuide && <UserGuideModal onClose={() => setShowUserGuide(false)} />}
     </DataProvider>
   );
