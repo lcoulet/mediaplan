@@ -1,13 +1,22 @@
 # TODO — MediaPlan
 
+## Competence Visibility (next)
+
+- [ ] Offers view: add a column showing how many mediators know the offer,
+  e.g. `5 (3✅ + 2📚)` (confirmed count + learning count)
+- [ ] Offer modal: list the mediators in question (confirmed and learning,
+  with their names/colors)
+- [ ] Mediators view: show the count of mastered offers FIRST, then the
+  offers in parentheses, then the count of learning offers (and those
+  offers in parentheses), e.g. `3✅ (Visite, Atelier, Parcours) · 2📚 (Conférence, Spectacle)`
+
 ## Build System & Release
 
-- [ ] Set up a build system (esbuild or Rollup) to bundle the app
-- [ ] Download SheetJS (xlsx) as a build dependency (not committed to git)
-- [ ] Generate a `dist/` folder with bundled assets for production
-- [ ] Add app versioning (semantic version, displayed in UI footer)
+- [x] Set up a build system (Vite)
+- [x] Generate a `dist/` folder with bundled assets for production
+- [x] Add version number to `package.json`, injected into the app at build
+  time and shown in the status bar
 - [ ] Create a release script (tag + build + GitHub release via `gh`)
-- [ ] Add version number to `package.json` and inject into the app at build time
 - [ ] GitHub Actions CI: run tests on push (vitest) and build preview
 - [ ] GitHub Actions: deploy preview builds to the server (details kept private)
 
@@ -36,7 +45,7 @@
 
 ## Work Cycles
 
-- [ ] Add WorkCycle and CycleWeek entities to models.js (TDD)
+- [ ] Add WorkCycle and CycleWeek entities to models.ts (TDD)
 - [ ] Add cycle rotation logic (S1 → S2 → S3 → S1)
 - [ ] Add per-week override mechanism
 - [ ] Add Cycle Override entity
@@ -44,31 +53,15 @@
 - [ ] Integrate cycle availability into assignment suggestions
 - [ ] Cycle management UI in mediator view/settings
 
-## Competence Status
+## Assignment UX
 
-- [ ] Migrate mediator skills from string[] to [{ offerId, status }] (TDD)
-- [ ] Update assignment UI to show competence status (confirmed/learning)
 - [ ] Allow learning mediator as supplemental assignment with visible indicator
 - [ ] Allow learning mediator as sole assignment (exception, with warning)
-
-## Setup/Teardown Time
-
-- [ ] Add setupTime and teardownTime to offer entity (TDD)
-- [ ] Update overlap detection to use extended range (start - setup, end + teardown)
-- [ ] Display setup/teardown on calendar for assigned mediators
+- [ ] Slot resize by dragging block edges (daily view)
 
 ## Testing
 
-- [ ] Extract logic from `app.js` into testable modules (calendar logic, CRUD, filters)
-- [ ] Write tests for extracted modules (TDD)
-- [ ] Add DOM/UI tests (jsdom or similar)
 - [ ] Set up CI to run tests on push (GitHub Actions)
-
-## Deployment
-
-- [ ] Configure Caddy to serve static files directly (no Python dev server)
-- [ ] Or: add systemd service for the Python server
-- [ ] Open ports 80/443 on firewall if needed
 
 ## V2 — Server & Sync (future)
 
@@ -81,19 +74,6 @@
 
 ## Features (Future)
 
-- [ ] Calendar views: day / week / month toggle in the planning view
-  - Day view: mediators as rows, time as columns, 10min grid lines
-  - Unassigned lane for imported offers awaiting assignment
-  - Standard offers lane: drag onto mediator+time to create manual slot
-  - Drag-and-drop assignment, slot resize, slot move (same day only)
-  - Slot duplication onto other mediators (multi-mediator assignment)
-  - Overlap: red hatching/highlight + warning confirmation
-  - Day navigation tabs (prev/next/today)
-- [ ] Migrate slot model from `mediatorId` to `mediatorIds` (array)
-  - Update models.js, store.js, app.js, overlap detection
-  - Update demo data generation
-  - Update tests
-- [ ] Drag & drop on calendar to move slots
 - [ ] Schedule entity management (create/edit/delete schedules as distinct objects)
 - [ ] Statistics and dashboards
 - [ ] Read-only mediator view
