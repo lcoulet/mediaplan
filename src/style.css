@@ -278,10 +278,8 @@ body {
 }
 
 .data-table .actions-cell {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
 }
 
 .data-table .action-btn {
@@ -293,7 +291,11 @@ body {
     border-radius: 4px;
     opacity: 0.6;
     line-height: 1;
-    vertical-align: middle;
+    display: inline-block;
+}
+
+.data-table .action-btn + .action-btn {
+    margin-left: 4px;
 }
 
 .data-table .action-btn:hover {
