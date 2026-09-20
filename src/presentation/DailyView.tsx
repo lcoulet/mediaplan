@@ -163,6 +163,19 @@ export default function DailyView() {
     return ABSENCE_TYPE_LABELS[type] || type;
   }
 
+  // Shared drop-position calculation: cursor x -> rounded 10-min time.
+  // Used by BOTH the drag indicator and the actual drop so the created slot
+  // always matches the time shown in the tooltip.
+  function getDropTimeFromX(track: HTMLElement, clientX: number): string {
+    const rect = track.getBoundingClientRect();
+    const x = clientX - rect.left;
+    // Round to 10-minute precision
+    const totalMinutes = Math.round(x / (HOUR_HEIGHT / 60) / 10) * 10;
+    const hour = START_HOUR + Math.floor(totalMinutes / 60);
+    const minute = totalMinutes % 60;
+    return formatTime(hour, minute);
+  }
+
   // Handle drop on mediator track
   function handleDropOnMediator(e: React.DragEvent, mediatorId: string) {
     e.preventDefault();
@@ -171,17 +184,17 @@ export default function DailyView() {
     const track = (e.currentTarget as HTMLElement).closest('.daily-mediator-track');
     if (!track) return;
 
-    const rect = track.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const { hour, minute } = getTimeFromPosition(x);
-    const startTime = formatTime(hour, minute);
+    // Use the exact time shown by the drag indicator when available
+    // (computed at the last dragover); fall back to recomputing from the
+    // drop coordinates with the same rounded calculation.
+    const cursorTime = dragIndicator ? dragIndicator.blockStart : getDropTimeFromX(track as HTMLElement, e.clientX);
 
     if (draggedItem.type === 'offer') {
       const offer = data.offers.find(o => o.id === draggedItem.id);
       if (offer) {
         // Cursor marks the START OF THE TOTAL BLOCK (setup first).
         // Stored hours are the real booking period.
-        const booking = slotBookingFromDropPosition(startTime, offer);
+        const booking = slotBookingFromDropPosition(cursorTime, offer);
 
         const newSlot: Slot = {
           id: `slot_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -217,15 +230,6 @@ export default function DailyView() {
     }
     setDraggedItem(null);
     setDragIndicator(null);
-  }
-
-  // Calculate time from drop position (x in pixels)
-  function getTimeFromPosition(x: number): { hour: number; minute: number } {
-    const totalMinutes = Math.floor(x / (HOUR_HEIGHT / 60));
-    return {
-      hour: START_HOUR + Math.floor(totalMinutes / 60),
-      minute: totalMinutes % 60,
-    };
   }
 
   // Format time as HH:mm

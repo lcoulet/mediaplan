@@ -394,6 +394,70 @@ describe('DailyView', () => {
     expect(indicator!.getAttribute('title')).toContain('11:50'); // teardown 10
   });
 
+  it('should create a slot from a drop using the indicator time and offer durations', () => {
+    // End-to-end: dragstart -> dragover -> drop must produce a slot whose
+    // booking matches the drag indicator and whose setup/teardown come
+    // from the offer.
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+
+    const offer = container.querySelector('.daily-offer')!;
+    const dataTransfer = {
+      effectAllowed: 'move',
+      dropEffect: 'move',
+      setData: () => {},
+      getData: () => '',
+    };
+
+    const dragStartEvent = new Event('dragstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragStartEvent, 'dataTransfer', { value: dataTransfer });
+    act(() => { offer.dispatchEvent(dragStartEvent); });
+
+    const track = container.querySelector('.daily-mediators-section .daily-mediator-track')!;
+    Object.defineProperty(track, 'getBoundingClientRect', {
+      value: () => ({ left: 0, top: 0, width: 660, height: 40 }),
+    });
+
+    // dragover at 145px -> rounded 10:30 (block start)
+    const dragOverEvent = new MouseEvent('dragover', {
+      bubbles: true, cancelable: true, clientX: 145, clientY: 20,
+    });
+    Object.defineProperty(dragOverEvent, 'dataTransfer', { value: dataTransfer });
+    act(() => { track.dispatchEvent(dragOverEvent); });
+
+    // Drop at a slightly different x (simulates cursor moving 1px at drop)
+    const dropEvent = new MouseEvent('drop', {
+      bubbles: true, cancelable: true, clientX: 146, clientY: 20,
+    });
+    Object.defineProperty(dropEvent, 'dataTransfer', { value: dataTransfer });
+    act(() => { track.dispatchEvent(dropEvent); });
+
+    // The created slot is rendered in the DOM (the localStorage mock does
+    // not persist, so we assert on the rendered slots instead)
+    const renderedSlots = container.querySelectorAll('.daily-mediators-section .daily-slot');
+    // 1 pre-existing assigned slot (s1) + 1 newly created = 2
+    expect(renderedSlots.length).toBe(2);
+
+    // The NEW slot is the one whose time is not s1's (10:00)
+    const createdEl = Array.from(renderedSlots).find(
+      el => !el.textContent!.includes('10:00 – 12:00')
+    );
+    expect(createdEl).toBeTruthy();
+
+    // Offer o1: setupTime 10, duration 60, teardownTime 10.
+    // Indicator block start 10:30 -> booking 10:40 - 11:40.
+    expect(createdEl!.textContent).toContain('10:40');
+    expect(createdEl!.textContent).toContain('11:40');
+
+    // The total block starts at the cursor position (10:30 = 150px from axis
+    // 8:00) and spans setup+duration+teardown = 80 min
+    expect((createdEl as HTMLElement).style.left).toBe('150px');
+    expect((createdEl as HTMLElement).style.width).toBe('80px');
+  });
+
   it('should open slot modal with mediatorOnly=false when clicking a slot', () => {
     const { container } = render(
       <DataProvider>
