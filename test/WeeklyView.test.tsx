@@ -43,7 +43,7 @@ describe('WeeklyView', () => {
     );
 
     expect(screen.getByText(/Plan Hebdo/i)).toBeInTheDocument();
-    expect(screen.getByText(/14 sept. – 20 sept./i)).toBeInTheDocument();
+    expect(screen.getByText(/14 sept\. 2026 – 20 sept\. 2026/i)).toBeInTheDocument();
   });
 
   it('should display mediators and slots', () => {
