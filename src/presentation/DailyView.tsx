@@ -448,12 +448,16 @@ export default function DailyView() {
       <div className="daily-grid" ref={gridRef}>
         {/* Time axis — horizontal, hours as columns */}
         <div className="daily-time-axis">
-          <div className="daily-time-spacer"></div>
-          {HOURS.map(hour => (
-            <div key={hour} className="daily-hour-label">
-              {hour}:00
-            </div>
-          ))}
+        <div className="daily-time-spacer" style={{ minWidth: `${MEDIATOR_LABEL_WIDTH}px`, width: `${MEDIATOR_LABEL_WIDTH}px` }}></div>
+        {HOURS.map(hour => (
+          <div
+            key={hour}
+            className="daily-hour-label"
+            style={{ width: `${pxPerHour}px` }}
+          >
+            {hour}:00
+          </div>
+        ))}
         </div>
 
         {/* Unassigned lane — above mediators */}

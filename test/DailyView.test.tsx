@@ -82,6 +82,22 @@ describe('DailyView', () => {
     expect(hourLabels[11].textContent).toBe('19:00');
   });
 
+  it('scales the hour axis labels to the responsive px/hour scale', () => {
+    // In jsdom the container is not measured -> fallback 60px/hour
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+    const labels = container.querySelectorAll('.daily-hour-label');
+    expect(labels.length).toBe(12);
+    // Each label width follows the responsive scale (fallback = 60px in jsdom)
+    expect((labels[0] as HTMLElement).style.width).toBe('60px');
+    // The spacer aligns with the 200px mediator label column
+    const spacer = container.querySelector('.daily-time-spacer') as HTMLElement;
+    expect(spacer.style.width).toBe('200px');
+  });
+
   describe('mediator filter', () => {
     it('should render the mediator filter select with Libres/Occupés/Tous then mediator options', () => {
       const { container } = render(

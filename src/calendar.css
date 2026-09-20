@@ -246,7 +246,9 @@ body.edit-mode .cal-day-col:hover {
   padding: 0;
 }
 
-/* Time axis — horizontal header with hour labels */
+/* Time axis — horizontal header with hour labels.
+   The spacer and label widths are set INLINE by the responsive scale
+   (MEDIATOR_LABEL_WIDTH and pxPerHour). */
 .daily-time-axis {
   display: flex;
   align-items: center;
@@ -258,20 +260,19 @@ body.edit-mode .cal-day-col:hover {
 }
 
 .daily-time-spacer {
-  min-width: 160px;
   flex-shrink: 0;
   border-right: 1px solid var(--color-border);
 }
 
 .daily-hour-label {
   flex-shrink: 0;
-  width: 60px;
   text-align: center;
   font-size: 12px;
   font-weight: 600;
   color: var(--color-text-secondary);
   padding: 8px 0;
   border-right: 1px solid var(--color-border-light);
+  box-sizing: border-box;
 }
 
 /* Section titles */
