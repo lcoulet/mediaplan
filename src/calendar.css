@@ -118,6 +118,18 @@
   font-weight: 600;
 }
 
+/* Narrow parallel lanes: emoji-only summary */
+.slot-badges-compact {
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 3px;
+}
+
+.slot-badge-emoji {
+  font-size: 11px;
+  line-height: 1;
+}
+
 .calendar-grid {
     display: grid;
     grid-template-columns: 60px repeat(7, 1fr);

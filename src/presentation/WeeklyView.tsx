@@ -44,6 +44,15 @@ const STATUS_SHORT: Record<SlotPlanningStatus, string> = {
   incompetent: 'Incompétent',
 };
 
+// Compact emoji per status — used when lanes are too narrow for text
+const STATUS_EMOJI: Record<SlotPlanningStatus, string> = {
+  ok: '✔️',
+  unassigned: '❌',
+  dispo_issue: '🚫',
+  learning: '📚',
+  incompetent: '⚠️',
+};
+
 function toMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
   return h * 60 + m;
@@ -398,22 +407,34 @@ export default function WeeklyView() {
                         title={tooltip}
                         onClick={() => handleSlotClick(slot)}
                       >
-                        <div className="slot-badges">
-                          <span className="slot-badge slot-badge-time">{slot.startTime}–{slot.endTime}</span>
-                          <span className="slot-badge slot-badge-title">
-                            {offer ? offer.name : '—'}{originIcon}
-                          </span>
-                          {laneCount === 1 && (
-                            <span className={`slot-badge slot-badge-status sb-${planningStatus}`}>
-                              {(planningStatus === 'unassigned' || planningStatus === 'dispo_issue' || planningStatus === 'incompetent') && '⚠ '}
-                              {STATUS_SHORT[planningStatus]}
+                        {laneCount === 1 ? (
+                          <>
+                            <div className="slot-badges">
+                              <span className="slot-badge slot-badge-time">{slot.startTime}–{slot.endTime}</span>
+                              <span className="slot-badge slot-badge-title">
+                                {offer ? offer.name : '—'}{originIcon}
+                              </span>
+                              <span className={`slot-badge slot-badge-status sb-${planningStatus}`}>
+                                {STATUS_EMOJI[planningStatus]} {STATUS_SHORT[planningStatus]}
+                              </span>
+                            </div>
+                            {mediator && (
+                              <div className="slot-mediator">
+                                {mediatorBadge}
+                                {mediator.firstName} {mediator.lastName}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          // Narrow parallel lane: emoji summary only —
+                          // status emoji + mediator dot (no origin badge)
+                          <div className="slot-badges slot-badges-compact">
+                            <span className="slot-badge-emoji" title={STATUS_LABELS[planningStatus]}>
+                              {STATUS_EMOJI[planningStatus]}
                             </span>
-                          )}
-                        </div>
-                        {laneCount === 1 && mediator && (
-                          <div className="slot-mediator">
-                            {mediatorBadge}
-                            {mediator.firstName} {mediator.lastName}
+                            {mediator && (
+                              <span className="slot-mediator-dot" style={{ background: mediatorColor }}></span>
+                            )}
                           </div>
                         )}
                       </div>
@@ -423,7 +444,7 @@ export default function WeeklyView() {
               </div>
             );
           })}
-          {/* Legend: planning status badges (same style as in slots) */}
+          {/* Legend: planning status badges (same emoji + colors as in slots) */}
           <div className="week-legend">
             {STATUS_ORDER.map((st) => (
               <span key={st} className="week-legend-item">
@@ -431,8 +452,7 @@ export default function WeeklyView() {
                   className={`slot-badge slot-badge-status sb-${st}`}
                   style={{ background: STATUS_BG[st] }}
                 >
-                  {(st === 'unassigned' || st === 'dispo_issue' || st === 'incompetent') && '⚠ '}
-                  {STATUS_LABELS[st]}
+                  {STATUS_EMOJI[st]} {STATUS_LABELS[st]}
                 </span>
               </span>
             ))}

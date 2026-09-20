@@ -95,8 +95,8 @@ describe('WeeklyView', () => {
     expect(slotEl.className).toContain('pstatus-incompetent');
     expect(slotEl.style.background).toContain('rgb(255, 233, 199)'); // #ffe9c7
 
-    // Compact badges: time + title + status with ⚠
-    expect(slotEl.textContent).toContain('⚠');
+    // Compact badges: time + title + status with the status emoji
+    expect(slotEl.textContent).toContain('⚠️');
     expect(slotEl.textContent).toContain('Incompétent');
 
     // Native tooltip carries the status and mediators
@@ -118,13 +118,55 @@ describe('WeeklyView', () => {
     expect(items.length).toBe(5);
     // Severity order: À assigner, Indisponibilité, Incompétent, En apprentissage, OK
     const badges = Array.from(items).map((i) => i.textContent);
+    expect(badges[0]).toContain('❌');
     expect(badges[0]).toContain('À assigner');
+    expect(badges[1]).toContain('🚫');
     expect(badges[1]).toContain('Indisponibilité');
+    expect(badges[2]).toContain('⚠️');
     expect(badges[2]).toContain('Incompétent');
+    expect(badges[3]).toContain('📚');
     expect(badges[3]).toContain('En apprentissage');
+    expect(badges[4]).toContain('✔️');
     expect(badges[4]).toContain('OK');
-    // Error statuses carry the ⚠ badge in the legend
-    expect(badges[0]).toContain('⚠');
-    expect(badges[3]).not.toContain('⚠');
+  });
+
+  it('renders emoji-only summary in narrow parallel lanes (no origin badge)', () => {
+    // Two overlapping slots on the same day -> computeLanes splits into
+    // 2 parallel lanes -> compact emoji mode
+    const overlapping = {
+      ...mockData,
+      slots: [
+        ...mockData.slots,
+        {
+          ...mockData.slots[0],
+          id: 's2',
+          startTime: '10:30',
+          endTime: '11:30',
+          origin: 'imported' as const,
+          importSource: 'Secutix',
+        },
+      ],
+    };
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(overlapping)),
+      setItem: vi.fn(),
+    });
+
+    const { container } = render(
+      <DataProvider>
+        <WeeklyView />
+      </DataProvider>
+    );
+
+    const compactSlots = container.querySelectorAll('.slot-badges-compact');
+    expect(compactSlots.length).toBe(2);
+
+    // Each compact lane: status emoji + mediator dot, NO origin emoji
+    const first = compactSlots[0];
+    expect(first.textContent).toMatch(/❌|🚫|⚠️|📚|✔️/);
+    expect(first.textContent).not.toContain('📥');
+    expect(first.textContent).not.toContain('✋');
+    // No time or title text in compact mode
+    expect(first.textContent).not.toContain('10:00');
   });
 });
