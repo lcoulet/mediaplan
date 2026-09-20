@@ -78,7 +78,7 @@ export default function SlotDetailModal({ slot, onClose }: Props) {
           <span className="detail-value">
             {mediator ? (
               <>
-                <span className="slot-mediator-dot" style={{ background: mediator.color || '#ccc' }}></span>
+                <span className="slot-mediator-glyph" style={{ color: mediator.color || '#ccc' }}>●</span>{' '}
                 {mediator.firstName} {mediator.lastName}
               </>
             ) : (

@@ -137,11 +137,11 @@
   text-align: center;
 }
 
-/* Colored ● mediator glyph (text-based, aligns with the emoji above) */
+/* Colored ● mediator glyph (text-based, aligns with the emoji above).
+   Base style lives in style.css (.slot-mediator-glyph); compact lanes
+   just center it in a fixed-width box. */
 .slot-mediator-glyph {
-  font-size: 10px;
-  line-height: 1;
-  width: 16px;
+  margin-right: 0;
   text-align: center;
 }
 

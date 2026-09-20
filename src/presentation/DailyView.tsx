@@ -534,7 +534,7 @@ export default function DailyView() {
                 className={`daily-mediator-row${competenceStatus ? ` competence-${competenceStatus}` : ''}`}
               >
                 <div className="daily-mediator-label">
-                  <span className="daily-mediator-color" style={{ backgroundColor: mediator.color || '#ccc' }}></span>
+                  <span className="slot-mediator-glyph daily-mediator-color" style={{ color: mediator.color || '#ccc' }}>●</span>
                   <span className="daily-mediator-name">{mediator.lastName} {mediator.firstName}</span>
                 </div>
                 <div

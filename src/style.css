@@ -575,16 +575,16 @@ body {
     display: inline-block;
 }
 
-/* ===== Mediator color dot ===== */
-.mediator-color-dot,
-.slot-mediator-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    margin-right: 6px;
+/* ===== Mediator color glyph ===== */
+/* Replaced the old CSS dot (10px box) with a UTF ● colored via `color`:
+   text-metric rendering aligns with adjacent text/emoji on the same
+   baseline. Global version (weekly full mode, tables, modals). */
+.slot-mediator-glyph {
+    font-size: 12px;
+    line-height: 1;
+    margin-right: 4px;
     vertical-align: middle;
-    border: 1px solid rgba(0,0,0,0.1);
+    text-shadow: 0 0 1px rgba(0,0,0,0.25);
 }
 
 /* ===== Offer color pill ===== */

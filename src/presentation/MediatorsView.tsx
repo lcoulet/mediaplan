@@ -173,7 +173,7 @@ export default function MediatorsView() {
                 return (
                   <tr key={m.id}>
                     <td>
-                      <span className="mediator-color-dot" style={{ background: m.color || '#ccc' }}></span>{' '}
+                      <span className="slot-mediator-glyph" style={{ color: m.color || '#ccc' }}>●</span>{' '}
                       {m.lastName}
                     </td>
                     <td>{m.firstName}</td>

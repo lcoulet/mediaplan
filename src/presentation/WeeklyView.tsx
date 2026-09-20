@@ -356,7 +356,7 @@ export default function WeeklyView() {
                     const originIcon = slot.origin === 'imported' ? (slot.modifiedAfterImport ? ' 📥✏' : ' 📥') : ' ✋';
                     const mediatorColor = mediator ? mediator.color || '#ccc' : '#ccc';
                     const mediatorBadge = mediator ? (
-                      <span className="slot-mediator-dot" style={{ background: mediatorColor }}></span>
+                      <span className="slot-mediator-glyph" style={{ color: mediatorColor }}>●</span>
                     ) : null;
 
                     const startMin = toMinutes(slot.startTime);
