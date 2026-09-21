@@ -15,12 +15,20 @@ can lead with a status: confirmed or learning), active status (can be deactivate
 ### Mediation Offer (Offre de médiation)
 An activity proposed by the museum to visitors (guided tour, workshop,
 show, etc.). Has: name, duration, capacity, location, **setup time**
-(temps de mise en place), **teardown time** (temps de démontage). Can be:
+(temps de mise en place), **teardown time** (temps de démontage), **welcomeType** (type d’accueil). Can be:
 - **Reserved** (réservée) — booked by a visitor group via Secutix import
 - **Ad hoc** (ponctuelle) — entered manually, scheduled once without reservation
 
 No recurring offers exist in the current scope. All offers are unique
 instances.
+
+### Welcome Type (Type d’Accueil)
+Categorizes how an offer is managed in the planning. Values:
+- **Accueil Libre** : offer reservable without requiring a mediator assignment
+  (e.g., free-entry visits). Its slots display as **OK** (green) even when
+  unassigned — no mediator is needed, so no "to assign" state applies.
+- **Réservable encadrée par médiateur** : offer requiring a mediator assignment (e.g., guided tour).
+- **Animation par médiateur** : offer always requiring a mediator (e.g., educational workshop).
 
 ### Setup Time (Temps de mise en place)
 The time needed before an offer to prepare the activity (room, equipment).

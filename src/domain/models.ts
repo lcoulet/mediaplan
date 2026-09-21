@@ -148,6 +148,7 @@ interface OfferInput {
   setupTime?: number;
   teardownTime?: number;
   color?: string;
+  welcomeType?: 'Accueil Libre' | 'Réservable encadrée par médiateur' | 'Animation par médiateur';
 }
 
 export function createOffer(data: OfferInput = {}): Offer {
@@ -162,6 +163,7 @@ export function createOffer(data: OfferInput = {}): Offer {
     ...(data.teardownTime !== undefined ? { teardownTime: data.teardownTime } : {}),
     // Assign a palette color when none provided (tests rely on this default)
     color: data.color || OFFER_COLORS[offerColorIndex++ % OFFER_COLORS.length],
+    welcomeType: data.welcomeType ?? 'Réservable encadrée par médiateur',
   };
 }
 
@@ -378,6 +380,10 @@ export function getSlotPlanningStatus(
   slot: Slot,
   data: AppData
 ): SlotPlanningStatus {
+  // Offres "Accueil Libre": no mediator required — the slot is OK even
+  // when unassigned, so it displays like a fully staffed slot (green).
+  const offer = data.offers.find((o) => o.id === slot.offerId);
+  if (offer?.welcomeType === 'Accueil Libre') return 'ok';
   if (slot.mediatorIds.length === 0) return 'unassigned';
 
   // Mediators that exist and are active

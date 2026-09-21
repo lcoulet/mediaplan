@@ -11,7 +11,7 @@ const mockData: AppData = {
   ],
   offers: [
     // User's scenario: 90 min + 15 setup + 5 teardown = 110
-    { id: 'o1', name: 'Grande visite', description: '', duration: 90, capacity: 20, location: '', setupTime: 15, teardownTime: 5 },
+    { id: 'o1', name: 'Grande visite', description: '', duration: 90, capacity: 20, location: '', setupTime: 15, teardownTime: 5, welcomeType: 'Réservable encadrée par médiateur' },
   ],
   schedules: [],
   slots: [],

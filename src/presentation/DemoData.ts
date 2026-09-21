@@ -104,6 +104,13 @@ export function seedDemoData(data: AppData): void {
   ];
   const offers = offerDefs.map((d) => createOffer(d));
 
+  // --- Mark a few offers as "Accueil Libre" for demo ---
+  // These are reservable but need NO mediator: their slots display as OK
+  // (green) even when unassigned.
+  offers[0].welcomeType = 'Accueil Libre';   // Visite guidée Dinosauria
+  offers[20].welcomeType = 'Accueil Libre';  // Visite nocturne : Le musée s'anime
+  offers[42].welcomeType = 'Accueil Libre';  // Conférence : Les dinosaures de l'extrême
+
   // --- Assign competences (skills) to mediators ---
   const skillAssignments = [
     [0, 20, 42, 62, 64],

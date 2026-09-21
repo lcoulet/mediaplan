@@ -22,6 +22,7 @@ export interface Offer {
   setupTime?: number;
   teardownTime?: number;
   color?: string;
+  welcomeType: 'Accueil Libre' | 'Réservable encadrée par médiateur' | 'Animation par médiateur';
 }
 
 export type ScheduleStatus = 'draft' | 'published' | 'archived';

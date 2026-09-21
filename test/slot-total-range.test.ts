@@ -15,6 +15,7 @@ const offer = (setup?: number, teardown?: number): Offer => ({
   location: '',
   ...(setup !== undefined ? { setupTime: setup } : {}),
   ...(teardown !== undefined ? { teardownTime: teardown } : {}),
+  welcomeType: 'Réservable encadrée par médiateur',
 });
 
 const slot = (startTime: string, endTime: string): Slot => ({

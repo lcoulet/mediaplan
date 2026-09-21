@@ -11,6 +11,12 @@ interface Props {
   onClose: () => void;
 }
 
+export const WELCOME_TYPE_LABELS: Record<Offer['welcomeType'], string> = {
+  'Accueil Libre': 'Accueil libre',
+  'Réservable encadrée par médiateur': 'Réservable encadrée par médiateur',
+  'Animation par médiateur': 'Animation par médiateur',
+};
+
 export default function OfferModal({ offer, onClose }: Props) {
   const crud = useCRUD();
   const isEdit = !!offer;
@@ -102,6 +108,18 @@ export default function OfferModal({ offer, onClose }: Props) {
               title="Durée de rangement après la réservation"
             />
           </div>
+        </div>
+        <div className="form-group">
+          <label>Type d'accueil</label>
+          <select
+            value={form.welcomeType}
+            onChange={(e) => setField('welcomeType', e.target.value as Offer['welcomeType'])}
+            title="Une offre « Accueil libre » n'a pas besoin de médiateur : ses créneaux s'affichent comme OK même sans assignation"
+          >
+            {Object.entries(WELCOME_TYPE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
         </div>
         <div className="form-row">
           <div className="form-group">

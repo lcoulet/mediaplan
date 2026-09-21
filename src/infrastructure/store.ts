@@ -20,10 +20,13 @@ export function load(): AppData {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...defaultData };
     const parsed = JSON.parse(raw) as Partial<AppData>;
-    // Migrate: assign a palette color to offers persisted before the color field existed
-    const offers: Offer[] = (parsed.offers || []).map((o) =>
-      o.color ? o : { ...o, color: defaultOfferColor() }
-    );
+    // Migrate: assign a palette color to offers persisted before the color field existed,
+    // and a default welcomeType to offers persisted before the field existed
+    const offers: Offer[] = (parsed.offers || []).map((o) => ({
+      ...o,
+      ...(o.color ? {} : { color: defaultOfferColor() }),
+      ...(o.welcomeType ? {} : { welcomeType: 'Réservable encadrée par médiateur' as const }),
+    }));
     return {
       mediators: parsed.mediators || [],
       offers,

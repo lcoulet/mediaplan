@@ -6,6 +6,12 @@ import type { AppData, Mediator, Offer, Slot, Absence } from '../src/domain/type
 const offer: Offer = {
   id: 'o1', name: 'Visite', description: '', duration: 60,
   capacity: 20, location: '',
+  welcomeType: 'Réservable encadrée par médiateur',
+};
+
+const libreOffer: Offer = {
+  ...offer, id: 'o-libre',
+  welcomeType: 'Accueil Libre',
 };
 
 const mediator = (id: string, competences: { offerId: string; status: 'confirmed' | 'learning' }[] = []): Mediator => ({
@@ -34,6 +40,21 @@ describe('getSlotPlanningStatus', () => {
   it('is UNASSIGNED when the slot has no mediator (top priority)', () => {
     const s = slot([]);
     expect(getSlotPlanningStatus(s, data([s], [], [mediator('m1')]))).toBe('unassigned');
+  });
+
+  it('is OK for an "Accueil Libre" offer even when the slot has no mediator', () => {
+    const s = slot([], { offerId: 'o-libre' });
+    const d = data([s], [], [mediator('m1')]);
+    d.offers = [libreOffer];
+    expect(getSlotPlanningStatus(s, d)).toBe('ok');
+  });
+
+  it('is OK for an "Accueil Libre" offer with an unconfirmed mediator (no mediator needed)', () => {
+    const m = mediator('m1'); // no competence on the offer
+    const s = slot(['m1'], { offerId: 'o-libre' });
+    const d = data([s], [], [m]);
+    d.offers = [libreOffer];
+    expect(getSlotPlanningStatus(s, d)).toBe('ok');
   });
 
   it('is OK when a mediator is available AND confirmed for the offer', () => {

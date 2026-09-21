@@ -34,6 +34,7 @@ function storedOffer(color = '#123456'): Offer {
     capacity: 25,
     location: 'Galerie Dinosauria',
     color,
+    welcomeType: 'Réservable encadrée par médiateur',
   };
 }
 
