@@ -36,6 +36,7 @@ export default function OfferModal({ offer, onClose }: Props) {
       duration: parseInt(String(form.duration)) || 60,
       capacity: parseInt(String(form.capacity)) || 30,
       location: form.location.trim(),
+      secutixLabel: form.secutixLabel?.trim(),
       setupTime: form.setupTime ? parseInt(String(form.setupTime)) || 0 : 0,
       teardownTime: form.teardownTime ? parseInt(String(form.teardownTime)) || 0 : 0,
     };
@@ -106,6 +107,18 @@ export default function OfferModal({ offer, onClose }: Props) {
               step={5}
               onChange={(e) => setField('teardownTime', parseInt(e.target.value) || 0)}
               title="Durée de rangement après la réservation"
+            />
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Libellé Secutix</label>
+            <input
+              type="text"
+              value={form.secutixLabel ?? ''}
+              onChange={(e) => setField('secutixLabel', e.target.value)}
+              title="Libellé exact de l\u2019offre dans les exports Secutix (colonne THÈME), utilisé pour le recollement à l\u2019import"
+              placeholder="ex. G/ CP à CE2/ Minéraux"
             />
           </div>
         </div>

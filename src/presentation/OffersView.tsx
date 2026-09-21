@@ -29,7 +29,8 @@ export default function OffersView() {
         (o) =>
           o.name.toLowerCase().includes(s) ||
           o.description.toLowerCase().includes(s) ||
-          o.location.toLowerCase().includes(s)
+          o.location.toLowerCase().includes(s) ||
+          (o.secutixLabel || '').toLowerCase().includes(s)
       );
     }
     
