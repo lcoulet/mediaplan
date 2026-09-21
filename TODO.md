@@ -55,8 +55,8 @@
   - Booking times from the file take priority over the offer's default
     duration
   - Update modified reservations (headcount, time)
-  - Deallocate cancelled reservations (not in Secutix file): mediators
-    removed, status cancelled
+  - Remove cancelled reservations (not in the Secutix file): the slot is
+    deleted from the planning, recoverable via the import's undo
   - Preserve mediator assignments where possible
   - Offer reconciliation UX: an imported THÈME matching no offer blocks
     the import; the user maps the label to an existing offer or creates

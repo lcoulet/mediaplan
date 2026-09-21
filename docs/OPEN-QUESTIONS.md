@@ -21,15 +21,17 @@ weeks 39–51, analyzed locally, never committed):**
   set by the import on imported slots
 
 **Resolved:**
-- [x] Import UX: FULL SYNC (decided 2026-09-21) — add new bookings, update
-      modified ones (headcount, times), deallocate the ones that left the
-      file (mediators removed, status cancelled), preserving mediator
-      assignments. Offer reconciliation (map or create) blocks the import
-      until every THÈME label is mapped. The summary popup reports
-      added/updated/deallocated counts and the covered date range, with a
-      one-click undo. Some rows carry an empty THÈME (private ANNIVERSAIRE
-      products): they surface as "(sans libellé Secutix)" and must be
-      mapped to an existing offer.
+- [x] Import UX: FULL SYNC (decided 2026-09-21, removal semantics
+      2026-09-22) — add new bookings, update modified ones (headcount,
+      times), REMOVE the ones that left the file (cancelled in Secutix;
+      recoverable via the import's undo), preserving mediator
+      assignments. Offer reconciliation (map, create or ignore) blocks
+      the import until every THÈME label has a decision. The summary
+      popup reports added/updated/removed counts and the covered date
+      range, with a one-click undo. Some rows carry an empty THÈME
+      (private ANNIVERSAIRE products): they surface as
+      "(sans libellé Secutix)" and must be mapped to an existing offer
+      or ignored.
 - [x] "G/ Pause Repas" rows ARE imported — the rooms are used by groups
       for lunch; the corresponding offer is `Accueil Libre` (no mediator)
 - [x] welcomeType mapping lives in the OFFER database (each offer carries

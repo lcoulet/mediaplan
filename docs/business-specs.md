@@ -309,11 +309,11 @@ in `src/infrastructure/secutix-reader.ts`, UI in the Import/Export view):
     contact, notes…), preserving mediator assignments, setup/teardown and
     status; `modifiedAfterImport` resets (values are re-synced with the file)
   - imported Secutix slots INSIDE the file's covered date range whose
-    booking left the file are DEALLOCATED: mediator assignments are
-    removed and the status becomes `cancelled` — the slot stays visible
-    so the team sees the cancellation. Manual slots, other import
-    sources, slots outside the covered range and offers without a
-    secutixLabel are never touched
+    booking left the file are REMOVED from the planning (the reservation
+    was cancelled in Secutix). They are recoverable through the
+    import's one-click undo. Manual slots, other import sources, slots
+    outside the covered range and offers without a secutixLabel are
+    never touched
   - the whole import is applied as a single history entry: the summary
     (added / updated / deallocated counts + covered date range) offers
     a one-click undo that reverts everything

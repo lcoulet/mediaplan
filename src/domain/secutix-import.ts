@@ -5,7 +5,7 @@
 // turns raw rows into a full synchronization plan:
 //   normalize → filter + dedupe + parse
 //   reconcile → match THÈME labels to offers via offer.secutixLabel
-//   plan      → create / update / deallocate slots
+//   plan      → create / update / remove slots
 //   apply     → merge the plan into the AppData in one pass (single undo step)
 //
 // Rules (see docs/business-specs.md "Secutix Import"):
@@ -13,9 +13,9 @@
 // - booking times from the file take priority over the offer's default duration
 // - the dossier d'achat covers several slots: the dedup key is the composite
 //   (contract + theme + date + startTime + groupName)
-// - "deallocate" = a Secutix-imported slot whose booking left the file: its
-//   mediator assignments are removed and its status becomes "cancelled"
-//   (the slot stays visible so the team sees the cancellation)
+// - "remove" = a Secutix-imported slot whose booking left the file
+//   (cancelled in Secutix): it is deleted from the planning, recoverable
+//   via the import's one-click undo
 
 import { createSlot, createOffer } from './models';
 import type { AppData, Offer, Slot } from './types';
@@ -321,7 +321,7 @@ export interface SecutixChoiceResolution {
  * - a "map" choice re-links every booking of the label to the chosen offer
  *   (existing, or created from the label during this import)
  * - an "ignore" choice drops the label's bookings from the import — they are
- *   not created, not updated, and their slots are never deallocated
+ *   not created, not updated, and their slots are never removed
  * - labels with no valid choice stay pending and block the import
  * Auto-matching (secutixLabel) applies first, so created offers match their
  * label without an explicit "map" entry.
@@ -373,8 +373,9 @@ export interface SecutixImportPlan {
   /** Updated slots (booking changed: headcount, time, contact…). Mediator
    *  assignments, setup/teardown and status are preserved. */
   update: Slot[];
-  /** Slots whose booking left the file: mediators removed, status cancelled */
-  deallocate: Slot[];
+  /** Slots removed from the planning: their booking left the file
+   *  (cancelled in Secutix). Recoverable via the import's undo. */
+  remove: Slot[];
   /** Min/max booking dates covered by the file (null when no bookings) */
   coveredRange: { start: string; end: string } | null;
 }
@@ -426,9 +427,10 @@ function bookingToSlot(booking: SecutixBooking, offerId: string, now: Date): Slo
  * - create a slot per booking that has no matching imported slot
  * - update imported slots whose booking changed (preserving mediators,
  *   setup/teardown, status; modifiedAfterImport resets — values are re-synced)
- * - deallocate Secutix-imported slots INSIDE the covered date range whose
- *   booking left the file. Manual slots, other import sources, slots outside
- *   the range and slots of offers without a secutixLabel are never touched.
+ * - REMOVE Secutix-imported slots INSIDE the covered date range whose
+ *   booking left the file (cancelled reservations). Manual slots, other
+ *   import sources, slots outside the range and slots of offers without
+ *   a secutixLabel are never touched.
  */
 export function buildSecutixImportPlan(
   matched: OfferMatch[],
@@ -508,7 +510,7 @@ export function buildSecutixImportPlan(
     }
   }
 
-  const deallocate: Slot[] = [];
+  const remove: Slot[] = [];
   if (coveredRange) {
     for (const slot of existingSlots) {
       if (matchedSlotIds.has(slot.id)) continue;
@@ -516,11 +518,11 @@ export function buildSecutixImportPlan(
       if (slot.date < coveredRange.start || slot.date > coveredRange.end) continue;
       const label = slot.offerId ? offerLabelById.get(slot.offerId) : undefined;
       if (!label) continue;
-      deallocate.push({ ...slot, mediatorIds: [], status: 'cancelled' });
+      remove.push(slot);
     }
   }
 
-  return { create, update, deallocate, coveredRange };
+  return { create, update, remove, coveredRange };
 }
 
 // ---------------------------------------------------------------------------
@@ -529,22 +531,24 @@ export function buildSecutixImportPlan(
 
 /**
  * Merge the plan into the data in a single pass (offers first, then slot
- * replacements and additions), so one undo step reverts the whole import.
- * Pure: the input data is not mutated.
+ * replacements, removals and additions), so one undo step reverts the
+ * whole import. Pure: the input data is not mutated.
  */
 export function applySecutixImport(
   data: AppData,
   plan: SecutixImportPlan,
   newOffers: Offer[]
 ): AppData {
-  const replacedIds = new Set<string>([...plan.update, ...plan.deallocate].map((s) => s.id));
+  const touchedIds = new Set<string>([
+    ...plan.update.map((s) => s.id),
+    ...plan.remove.map((s) => s.id),
+  ]);
   return {
     ...data,
     offers: [...data.offers, ...newOffers],
     slots: [
-      ...data.slots.filter((s) => !replacedIds.has(s.id)),
+      ...data.slots.filter((s) => !touchedIds.has(s.id)),
       ...plan.update,
-      ...plan.deallocate,
       ...plan.create,
     ],
   };

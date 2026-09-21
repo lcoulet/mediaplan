@@ -259,7 +259,7 @@ describe('buildSecutixImportPlan', () => {
     expect(s.participantCount).toBe(28);
     expect(s.mediatorIds).toEqual([]);
     expect(plan.update).toEqual([]);
-    expect(plan.deallocate).toEqual([]);
+    expect(plan.remove).toEqual([]);
     expect(plan.coveredRange).toEqual({ start: '2026-09-22', end: '2026-09-22' });
   });
 
@@ -291,7 +291,7 @@ describe('buildSecutixImportPlan', () => {
     expect(plan.update.length).toBe(0);
   });
 
-  it('deallocates imported Secutix slots inside the covered range that left the file', () => {
+  it('removes imported Secutix slots inside the covered range that left the file', () => {
     const existing = importedSlot({ id: 'slot_gone', date: '2026-09-23', startTime: '14:00' });
     // A booking on 09-23 extends the covered range over the disappeared slot
     const bookings = normalizeSecutixRows([
@@ -300,11 +300,10 @@ describe('buildSecutixImportPlan', () => {
     ]).bookings;
     const matched = reconcileOffers(bookings, [offer]).matched;
     const plan = buildSecutixImportPlan(matched, [offer], [existing], NOW);
-    expect(plan.deallocate.length).toBe(1);
-    const d = plan.deallocate[0];
-    expect(d.id).toBe('slot_gone');
-    expect(d.mediatorIds).toEqual([]);
-    expect(d.status).toBe('cancelled');
+    expect(plan.remove.length).toBe(1);
+    expect(plan.remove[0].id).toBe('slot_gone');
+    // unchanged in the plan: the slot is deleted on apply, not modified
+    expect(plan.update.length).toBe(0);
     expect(plan.coveredRange).toEqual({ start: '2026-09-22', end: '2026-09-23' });
   });
 
@@ -317,15 +316,15 @@ describe('buildSecutixImportPlan', () => {
     const bookings = normalizeSecutixRows([row()]).bookings;
     const matched = reconcileOffers(bookings, [offer]).matched;
     const plan = buildSecutixImportPlan(matched, [offer, noLabelOffer], [manual, otherSource, outside, orphan], NOW);
-    expect(plan.deallocate).toEqual([]);
+    expect(plan.remove).toEqual([]);
     expect(plan.update).toEqual([]);
   });
 
-  it('returns a null covered range for an empty booking set (no deallocation either)', () => {
+  it('returns a null covered range for an empty booking set (no removal either)', () => {
     const existing = importedSlot();
     const plan = buildSecutixImportPlan([], [offer], [existing], NOW);
     expect(plan.coveredRange).toBeNull();
-    expect(plan.deallocate).toEqual([]);
+    expect(plan.remove).toEqual([]);
     expect(plan.create).toEqual([]);
   });
 });
@@ -334,29 +333,37 @@ describe('applySecutixImport', () => {
   const offer = createOffer({ id: 'off_1', name: 'Visite découverte', secutixLabel: 'G/ Visite découverte' });
   const newOffer = createOffer({ id: 'off_new', name: 'Nouveau thème', secutixLabel: 'G/ Nouveau thème' });
 
-  it('merges created offers, created/updated/deallocated slots into the data in one pass', () => {
+  it('merges created offers, created/updated slots and removals into the data in one pass', () => {
     const existing = importedSlot();
+    const gone = importedSlot({
+      id: 'slot_gone',
+      date: '2026-09-23',
+      startTime: '14:00',
+      endTime: '15:30',
+    });
     const data: AppData = {
       mediators: [],
       offers: [offer],
       schedules: [],
-      slots: [existing],
+      slots: [existing, gone],
       absences: [],
     };
     const bookings = normalizeSecutixRows([
       row({ participantCount: '30' }),               // same key as existing, changed headcount
-      row({ theme: 'G/ Nouveau thème', productDateTime: '23.09.2026 14:00' }), // new booking
+      row({ theme: 'G/ Nouveau thème', productDateTime: '23.09.2026 09:45' }), // new booking extends the range
     ]).bookings;
     const allOffers = [offer, newOffer];
     const matched = reconcileOffers(bookings, allOffers).matched;
-    const plan = buildSecutixImportPlan(matched, allOffers, [existing], NOW);
+    const plan = buildSecutixImportPlan(matched, allOffers, [existing, gone], NOW);
+    expect(plan.remove.length).toBe(1); // gone: 23.09 14:00 left the file
     const next = applySecutixImport(data, plan, [newOffer]);
 
     expect(next.offers.length).toBe(2);
     expect(next.offers.some((o) => o.id === 'off_new')).toBe(true);
-    // unchanged slot kept, updated slot replaced, created slot appended
+    // updated slot replaced, created slot appended, disappeared slot deleted
     const updated = next.slots.find((s) => s.id === 'slot_1');
     expect(updated?.participantCount).toBe(30);
+    expect(next.slots.some((s) => s.id === 'slot_gone')).toBe(false);
     const created = next.slots.find((s) => s.id !== 'slot_1');
     expect(created?.offerId).toBe('off_new');
     expect(next.slots.length).toBe(2);

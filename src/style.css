@@ -485,6 +485,11 @@ body {
     font-style: italic;
 }
 
+.plan-removed {
+    background: #fdeaea;
+    color: #c0392b;
+}
+
 .secutix-result p {
     margin-bottom: 8px;
 }

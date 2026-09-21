@@ -172,8 +172,8 @@ export default function SecutixImportPanel() {
       <h2>Import Secutix (synchronisation)</h2>
       <p>
         Synchronise le planning avec un export Secutix : ajoute les nouvelles réservations,
-        met à jour les modifiées, désalloue (annule) celles qui ont disparu du fichier.
-        Les affectations de médiateurs sont conservées.
+        met à jour les modifiées, supprime celles qui ont disparu du fichier (annulées
+        côté Secutix). Les affectations de médiateurs sont conservées.
       </p>
 
       {!result && (
@@ -260,8 +260,8 @@ export default function SecutixImportPanel() {
             <div className="secutix-plan-preview">
               <span className="plan-stat plan-create">➕ {plan.create.length} à ajouter</span>
               <span className="plan-stat plan-update">✏ {plan.update.length} à mettre à jour</span>
-              <span className="plan-stat plan-deallocate">
-                🚫 {plan.deallocate.length} à désallouer (annulées côté Secutix)
+              <span className="plan-stat plan-removed">
+                🗑️ {plan.remove.length} à supprimer (absentes du fichier)
               </span>
               {createdOffers.length > 0 && (
                 <span className="plan-stat plan-create">📂 {createdOffers.length} offre(s) créée(s)</span>
@@ -296,7 +296,7 @@ export default function SecutixImportPanel() {
           <p>
             ✅ Import terminé : <strong>{result.plan.create.length}</strong> réservation(s)
             ajoutée(s), <strong>{result.plan.update.length}</strong> mise(s) à jour,{' '}
-            <strong>{result.plan.deallocate.length}</strong> désallouée(s) (annulées)
+            <strong>{result.plan.remove.length}</strong> supprimée(s) (annulées côté Secutix)
             {result.ignoredCount > 0 && (
               <> · <strong>{result.ignoredCount}</strong> ignorée(s)</>
             )}
