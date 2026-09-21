@@ -84,7 +84,11 @@ is not needed. Tracks:
 - `importSource`: e.g. "Secutix"
 - `importedAt`: timestamp of import
 - `modifiedAfterImport`: boolean, true if edited after import
-- `contractNumber`: unique identifier from Secutix (reserved slots only)
+- `contractNumber`: Secutix dossier d'achat (reserved slots only) — NOT
+  unique per slot, one contract covers several bookings
+- Booking details carried from Secutix (or manual entry): `groupName`,
+  `guide`, `location` (espace), `groupNature`, `contactName`,
+  `contactPhone`, `contactEmail`, `notes` (from "REMARQUE")
 
 ### Absence
 A mediator's unavailability. Has: type (leave, mission, training, sick,

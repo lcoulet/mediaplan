@@ -1,5 +1,39 @@
 # Open Questions — MediaPlan
 
+## Secutix Import
+
+**Established so far (from the confidential export `sem39sem51.xlsx`,
+weeks 39–51, analyzed locally, never committed):**
+- [x] Export layout: single sheet `visitPlanning`, header row 2, one
+  booking per row, trailing "Total" row (skipped)
+- [x] Rows with theme `G/ Droit d'accès` (entry fees) are NOT imported
+- [x] The dossier d'achat is the reservation contract and can cover
+  several slots → dedup key is composite (contract + offer + date +
+  time + group name), not the contract alone
+- [x] Booking times from the Secutix file take priority over the offer's
+  default duration (duration varies within a product)
+- [x] THÈME is the offer label → offers carry a `secutixLabel` for
+  reconciliation
+- [x] Slot gains booking-detail fields: group name, guide, espace,
+  group nature, contact (name/phone/email), contract number; Secutix
+  "REMARQUE" lands in slot notes
+- [x] Offers get a default espace (`location`), overridable per slot,
+  set by the import on imported slots
+
+**Open questions:**
+- [ ] Import UX: full sync (deallocate missing) vs. add-only first
+      version?
+
+**Resolved:**
+- [x] "G/ Pause Repas" rows ARE imported — the rooms are used by groups
+      for lunch; the corresponding offer is `Accueil Libre` (no mediator)
+- [x] welcomeType mapping lives in the OFFER database (each offer carries
+      its type d'accueil), not in the import. Demo data now reflects the
+      real Secutix catalog with per-offer welcome types:
+      Visites Encadrées/Labos/Ateliers/PSH/HLM → mediator required;
+      Visite Libre / Pause Repas / Mallette / Mise à disposition /
+      ANNIVERSAIRE → `Accueil Libre` (ANNIVERSAIRE confirmed by Loic)
+
 ## Mediator Annual Planning View (vue planning médiateurs)
 
 **Established so far:**

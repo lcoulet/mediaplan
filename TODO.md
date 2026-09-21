@@ -50,11 +50,20 @@
   - Support Secutix export format
   - Support internal coordination files format
 - [ ] Implement Secutix synchronization logic:
-  - Deduplicate by contract number
+  - Skip rows with theme "G/ Droit d'accès" (entry fees — not mediation)
+  - Deduplicate with the composite key (contract + offer + date + time +
+    group name) — the dossier d'achat alone covers several slots
+  - Booking times from the file take priority over the offer's default
+    duration
   - Update modified reservations (headcount, time)
   - Deallocate cancelled reservations (not in Secutix file)
   - Preserve mediator assignments where possible
-- [ ] Obtain sample files (Secutix + coordination) to define column mappings
+  - **Offer reconciliation UX**: when an imported THÈME matches no offer
+    (by `offer.secutixLabel`), guide the user to fix it: offer to create
+    the missing offer from the Secutix label, or to re-link to an
+    existing offer — import cannot complete until every label is mapped
+- [x] Obtain sample files (Secutix done — analyzed locally; coordination
+  format still to be provided) to define column mappings
 
 ## Work Cycles
 
