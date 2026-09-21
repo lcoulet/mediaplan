@@ -810,6 +810,18 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
     font-weight: 600;
 }
 
+.tab-panels {
+    display: grid;
+}
+
+/* All panels share one grid cell: the container is as tall as the tallest
+   panel, so the modal keeps a constant height when switching tabs. */
 .tab-panel {
+    grid-area: 1 / 1;
     min-height: 200px;
+}
+
+.tab-panel.inactive {
+    visibility: hidden;
+    pointer-events: none;
 }

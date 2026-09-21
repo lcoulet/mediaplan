@@ -1,6 +1,6 @@
 // SlotModal.tsx — Slot creation/editing, tabbed (booking, contact, details)
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useData, useCRUD } from './DataContext';
 import {
   createSlot,
@@ -57,6 +57,19 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
   const [setupTimeInput, setSetupTimeInput] = useState<string>(String(setupDefault));
   const [teardownTimeInput, setTeardownTimeInput] = useState<string>(String(teardownDefault));
 
+  // Deferred validation report: when the submit hits an invalid field on a
+  // hidden panel, we switch to its tab first, then show the browser bubble
+  // after the re-render.
+  const formRef = useRef<HTMLFormElement>(null);
+  const pendingValidate = useRef(false);
+
+  useEffect(() => {
+    if (pendingValidate.current) {
+      pendingValidate.current = false;
+      formRef.current?.reportValidity();
+    }
+  }, [activeTab]);
+
   // Mediator warning: overlap or absence for the first selected mediator
   const warning = useMemo(() => {
     const firstMed = selectedMediators[0];
@@ -74,6 +87,21 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Required fields live on the hidden reservation panel. When submit hits
+    // an invalid field, switch to its tab first and let the deferred
+    // reportValidity show the browser bubble there.
+    const formEl = e.currentTarget as HTMLFormElement;
+    if (!formEl.checkValidity()) {
+      const invalidTab = formEl.querySelector<HTMLElement>(':invalid')?.closest<HTMLElement>('.tab-panel')?.dataset.tab;
+      if (invalidTab && invalidTab !== activeTab) {
+        pendingValidate.current = true;
+        setActiveTab(invalidTab as TabId);
+      } else {
+        formEl.reportValidity();
+      }
+      return;
+    }
 
     // Setup/teardown are editable regardless of lock state
     const setupVal = setupTimeInput !== '' ? parseInt(setupTimeInput) || 0 : setupDefault;
@@ -157,6 +185,10 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
 
   const offer = state.data.offers.find((o) => o.id === form.offerId);
 
+  // Panels are always mounted and stacked in one grid cell (see .tab-panels),
+  // so the modal keeps a constant height across tabs.
+  const panelClass = (id: TabId) => `tab-panel${activeTab === id ? '' : ' inactive'}`;
+
   // Origin badges — visible above the tabs on every tab
   const originBadges = isImported ? (
     <>
@@ -179,7 +211,7 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
 
   return (
     <Modal title={isEdit ? 'Modifier le créneau' : 'Nouveau créneau'} onClose={onClose}>
-      <form id="form-slot" onSubmit={handleSubmit}>
+      <form id="form-slot" onSubmit={handleSubmit} noValidate ref={formRef}>
         <div className="origin-info">{originBadges}</div>
 
         <div className="modal-tabs" role="tablist">
@@ -197,8 +229,8 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
           ))}
         </div>
 
-        {activeTab === 'reservation' && (
-          <div className="tab-panel" role="tabpanel">
+        <div className="tab-panels">
+          <div className={panelClass('reservation')} role="tabpanel" data-tab="reservation">
             <div className="form-group">
               <label>Offre *</label>
               <select
@@ -300,10 +332,8 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
               ></textarea>
             </div>
           </div>
-        )}
 
-        {activeTab === 'contact' && (
-          <div className="tab-panel" role="tabpanel">
+          <div className={panelClass('contact')} role="tabpanel" data-tab="contact">
             <div className="form-group">
               <label>N° dossier d'achat</label>
               <input
@@ -346,10 +376,8 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
               </div>
             </div>
           </div>
-        )}
 
-        {activeTab === 'details' && (
-          <div className="tab-panel" role="tabpanel">
+          <div className={panelClass('details')} role="tabpanel" data-tab="details">
             <div className="form-row">
               <div className="form-group">
                 <label>Mise en place (min)</label>
@@ -423,7 +451,7 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
               </div>
             </div>
           </div>
-        )}
+        </div>
 
         <div className="form-actions">
           {isEdit && !restricted && (

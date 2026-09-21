@@ -242,6 +242,11 @@ the tabs on every tab, on a single compact line: for imported slots the
 source name and import date sit on that line ("Source : … — Importé le …"),
 for manual slots the creation date is shown ("Créé le …").
 
+All three tab panels stay mounted and stacked in a single grid cell, so
+the modal height never changes when switching tabs. Submitting with an
+invalid required field (they live on the Réservation tab) switches back
+to that tab and shows the validation bubble there.
+
 Editability rules:
 - Unlocked: everything is editable; imported slots are marked
   "modified after import" on save
