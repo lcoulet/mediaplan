@@ -161,6 +161,63 @@ describe('WeeklyView', () => {
     expect(badges[4]).toContain('OK');
   });
 
+  it('clamps absence banners to the visible 8:00–19:00 window', () => {
+    const withAbsences = {
+      ...mockData,
+      absences: [
+        // Full-day: 00:00–23:59 -> must clamp to 8:00–19:00 (top 0, full column)
+        { id: 'a1', mediatorId: 'm1', startDate: '2026-09-15', endDate: '2026-09-15', halfDay: 'none', type: 'leave', notes: '' },
+        // Morning half-day: 00:00–13:00 -> clamps to 8:00–13:00
+        { id: 'a2', mediatorId: 'm2', startDate: '2026-09-16', endDate: '2026-09-16', halfDay: 'morning', type: 'training', notes: '' },
+        // Afternoon half-day: 13:00–23:59 -> clamps to 13:00–19:00
+        { id: 'a3', mediatorId: 'm1', startDate: '2026-09-17', endDate: '2026-09-17', halfDay: 'afternoon', type: 'mission', notes: '' },
+      ],
+    };
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(withAbsences)),
+      setItem: vi.fn(),
+    });
+
+    const { container } = render(
+      <DataProvider>
+        <WeeklyView />
+      </DataProvider>
+    );
+
+    const banners = container.querySelectorAll('.cal-absence');
+    expect(banners.length).toBe(3);
+
+    // jsdom default innerHeight 768 -> (768 - 220) / 11 = 49.82 px/h
+    const pxPerHour = (768 - 220) / 11;
+    const colHeight = pxPerHour * 11;
+
+    for (const b of Array.from(banners) as HTMLElement[]) {
+      const top = parseFloat(b.style.top);
+      const height = parseFloat(b.style.height);
+      expect(top).toBeGreaterThanOrEqual(0);
+      expect(top + height).toBeLessThanOrEqual(colHeight + 1);
+    }
+
+    // Full-day banner spans the whole visible window
+    const fullDay = banners[0] as HTMLElement;
+    expect(parseFloat(fullDay.style.top)).toBe(0);
+    expect(parseFloat(fullDay.style.height)).toBeCloseTo(colHeight - 4, 0);
+
+    // Morning half-day starts at the top of the window and ends at 13:00
+    const morning = banners[1] as HTMLElement;
+    expect(parseFloat(morning.style.top)).toBe(0);
+    expect(parseFloat(morning.style.top) + parseFloat(morning.style.height)).toBeCloseTo(5 * pxPerHour - 4, 0);
+
+    // Afternoon half-day starts at 13:00 and reaches the bottom of the window
+    const afternoon = banners[2] as HTMLElement;
+    expect(parseFloat(afternoon.style.top)).toBeCloseTo(5 * pxPerHour, 0);
+    expect(parseFloat(afternoon.style.top) + parseFloat(afternoon.style.height)).toBeCloseTo(colHeight - 4, 0);
+
+    // The native tooltip keeps the REAL absence hours (00:00 – 23:59)
+    expect(fullDay.getAttribute('title')).toContain('00:00');
+    expect(fullDay.getAttribute('title')).toContain('23:59');
+  });
+
   it('renders emoji-only summary in narrow parallel lanes (no origin badge)', () => {
     // Two overlapping slots on the same day -> computeLanes splits into
     // 2 parallel lanes -> compact emoji mode

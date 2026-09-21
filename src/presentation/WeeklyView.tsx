@@ -16,6 +16,11 @@ import SlotDetailModal from './SlotDetailModal';
 const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 8); // 8h à 19h
 const FALLBACK_PX_PER_HOUR_V = 40; // before measurement / jsdom
+// Visible window of the grid: full-day absences span 00:00–23:59 and
+// half-days start at 00:00 or end at 23:59 — banners are clamped so they
+// never overflow the displayed hours.
+const DAY_START_MIN = HOURS[0] * 60;
+const DAY_END_MIN = HOURS[HOURS.length - 1] * 60;
 
 // Planning status labels, colors and severity (weekly view).
 // Severity order drives legend, stats AND visual weight:
@@ -337,9 +342,11 @@ export default function WeeklyView() {
                   const label = ABSENCE_TYPE_LABELS[abs.type] || abs.type;
                   const medName = mediator ? `${mediator.firstName} ${mediator.lastName}` : '—';
                   
-                  // Calculate position based on startTime/endTime
-                  const startMinutes = toMinutes(abs.startTime || '00:00');
-                  const endMinutes = toMinutes(abs.endTime || '23:59');
+                  // Calculate position based on startTime/endTime, clamped to
+                  // the visible hours (the real hours stay in the tooltip)
+                  const startMinutes = Math.max(toMinutes(abs.startTime || '00:00'), DAY_START_MIN);
+                  const endMinutes = Math.min(toMinutes(abs.endTime || '23:59'), DAY_END_MIN);
+                  if (endMinutes <= startMinutes) return null; // outside visible hours
 
                   // Day column height scales with the viewport
                   const DAY_HEIGHT = (HOURS.length - 1) * pxPerHourV;
