@@ -307,17 +307,32 @@ describe('buildSecutixImportPlan', () => {
     expect(plan.coveredRange).toEqual({ start: '2026-09-22', end: '2026-09-23' });
   });
 
-  it('never touches manual slots, other import sources, slots outside the covered range, or offers without a secutixLabel', () => {
+  it('never touches manual slots, other import sources, or slots outside the covered range', () => {
     const manual = importedSlot({ id: 'slot_manual', origin: 'manual', importSource: '' });
     const otherSource = importedSlot({ id: 'slot_coord', importSource: 'Coordination' });
     const outside = importedSlot({ id: 'slot_out', date: '2026-10-23' });
-    const noLabelOffer = createOffer({ id: 'off_nl', name: 'Sans libellé' });
-    const orphan = importedSlot({ id: 'slot_nl', offerId: 'off_nl' });
     const bookings = normalizeSecutixRows([row()]).bookings;
     const matched = reconcileOffers(bookings, [offer]).matched;
-    const plan = buildSecutixImportPlan(matched, [offer, noLabelOffer], [manual, otherSource, outside, orphan], NOW);
+    const plan = buildSecutixImportPlan(matched, [offer], [manual, otherSource, outside], NOW);
     expect(plan.remove).toEqual([]);
     expect(plan.update).toEqual([]);
+  });
+
+  it('removes imported Secutix slots of offers without a secutixLabel (provenance over label)', () => {
+    // An imported Secutix slot whose offer lost (or never had) its label
+    // cannot be matched by key, but its provenance still makes it
+    // Secutix-managed: it must disappear when its booking left the file.
+    const noLabelOffer = createOffer({ id: 'off_nl', name: 'Sans libellé' });
+    const orphan = importedSlot({ id: 'slot_nl', offerId: 'off_nl', date: '2026-09-23' });
+    // A booking on 09-23 extends the covered range over the orphan slot
+    const bookings = normalizeSecutixRows([
+      row(),
+      row({ groupName: 'COLLEGE DES CYPRES - 6E', productDateTime: '23.09.2026 09:45' }),
+    ]).bookings;
+    const matched = reconcileOffers(bookings, [offer]).matched;
+    const plan = buildSecutixImportPlan(matched, [offer, noLabelOffer], [orphan], NOW);
+    expect(plan.remove.length).toBe(1);
+    expect(plan.remove[0].id).toBe('slot_nl');
   });
 
   it('returns a null covered range for an empty booking set (no removal either)', () => {

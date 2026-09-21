@@ -428,9 +428,11 @@ function bookingToSlot(booking: SecutixBooking, offerId: string, now: Date): Slo
  * - update imported slots whose booking changed (preserving mediators,
  *   setup/teardown, status; modifiedAfterImport resets — values are re-synced)
  * - REMOVE Secutix-imported slots INSIDE the covered date range whose
- *   booking left the file (cancelled reservations). Manual slots, other
- *   import sources, slots outside the range and slots of offers without
- *   a secutixLabel are never touched.
+ *   booking left the file (cancelled reservations). The slot's provenance
+ *   (origin imported + importSource Secutix) decides, not the offer's
+ *   label: unlabeled offers cannot match, but their imported slots are
+ *   still removed. Manual slots, other import sources and slots outside
+ *   the range are never touched.
  */
 export function buildSecutixImportPlan(
   matched: OfferMatch[],
@@ -514,10 +516,11 @@ export function buildSecutixImportPlan(
   if (coveredRange) {
     for (const slot of existingSlots) {
       if (matchedSlotIds.has(slot.id)) continue;
+      // Provenance over label: a Secutix-imported slot is managed by the
+      // sync even if its offer lost (or never had) a secutixLabel — the
+      // label is only needed to MATCH a booking, never to protect the slot.
       if (slot.origin !== 'imported' || slot.importSource !== SECUTIX_SOURCE) continue;
       if (slot.date < coveredRange.start || slot.date > coveredRange.end) continue;
-      const label = slot.offerId ? offerLabelById.get(slot.offerId) : undefined;
-      if (!label) continue;
       remove.push(slot);
     }
   }

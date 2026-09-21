@@ -226,11 +226,13 @@ export default function SecutixImportPanel() {
                     <div className="secutix-picker">
                       <SingleSelect
                         options={[
-                          ...state.data.offers.map((o) => ({ value: o.id, label: o.name, color: o.color })),
+                          { value: IGNORE_CHOICE, label: '🚫 Ignorer — ne pas importer' },
                           ...(label
                             ? [{ value: CREATE_CHOICE, label: `➕ Créer l'offre « ${label} »` }]
                             : []),
-                          { value: IGNORE_CHOICE, label: '🚫 Ignorer — ne pas importer' },
+                          ...[...state.data.offers]
+                            .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+                            .map((o) => ({ value: o.id, label: o.name, color: o.color })),
                         ]}
                         value={choice}
                         onChange={(value) => handleChoice(label, value)}

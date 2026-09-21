@@ -310,9 +310,12 @@ in `src/infrastructure/secutix-reader.ts`, UI in the Import/Export view):
     status; `modifiedAfterImport` resets (values are re-synced with the file)
   - imported Secutix slots INSIDE the file's covered date range whose
     booking left the file are REMOVED from the planning (the reservation
-    was cancelled in Secutix). They are recoverable through the
-    import's one-click undo. Manual slots, other import sources, slots
-    outside the covered range and offers without a secutixLabel are
+    was cancelled in Secutix). Provenance decides, not the offer label:
+    a slot with origin `imported` and `importSource: "Secutix"` is managed
+    by the sync even if its offer lost (or never had) a secutixLabel.
+    Removed slots are recoverable through the import's one-click undo.
+    Manual slots, slots from other import sources (e.g. a future
+    coordination-file import) and slots outside the covered range are
     never touched
   - the whole import is applied as a single history entry: the summary
     (added / updated / deallocated counts + covered date range) offers
