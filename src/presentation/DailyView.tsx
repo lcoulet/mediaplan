@@ -488,6 +488,12 @@ export default function DailyView() {
           <div className="daily-unassigned-row">
             <div className="daily-mediator-label">
               <span className="daily-mediator-name">Non assigné</span>
+              <span
+                className="daily-unassigned-count"
+                title="Réservations non affectées / réservations du jour"
+              >
+                {unassignedSlots.length}/{daySlots.length}
+              </span>
             </div>
             <div
               className="daily-mediator-track"

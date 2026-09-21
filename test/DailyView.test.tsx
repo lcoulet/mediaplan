@@ -60,6 +60,18 @@ describe('DailyView', () => {
     expect(screen.getByText(/Plan Jour —/i)).toBeInTheDocument();
   });
 
+  it('should show the unassigned count next to the unassigned lane label', () => {
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+    // Mock data: 2 slots on 2026-09-19, 1 unassigned -> badge "1/2"
+    const badge = container.querySelector('.daily-unassigned-count');
+    expect(badge).toBeTruthy();
+    expect(badge!.textContent).toBe('1/2');
+  });
+
   it('should render active mediators as rows (not inactive ones)', () => {
     const { container } = render(
       <DataProvider>

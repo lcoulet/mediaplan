@@ -460,6 +460,18 @@ body.edit-mode .cal-day-col:hover {
   font-weight: 600;
 }
 
+/* Unassigned counter in the unassigned lane label ("3/10") */
+.daily-unassigned-count {
+  flex-shrink: 0;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: #f0f0f0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
 /* Competence highlighting for mediator rows */
 .daily-mediator-row.competence-confirmed {
   background-color: rgba(0, 100, 255, 0.1);
