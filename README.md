@@ -21,6 +21,9 @@ planned. The UI is in **French** by default.
 - Date pickers on both views (click the date / the period label)
 - Manage mediators (add, edit, delete, colors, competences)
 - Manage offers (catalog fully editable regardless of lock state)
+- Offer welcome type ("Type d'accueil"): free-entry offers
+  (Accueil Libre) need no mediator — their slots display as OK even when
+  unassigned
 - Manage reservations (slots) with multi-mediator assignment
 - Per-slot setup/teardown durations (default from the offer, editable locked)
 - Absences (leave, mission, training, sick, leave request) with configurable

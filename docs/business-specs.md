@@ -62,6 +62,12 @@ Excel export or paper printout).
   for all mediators)
 - `teardownTime`: cleanup time in minutes after the offer (fixed, same
   for all mediators)
+- `welcomeType`: `Accueil Libre` | `Réservable encadrée par médiateur` |
+  `Animation par médiateur` — how the offer is staffed. An
+  `Accueil Libre` offer needs NO mediator: its slots display as OK
+  (green) even when unassigned. Defaults to
+  `Réservable encadrée par médiateur`. Legacy persisted data is migrated
+  with the default on load.
 
 ### Schedule (Planning)
 
@@ -103,16 +109,6 @@ public-facing time). Setup extends the planning block BEFORE the booking,
 teardown AFTER it — this geometry is derived at display time
 (`getSlotTotalRange()`), never stored on the booking hours.
 
-### Mediation Offer
-
-- `id`, `name`, `description`
-- `duration`: booking duration in minutes (public time — setup/teardown
-  excluded)
-- `capacity`, `location`
-- `setupTime`: default setup duration in minutes (optional)
-- `teardownTime`: default teardown duration in minutes (optional)
-- `color`: display color (hex)
-
 ### Mediator Unavailability (Absence)
 
 - `id`: unique identifier
@@ -147,6 +143,8 @@ teardown AFTER it — this geometry is derived at display time
 ### Mediation Offer Management
 - List, add, edit, delete an offer
 - Define setup time and teardown time per offer
+- Set the welcome type (Accueil Libre / Réservable encadrée par
+  médiateur / Animation par médiateur)
 - Associate offers with mediators (competences)
 
 ### Mediator Unavailability Management

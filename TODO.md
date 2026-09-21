@@ -1,5 +1,18 @@
 # TODO — MediaPlan
 
+## Mediator Annual Planning View (next)
+
+- [ ] New view "Planning médiateurs": annual grid (year switchable)
+  - Rows: days of the year (with standard ISO week numbers, e.g. "S38")
+  - Columns: mediators, one cell per half-day (morning / afternoon)
+  - Cells show presences (work cycle) and absences (type + half-day)
+- [ ] Define work cycles in this view (e.g. S1, S2, S3... rotating weekly
+  patterns) — editable grid, cycle assignment per mediator
+- [ ] Reference: stakeholder's Excel example (to be provided) defines the
+  target layout
+- [ ] TDD: week numbering (ISO 8601), cycle rotation, half-day cell state
+  computation (cycle + absence overlay)
+
 ## Competence Visibility (next)
 
 - [ ] Offers view: add a column showing how many mediators know the offer,

@@ -81,6 +81,7 @@ La vue **Plan Jour** est la vue de travail : un médiateur par ligne, le temps e
 
 ### Offres
 - Catalogue des activités : durée (celle du public), capacité, lieu, **couleur**
+- **Type d'accueil** : « Accueil libre » (offre sans médiateur requis — ses créneaux s'affichent verts même sans assignation), « Réservable encadrée par médiateur », « Animation par médiateur »
 - **Mise en place / rangement** : durées logistiques par défaut en minutes — utilisées par les créneaux, modifiables à tout moment
 - Tri par colonne et recherche
 

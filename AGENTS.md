@@ -118,7 +118,12 @@ mediaplan/
 
 - **Mediator**: staff member, has a color, skills (offers), active status
 - **Mediation Offer**: activity (tour, workshop, etc.) with duration, capacity,
-  location, optional setup/teardown time
+  location, optional setup/teardown time, and a **welcomeType**
+  ("Type d'accueil": `Accueil Libre` | `Réservable encadrée par médiateur` |
+  `Animation par médiateur`). An `Accueil Libre` offer requires NO mediator:
+  `getSlotPlanningStatus()` returns `ok` for its slots even when unassigned.
+  Defaults to `Réservable encadrée par médiateur`; legacy localStorage data
+  is migrated with the default on load.
 - **Schedule**: planning period, has a `locked` boolean
 - **Slot (Reservation)**: assignment of one or more mediators to an offer at a
   date/time. Tracks `origin` (manual/imported), `importSource`, `importedAt`,
@@ -132,7 +137,8 @@ mediaplan/
   (`hasMediatorOverlap()` enforces this).
 - Each slot carries a **planning status** (weekly view): unassigned >
   dispo issue > incompetent > learning > OK — mutually exclusive,
-  availability before competence (`getSlotPlanningStatus()`).
+  availability before competence (`getSlotPlanningStatus()`). EXCEPTION:
+  slots of `Accueil Libre` offers are always `ok` — no mediator required.
 - Absences are **non-interactive** on the calendar (visual only,
   `pointer-events: none`).
 - Mediator assignment is always allowed (even when planning is locked) —
