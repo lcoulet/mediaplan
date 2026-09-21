@@ -51,6 +51,19 @@ describe('slot booking-detail fields', () => {
   });
 });
 
+describe('slot createdAt', () => {
+  it('is stamped with the creation time', () => {
+    const slot = createSlot({});
+    expect(slot.createdAt).toBeTruthy();
+    expect(new Date(slot.createdAt!).toISOString()).toBe(slot.createdAt);
+  });
+
+  it('keeps the provided createdAt', () => {
+    const slot = createSlot({ createdAt: '2026-09-14T19:30:00.000Z' });
+    expect(slot.createdAt).toBe('2026-09-14T19:30:00.000Z');
+  });
+});
+
 describe('offer secutixLabel', () => {
   it('is absent when not provided (manual offer)', () => {
     const offer = createOffer({ name: 'Visite découverte' });

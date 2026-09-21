@@ -162,11 +162,19 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
     <>
       <span className="badge origin-badge-imported">📥 {ORIGIN_LABELS.imported}</span>
       {form.modifiedAfterImport && <span className="badge origin-badge-modified">✏ Modifié après import</span>}
-      {form.importSource && <span className="origin-detail">Source : {form.importSource}</span>}
-      {form.importedAt && <span className="origin-detail">Importé le {formatImportDate(form.importedAt)}</span>}
+      {(form.importSource || form.importedAt) && (
+        <span className="origin-detail">
+          {[form.importSource && `Source : ${form.importSource}`, form.importedAt && `Importé le ${formatImportDate(form.importedAt)}`]
+            .filter(Boolean)
+            .join(' — ')}
+        </span>
+      )}
     </>
   ) : (
-    <span className="badge origin-badge-manual">✋ {ORIGIN_LABELS.manual}</span>
+    <>
+      <span className="badge origin-badge-manual">✋ {ORIGIN_LABELS.manual}</span>
+      {form.createdAt && <span className="origin-detail">Créé le {formatImportDate(form.createdAt)}</span>}
+    </>
   );
 
   return (

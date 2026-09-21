@@ -57,6 +57,9 @@ export interface Slot {
   origin: SlotOrigin;
   importSource: string;
   importedAt: string;
+  // Creation timestamp (ISO 8601), stamped at creation for every slot.
+  // Optional: slots persisted before the field existed have none.
+  createdAt?: string;
   modifiedAfterImport: boolean;
   // Secutix "N° DOSSIER D'ACHAT" — the purchase contract. NOT unique per
   // slot: one contract can cover several bookings (e.g. entry + guided

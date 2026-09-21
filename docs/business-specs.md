@@ -104,6 +104,8 @@ Excel export or paper printout).
 - `origin`: `manual` | `imported`
 - `importSource`: source label (e.g. `"Secutix"`, `"Coordination"`)
 - `importedAt`: import timestamp (ISO 8601) — empty for manual slots
+- `createdAt`: creation timestamp (ISO 8601), stamped at creation.
+  Optional: slots persisted before the field existed have none
 - `modifiedAfterImport`: boolean — true if edited after import
 - `contractNumber`: Secutix "N° DOSSIER D'ACHAT" — the purchase contract
   (reserved slots only). NOT unique per slot: one contract can cover
@@ -236,7 +238,9 @@ model stays readable (imported slots show all Secutix booking details):
 - **Détails**: setup/teardown times, participants, status, guide,
   group nature
 The origin badges (imported / modified after import) stay visible above
-the tabs on every tab.
+the tabs on every tab, on a single compact line: for imported slots the
+source name and import date sit on that line ("Source : … — Importé le …"),
+for manual slots the creation date is shown ("Créé le …").
 
 Editability rules:
 - Unlocked: everything is editable; imported slots are marked

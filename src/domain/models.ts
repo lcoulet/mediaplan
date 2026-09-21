@@ -211,6 +211,7 @@ interface SlotInput {
   origin?: SlotOrigin;
   importSource?: string;
   importedAt?: string;
+  createdAt?: string;
   modifiedAfterImport?: boolean;
   contractNumber?: string;
   groupName?: string;
@@ -249,6 +250,7 @@ export function createSlot(data: SlotInput = {}): Slot {
     origin: data.origin || 'manual',
     importSource: data.importSource || '',
     importedAt: data.importedAt || '',
+    createdAt: data.createdAt || new Date().toISOString(),
     modifiedAfterImport: data.modifiedAfterImport !== undefined ? data.modifiedAfterImport : false,
     groupName: data.groupName || '',
     guide: data.guide || '',
