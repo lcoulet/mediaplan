@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useData } from './DataContext';
 import { exportJSON, importJSON } from '../infrastructure/store';
 import { exportExcel, importExcel } from '../infrastructure/excel';
+import SecutixImportPanel from './SecutixImportPanel';
 
 export default function ImportExportView() {
   const { state, commit, resetData } = useData();
@@ -61,6 +62,9 @@ export default function ImportExportView() {
       </div>
 
       <div className="import-export-container">
+        {/* Secutix synchronization card */}
+        <SecutixImportPanel />
+
         {/* Export card */}
         <div className="io-card">
           <h2>Exporter</h2>
