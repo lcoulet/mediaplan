@@ -275,21 +275,41 @@ plus a trailing "Total" row to skip. Reference layout (columns A–V):
 | REMARQUE | `slot.notes` |
 | LANGUE DE VISITE, SITE (single value) | not imported |
 
-Import rules:
+Import rules (implemented in `src/domain/secutix-import.ts`, browser reading
+in `src/infrastructure/secutix-reader.ts`, UI in the Import/Export view):
 - **Filter**: rows with theme `G/ Droit d'accès` (entry fees) are NOT
-  imported — they are not mediation bookings.
+  imported — they are not mediation bookings. The trailing "Total" row and
+  rows without a parsable product datetime are skipped as well.
 - **Times take priority**: the booking times from the Secutix file
-  override the offer's default duration.
+  override the offer's default duration (endTime = startTime + DURÉE,
+  clamped to 23:59).
 - **Offer reconciliation**: the THÈME label maps to the offer via
-  `offer.secutixLabel`; unmatched labels are reported for catalog
-  mapping rather than silently creating slots.
+  `offer.secutixLabel` (whitespace-tolerant comparison). Unmatched labels
+  BLOCK the import: the review UI lists each label with its booking count
+  and offers to map it to an existing offer or to create the offer
+  (suggested espace/duration from the label's bookings, welcome type
+  defaults to "Réservable encadrée par médiateur" — editable later). Rows
+  with an EMPTY theme (e.g. private ANNIVERSAIRE products) surface as
+  "(sans libellé Secutix)" and can only be mapped, not created.
 - **Deduplication**: one dossier d'achat covers several slots (one
   dossier can mix products and dates, and up to several groups share a
   dossier+product+time). The dedup key is the composite
-  (contractNumber, offer, date, startTime, groupName).
-- Update existing slots when a reservation is modified (headcount,
-  time), preserving mediator assignments when possible
-- Deallocate slots no longer in the Secutix file (cancelled reservations)
+  (contractNumber, theme, date, startTime, groupName).
+- **Synchronization** (full sync):
+  - new bookings create slots stamped `origin: imported`,
+    `importSource: "Secutix"`, `importedAt`
+  - bookings whose slot already exists update it (headcount, times,
+    contact, notes…), preserving mediator assignments, setup/teardown and
+    status; `modifiedAfterImport` resets (values are re-synced with the file)
+  - imported Secutix slots INSIDE the file's covered date range whose
+    booking left the file are DEALLOCATED: mediator assignments are
+    removed and the status becomes `cancelled` — the slot stays visible
+    so the team sees the cancellation. Manual slots, other import
+    sources, slots outside the covered range and offers without a
+    secutixLabel are never touched
+  - the whole import is applied as a single history entry: the summary
+    (added / updated / deallocated counts + covered date range) offers
+    a one-click undo that reverts everything
 
 ### Excel Import/Export
 - Export the schedule in .xlsx format (one tab per entity or per week)

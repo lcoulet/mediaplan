@@ -20,11 +20,16 @@ weeks 39–51, analyzed locally, never committed):**
 - [x] Offers get a default espace (`location`), overridable per slot,
   set by the import on imported slots
 
-**Open questions:**
-- [ ] Import UX: full sync (deallocate missing) vs. add-only first
-      version?
-
 **Resolved:**
+- [x] Import UX: FULL SYNC (decided 2026-09-21) — add new bookings, update
+      modified ones (headcount, times), deallocate the ones that left the
+      file (mediators removed, status cancelled), preserving mediator
+      assignments. Offer reconciliation (map or create) blocks the import
+      until every THÈME label is mapped. The summary popup reports
+      added/updated/deallocated counts and the covered date range, with a
+      one-click undo. Some rows carry an empty THÈME (private ANNIVERSAIRE
+      products): they surface as "(sans libellé Secutix)" and must be
+      mapped to an existing offer.
 - [x] "G/ Pause Repas" rows ARE imported — the rooms are used by groups
       for lunch; the corresponding offer is `Accueil Libre` (no mediator)
 - [x] welcomeType mapping lives in the OFFER database (each offer carries
