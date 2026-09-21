@@ -33,6 +33,13 @@ const slot = (startTime: string, endTime: string): Slot => ({
   importSource: '',
   importedAt: '',
   modifiedAfterImport: false,
+  groupName: '',
+  guide: '',
+  location: '',
+  groupNature: '',
+  contactName: '',
+  contactPhone: '',
+  contactEmail: '',
 });
 
 describe('getSlotTotalRange', () => {

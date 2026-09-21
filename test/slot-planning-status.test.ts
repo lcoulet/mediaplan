@@ -24,6 +24,8 @@ const slot = (mediatorIds: string[], over: Partial<Slot> = {}): Slot => ({
   date: '2026-09-15', startTime: '10:00', endTime: '11:00',
   participantCount: 0, status: 'planned', notes: '', origin: 'manual',
   importSource: '', importedAt: '', modifiedAfterImport: false,
+  groupName: '', guide: '', location: '', groupNature: '',
+  contactName: '', contactPhone: '', contactEmail: '',
   ...over,
 });
 

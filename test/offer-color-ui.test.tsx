@@ -178,6 +178,8 @@ describe('offers — colored pills display', () => {
       date: '2026-09-15', startTime: '09:00', endTime: '10:00', participantCount: 10,
       status: 'planned' as const, notes: '', origin: 'manual' as const,
       importSource: '', importedAt: '', modifiedAfterImport: false,
+      groupName: '', guide: '', location: '', groupNature: '',
+      contactName: '', contactPhone: '', contactEmail: '',
     };
     render(
       <DataProvider>
@@ -217,6 +219,8 @@ describe('offers — colored pills display', () => {
       date: '2026-09-15', startTime: '09:00', endTime: '10:00', participantCount: 10,
       status: 'planned' as const, notes: '', origin: 'manual' as const,
       importSource: '', importedAt: '', modifiedAfterImport: false,
+      groupName: '', guide: '', location: '', groupNature: '',
+      contactName: '', contactPhone: '', contactEmail: '',
     };
     render(
       <DataProvider>

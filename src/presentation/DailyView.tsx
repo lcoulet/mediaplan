@@ -229,6 +229,13 @@ export default function DailyView() {
           importSource: '',
           importedAt: '',
           modifiedAfterImport: false,
+          groupName: '',
+          guide: '',
+          location: '',
+          groupNature: '',
+          contactName: '',
+          contactPhone: '',
+          contactEmail: '',
           // Initialize per-slot durations from the offer (editable later)
           ...(offer.setupTime !== undefined ? { setupTime: offer.setupTime } : {}),
           ...(offer.teardownTime !== undefined ? { teardownTime: offer.teardownTime } : {}),

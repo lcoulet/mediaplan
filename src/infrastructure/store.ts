@@ -2,7 +2,7 @@
 
 import { generateExportFilename, buildExportMetadata } from '../domain/export-utils';
 import { defaultOfferColor } from '../domain/models';
-import type { AppData, Offer } from '../domain/types';
+import type { AppData, Offer, Slot } from '../domain/types';
 
 const STORAGE_KEY = 'mediaplan_data_v1';
 const LAST_MODIFIED_KEY = 'mediaplan_last_modified';
@@ -27,11 +27,24 @@ export function load(): AppData {
       ...(o.color ? {} : { color: defaultOfferColor() }),
       ...(o.welcomeType ? {} : { welcomeType: 'Réservable encadrée par médiateur' as const }),
     }));
+    // Migrate: default the booking-detail fields on slots persisted before
+    // the Secutix import fields existed (groupName, guide, location,
+    // groupNature, contact*)
+    const slots: Slot[] = (parsed.slots || []).map((s) => ({
+      ...s,
+      groupName: s.groupName || '',
+      guide: s.guide || '',
+      location: s.location || '',
+      groupNature: s.groupNature || '',
+      contactName: s.contactName || '',
+      contactPhone: s.contactPhone || '',
+      contactEmail: s.contactEmail || '',
+    }));
     return {
       mediators: parsed.mediators || [],
       offers,
       schedules: parsed.schedules || [],
-      slots: parsed.slots || [],
+      slots,
       absences: parsed.absences || [],
     };
   } catch (e) {

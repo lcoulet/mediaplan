@@ -1,0 +1,112 @@
+// test/slot-booking-fields.test.ts — Booking-detail fields on slots (Secutix)
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import {
+  createSlot,
+  createOffer,
+  getSlotLocation,
+} from '../src/domain/models';
+
+class LocalStorageMock {
+  data: Record<string, string> = {};
+  getItem(key: string): string | null { return this.data[key] || null; }
+  setItem(key: string, value: string): void { this.data[key] = String(value); }
+  removeItem(key: string): void { delete this.data[key]; }
+  clear(): void { this.data = {}; }
+}
+vi.stubGlobal('localStorage', new LocalStorageMock());
+
+describe('slot booking-detail fields', () => {
+  it('defaults the booking-detail fields to empty strings', () => {
+    const slot = createSlot();
+    expect(slot.groupName).toBe('');
+    expect(slot.guide).toBe('');
+    expect(slot.location).toBe('');
+    expect(slot.groupNature).toBe('');
+    expect(slot.contactName).toBe('');
+    expect(slot.contactPhone).toBe('');
+    expect(slot.contactEmail).toBe('');
+  });
+
+  it('stores the booking-detail fields provided at creation', () => {
+    const slot = createSlot({
+      groupName: 'ECOLE ELEMENTAIRE LES TOURNESOLS - CE1',
+      guide: 'M. Dupont',
+      contractNumber: '3126845',
+      location: 'RZA_MHN_EXPOSITION PERMANENTE',
+      groupNature: 'SCOLAIRES C2',
+      contactName: '(50100421) MERLANDE, Céleste',
+      contactPhone: '06 71 24 85 19',
+      contactEmail: 'celeste.merlande@exemple.fr',
+      notes: 'Contrat signé le 10/09/26',
+    });
+    expect(slot.groupName).toBe('ECOLE ELEMENTAIRE LES TOURNESOLS - CE1');
+    expect(slot.guide).toBe('M. Dupont');
+    expect(slot.contractNumber).toBe('3126845');
+    expect(slot.location).toBe('RZA_MHN_EXPOSITION PERMANENTE');
+    expect(slot.groupNature).toBe('SCOLAIRES C2');
+    expect(slot.contactName).toBe('(50100421) MERLANDE, Céleste');
+    expect(slot.contactPhone).toBe('06 71 24 85 19');
+    expect(slot.contactEmail).toBe('celeste.merlande@exemple.fr');
+    expect(slot.notes).toBe('Contrat signé le 10/09/26');
+  });
+});
+
+describe('offer secutixLabel', () => {
+  it('is absent when not provided (manual offer)', () => {
+    const offer = createOffer({ name: 'Visite découverte' });
+    expect('secutixLabel' in offer).toBe(false);
+  });
+
+  it('is stored when provided', () => {
+    const offer = createOffer({
+      name: "L'Arbre à Clés",
+      secutixLabel: "G/ CM1 à 6e/ L'Arbre à Clés",
+    });
+    expect(offer.secutixLabel).toBe("G/ CM1 à 6e/ L'Arbre à Clés");
+  });
+});
+
+describe('getSlotLocation', () => {
+  const offer = createOffer({ name: 'Visite', location: 'Exposition permanente' });
+
+  it('returns the slot location when set (overrides the offer default)', () => {
+    const slot = createSlot({ location: 'Labo' });
+    expect(getSlotLocation(slot, offer)).toBe('Labo');
+  });
+
+  it('falls back to the offer location when the slot has none', () => {
+    const slot = createSlot({});
+    expect(getSlotLocation(slot, offer)).toBe('Exposition permanente');
+  });
+
+  it('returns an empty string when neither slot nor offer has one', () => {
+    const slot = createSlot({});
+    expect(getSlotLocation(slot, undefined)).toBe('');
+  });
+});
+
+describe('store migration of legacy slots', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('fills the booking-detail fields on legacy persisted slots', async () => {
+    const legacy = {
+      mediators: [],
+      offers: [],
+      schedules: [],
+      absences: [],
+      slots: [{ id: 'slot_1', offerId: 'off_1', date: '2026-09-22', startTime: '09:45', endTime: '10:45' }],
+    };
+    localStorage.setItem('mediaplan_data_v1', JSON.stringify(legacy));
+    const { load } = await import('../src/infrastructure/store');
+    const data = load();
+    expect(data.slots[0].groupName).toBe('');
+    expect(data.slots[0].guide).toBe('');
+    expect(data.slots[0].location).toBe('');
+    expect(data.slots[0].groupNature).toBe('');
+    expect(data.slots[0].contactName).toBe('');
+    expect(data.slots[0].contactPhone).toBe('');
+    expect(data.slots[0].contactEmail).toBe('');
+    // existing values are preserved
+    expect(data.slots[0].startTime).toBe('09:45');
+  });
+});

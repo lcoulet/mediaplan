@@ -23,6 +23,10 @@ export interface Offer {
   teardownTime?: number;
   color?: string;
   welcomeType: 'Accueil Libre' | 'Réservable encadrée par médiateur' | 'Animation par médiateur';
+  // Label of this offer in Secutix exports ("THÈME" column), used to
+  // reconcile imported reservations with the offer catalog. Optional:
+  // offers never imported from Secutix have none.
+  secutixLabel?: string;
 }
 
 export type ScheduleStatus = 'draft' | 'published' | 'archived';
@@ -54,7 +58,24 @@ export interface Slot {
   importSource: string;
   importedAt: string;
   modifiedAfterImport: boolean;
+  // Secutix "N° DOSSIER D'ACHAT" — the purchase contract. NOT unique per
+  // slot: one contract can cover several bookings (e.g. entry + guided
+  // tour). Used for reconciliation together with offer, date, time and
+  // group name.
   contractNumber?: string;
+  // Booking details, from the Secutix import or manual entry
+  // ("NOM DU GROUPE")
+  groupName: string;
+  // Secutix "GUIDE" column — free text, usually empty in exports
+  guide: string;
+  // Secutix "ESPACE" — overrides the offer's default location when set
+  location: string;
+  // Secutix "NATURE DU GROUPE" — free text (e.g. SCOLAIRES C2, PSH)
+  groupNature: string;
+  // Secutix contact details of the purchase contract
+  contactName: string;
+  contactPhone: string;
+  contactEmail: string;
   // Logistics durations in minutes, editable per-slot regardless of lock
   // state. Default to the offer's values at creation. When undefined
   // (legacy data), the offer's values are used.

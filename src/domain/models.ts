@@ -149,6 +149,7 @@ interface OfferInput {
   teardownTime?: number;
   color?: string;
   welcomeType?: 'Accueil Libre' | 'Réservable encadrée par médiateur' | 'Animation par médiateur';
+  secutixLabel?: string;
 }
 
 export function createOffer(data: OfferInput = {}): Offer {
@@ -164,6 +165,7 @@ export function createOffer(data: OfferInput = {}): Offer {
     // Assign a palette color when none provided (tests rely on this default)
     color: data.color || OFFER_COLORS[offerColorIndex++ % OFFER_COLORS.length],
     welcomeType: data.welcomeType ?? 'Réservable encadrée par médiateur',
+    ...(data.secutixLabel !== undefined ? { secutixLabel: data.secutixLabel } : {}),
   };
 }
 
@@ -211,6 +213,13 @@ interface SlotInput {
   importedAt?: string;
   modifiedAfterImport?: boolean;
   contractNumber?: string;
+  groupName?: string;
+  guide?: string;
+  location?: string;
+  groupNature?: string;
+  contactName?: string;
+  contactPhone?: string;
+  contactEmail?: string;
   setupTime?: number;
   teardownTime?: number;
 }
@@ -241,11 +250,26 @@ export function createSlot(data: SlotInput = {}): Slot {
     importSource: data.importSource || '',
     importedAt: data.importedAt || '',
     modifiedAfterImport: data.modifiedAfterImport !== undefined ? data.modifiedAfterImport : false,
+    groupName: data.groupName || '',
+    guide: data.guide || '',
+    location: data.location || '',
+    groupNature: data.groupNature || '',
+    contactName: data.contactName || '',
+    contactPhone: data.contactPhone || '',
+    contactEmail: data.contactEmail || '',
+    ...(data.contractNumber !== undefined ? { contractNumber: data.contractNumber } : {}),
     // Optional per-slot logistics durations (minutes). Left undefined on
     // purpose when not provided: the offer's values apply (legacy behavior).
     ...(data.setupTime !== undefined ? { setupTime: data.setupTime } : {}),
     ...(data.teardownTime !== undefined ? { teardownTime: data.teardownTime } : {}),
   };
+}
+
+// Effective location ("espace") of a slot: the slot's own value overrides
+// the offer's default location (Secutix imports set it per booking; manual
+// slots fall back to the offer default).
+export function getSlotLocation(slot: Slot, offer: Offer | undefined): string {
+  return slot.location || offer?.location || '';
 }
 
 // Mediator Unavailability (Absence)
