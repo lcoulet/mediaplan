@@ -1,5 +1,5 @@
 // WeeklyView.test.tsx — Tests pour la vue "Plan Hebdo"
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import WeeklyView from '../src/presentation/WeeklyView';
 import { DataProvider } from '../src/presentation/DataContext';
@@ -23,6 +23,11 @@ const mockData: AppData = {
 
 describe('WeeklyView', () => {
   beforeEach(() => {
+    // Freeze time: the mock slot is on 2026-09-15, so "today" must fall in
+    // the week of Monday 14 Sept 2026 for the slot to be displayed.
+    // Without this the tests break as real time moves past that week.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-17T10:00:00'));
     // Mock localStorage
     vi.stubGlobal('localStorage', {
       getItem: vi.fn(() => JSON.stringify(mockData)),
@@ -33,6 +38,10 @@ describe('WeeklyView', () => {
     // reads ?date= — a leftover date would start the next test on the
     // wrong week.
     window.history.replaceState({}, '', '/');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('should render the weekly view with the period label', () => {
