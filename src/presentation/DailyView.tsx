@@ -13,7 +13,7 @@ const START_HOUR = 8;
 const END_HOUR = 19;
 const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + START_HOUR);
 const FALLBACK_PX_PER_HOUR = 60; // used until the container is measured
-const TRACK_HEIGHT = 40; // Fixed height for mediator tracks
+const TRACK_HEIGHT = 32; // Fixed height for mediator tracks
 
 function toMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);

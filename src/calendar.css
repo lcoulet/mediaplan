@@ -435,7 +435,7 @@ body.edit-mode .cal-day-col:hover {
   display: flex;
   align-items: stretch;
   border-bottom: 1px solid var(--color-border-light);
-  min-height: 50px;
+  min-height: 32px;
 }
 
 .daily-mediator-label {
@@ -493,7 +493,7 @@ body.edit-mode .cal-day-col:hover {
 /* Track where slots are positioned */
 .daily-mediator-track {
   position: relative;
-  min-height: 50px;
+  min-height: 32px;
   overflow: hidden;
 }
 
