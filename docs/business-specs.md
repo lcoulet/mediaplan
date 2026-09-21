@@ -284,13 +284,20 @@ in `src/infrastructure/secutix-reader.ts`, UI in the Import/Export view):
   override the offer's default duration (endTime = startTime + DURÉE,
   clamped to 23:59).
 - **Offer reconciliation**: the THÈME label maps to the offer via
-  `offer.secutixLabel` (whitespace-tolerant comparison). Unmatched labels
-  BLOCK the import: the review UI lists each label with its booking count
-  and offers to map it to an existing offer or to create the offer
-  (suggested espace/duration from the label's bookings, welcome type
-  defaults to "Réservable encadrée par médiateur" — editable later). Rows
-  with an EMPTY theme (e.g. private ANNIVERSAIRE products) surface as
-  "(sans libellé Secutix)" and can only be mapped, not created.
+  `offer.secutixLabel` (whitespace-tolerant comparison). Labels matching
+  no offer need a user decision before the import can run — the review
+  UI lists each label with its booking count and a searchable offer
+  picker offering three choices:
+  - **map**: re-link the label's bookings to an existing offer
+  - **create**: create the offer from the label (suggested espace and
+    duration from the label's bookings, welcome type defaults to
+    "Réservable encadrée par médiateur" — editable later)
+  - **ignore**: do not import these bookings (they are not created, not
+    updated, never deallocated) — e.g. rows with an EMPTY theme
+    (private ANNIVERSAIRE products, shown as "(sans libellé Secutix)")
+    can only be mapped or ignored, not created
+  Decided rows stay editable until the import runs; the plan preview and
+  the summary popup report the ignored count.
 - **Deduplication**: one dossier d'achat covers several slots (one
   dossier can mix products and dates, and up to several groups share a
   dossier+product+time). The dedup key is the composite

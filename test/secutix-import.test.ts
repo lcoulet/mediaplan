@@ -6,6 +6,7 @@ import {
   buildSecutixImportPlan,
   applySecutixImport,
   suggestOfferFromLabel,
+  resolveSecutixChoices,
   type SecutixRow,
 } from '../src/domain/secutix-import';
 import { createOffer, createSlot } from '../src/domain/models';
@@ -131,6 +132,63 @@ describe('reconcileOffers', () => {
     expect(rec.unmatchedLabels).toEqual(['G/ Autre inconnu', 'G/ Nouveau thème']);
     expect(rec.unmatchedBookings.length).toBe(3);
     expect(rec.matched.length).toBe(0);
+  });
+});
+
+describe('resolveSecutixChoices', () => {
+  const offers = [
+    createOffer({ id: 'off_1', name: 'Visite découverte', secutixLabel: 'G/ Visite découverte' }),
+    createOffer({ id: 'off_2', name: 'Atelier anniversaire' }),
+  ];
+
+  const bookings = () =>
+    normalizeSecutixRows([
+      row(),                                                            // auto-matched
+      row({ theme: 'G/ Nouveau thème', productDateTime: '23.09.2026 14:00' }),
+      row({ theme: 'G/ Nouveau thème', productDateTime: '24.09.2026 14:00' }),
+      row({ theme: 'G/ Sans libellé', productDateTime: '25.09.2026 14:00' }),
+      row({ theme: '', productDateTime: '26.09.2026 14:00' }),
+    ]).bookings;
+
+  it('auto-matches labels via secutixLabel and leaves the rest pending without choices', () => {
+    const res = resolveSecutixChoices(bookings(), offers, [], {});
+    expect(res.matched.length).toBe(1);
+    expect(res.matched[0].offerId).toBe('off_1');
+    expect(res.pendingLabels).toEqual(['', 'G/ Nouveau thème', 'G/ Sans libellé']);
+    expect(res.ignoredCount).toBe(0);
+  });
+
+  it('re-links an unmatched label to a chosen existing offer (manual mapping)', () => {
+    const res = resolveSecutixChoices(bookings(), offers, [], {
+      'G/ Nouveau thème': { action: 'map', offerId: 'off_2' },
+    });
+    expect(res.matched.filter((m) => m.offerId === 'off_2').length).toBe(2);
+    expect(res.pendingLabels).toEqual(['', 'G/ Sans libellé']);
+  });
+
+  it('matches bookings to the created offer of their label (create choice)', () => {
+    const created = [createOffer({ id: 'off_new', name: 'Nouveau thème', secutixLabel: 'G/ Nouveau thème' })];
+    const res = resolveSecutixChoices(bookings(), offers, created, {});
+    expect(res.matched.filter((m) => m.offerId === 'off_new').length).toBe(2);
+    expect(res.pendingLabels).toEqual(['', 'G/ Sans libellé']);
+  });
+
+  it('excludes ignored bookings from the import and counts them', () => {
+    const res = resolveSecutixChoices(bookings(), offers, [], {
+      '': { action: 'ignore' },
+      'G/ Sans libellé': { action: 'ignore' },
+    });
+    expect(res.ignoredCount).toBe(2);
+    expect(res.matched.length).toBe(1);
+    expect(res.pendingLabels).toEqual(['G/ Nouveau thème']);
+  });
+
+  it('treats a mapping to an unknown offer id as still pending', () => {
+    const res = resolveSecutixChoices(bookings(), offers, [], {
+      'G/ Nouveau thème': { action: 'map', offerId: 'off_inconnu' },
+    });
+    expect(res.pendingLabels).toContain('G/ Nouveau thème');
+    expect(res.matched.filter((m) => m.booking.theme === 'G/ Nouveau thème').length).toBe(0);
   });
 });
 

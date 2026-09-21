@@ -299,6 +299,71 @@ export function suggestOfferFromLabel(label: string, bookings: SecutixBooking[])
 }
 
 // ---------------------------------------------------------------------------
+// User choices on top of the reconciliation
+// ---------------------------------------------------------------------------
+
+/** Per-label user decision during the import review. */
+export type SecutixLabelChoice =
+  | { action: 'map'; offerId: string } // re-link to an existing/created offer
+  | { action: 'ignore' }; // do not import these bookings
+
+export interface SecutixChoiceResolution {
+  /** Bookings that will be imported, with their target offer */
+  matched: OfferMatch[];
+  /** Distinct labels still lacking a valid decision (blocking the import) */
+  pendingLabels: string[];
+  /** Bookings dropped by an explicit "ignore" decision */
+  ignoredCount: number;
+}
+
+/**
+ * Compose the automatic reconciliation with the user's per-label choices:
+ * - a "map" choice re-links every booking of the label to the chosen offer
+ *   (existing, or created from the label during this import)
+ * - an "ignore" choice drops the label's bookings from the import — they are
+ *   not created, not updated, and their slots are never deallocated
+ * - labels with no valid choice stay pending and block the import
+ * Auto-matching (secutixLabel) applies first, so created offers match their
+ * label without an explicit "map" entry.
+ */
+export function resolveSecutixChoices(
+  bookings: SecutixBooking[],
+  offers: Offer[],
+  createdOffers: Offer[],
+  choices: Record<string, SecutixLabelChoice | undefined>
+): SecutixChoiceResolution {
+  const allOffers = [...offers, ...createdOffers];
+  const rec = reconcileOffers(bookings, allOffers);
+
+  const byId = new Map(allOffers.map((o) => [o.id, o]));
+  const matched = [...rec.matched];
+  const pendingLabelSet = new Set<string>();
+  let ignoredCount = 0;
+
+  for (const booking of rec.unmatchedBookings) {
+    const choice = choices[booking.theme];
+    if (choice?.action === 'ignore') {
+      ignoredCount++;
+      continue;
+    }
+    if (choice?.action === 'map') {
+      const offer = byId.get(choice.offerId);
+      if (offer) {
+        matched.push({ booking, offerId: offer.id });
+        continue;
+      }
+    }
+    pendingLabelSet.add(booking.theme);
+  }
+
+  return {
+    matched,
+    pendingLabels: Array.from(pendingLabelSet).sort((a, b) => a.localeCompare(b)),
+    ignoredCount,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Import plan
 // ---------------------------------------------------------------------------
 

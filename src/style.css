@@ -423,9 +423,9 @@ body {
 
 .secutix-label-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
 }
 
 .secutix-label {
@@ -433,6 +433,7 @@ body {
     font-size: 13px;
     min-width: 0;
     word-break: break-word;
+    padding-top: 10px;
 }
 
 .secutix-label-count {
@@ -440,9 +441,27 @@ body {
     margin-left: 4px;
 }
 
-.secutix-label-row select {
+.secutix-picker {
     flex: 1;
-    min-width: 180px;
+    min-width: 240px;
+}
+
+.secutix-choice-hint {
+    margin-top: 4px;
+}
+
+.single-select-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.single-select-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex: none;
 }
 
 .secutix-plan-preview {
@@ -458,6 +477,12 @@ body {
     border-radius: 12px;
     background: #f4f6f6;
     color: #2c3e50;
+}
+
+.plan-ignored {
+    background: #f4f6f6;
+    color: var(--color-text-muted);
+    font-style: italic;
 }
 
 .secutix-result p {

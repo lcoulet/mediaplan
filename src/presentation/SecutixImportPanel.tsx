@@ -1,8 +1,9 @@
 // SecutixImportPanel.tsx — Secutix synchronization card (Import/Export view)
 //
-// Flow: pick the export file → read + normalize (domain) → map every
-// THÈME label to an offer (existing, or create it) → apply the plan in a
-// single history entry → summary with one-click undo.
+// Flow: pick the export file → read + normalize (domain) → decide for every
+// THÈME label that matches no offer (map it to an existing offer with a
+// searchable picker, create a suggested offer, or ignore the bookings) →
+// apply the plan in a single history entry → summary with one-click undo.
 
 import { useMemo, useState } from 'react';
 import { useData } from './DataContext';
@@ -10,16 +11,21 @@ import { readSecutixFile } from '../infrastructure/secutix-reader';
 import {
   normalizeSecutixRows,
   reconcileOffers,
+  resolveSecutixChoices,
   suggestOfferFromLabel,
   buildSecutixImportPlan,
   applySecutixImport,
   type SecutixNormalization,
   type SecutixImportPlan,
+  type SecutixLabelChoice,
 } from '../domain/secutix-import';
+import SingleSelect from './SingleSelect';
 import { parseLocalDate } from '../domain/models';
 import type { Offer } from '../domain/types';
 
+// Sentinel select values (the domain choice itself is structured)
 const CREATE_CHOICE = '__create__';
+const IGNORE_CHOICE = '__ignore__';
 
 function formatDay(isoDate: string): string {
   return parseLocalDate(isoDate).toLocaleDateString('fr-FR', {
@@ -41,9 +47,10 @@ export default function SecutixImportPanel() {
   const [normalization, setNormalization] = useState<SecutixNormalization | null>(null);
   const [fileName, setFileName] = useState('');
   const [error, setError] = useState('');
-  // Secutix label → chosen offer id, or CREATE_CHOICE to create the offer
+  // Secutix label → select value: '' (pending), offerId (map),
+  // CREATE_CHOICE or IGNORE_CHOICE
   const [choices, setChoices] = useState<Record<string, string>>({});
-  const [result, setResult] = useState<SecutixImportPlan | null>(null);
+  const [result, setResult] = useState<{ plan: SecutixImportPlan; ignoredCount: number } | null>(null);
 
   function reset() {
     setNormalization(null);
@@ -75,56 +82,84 @@ export default function SecutixImportPanel() {
     }
   }
 
+  // Labels needing a decision: those matching no existing offer (stable list,
+  // independent of the choices — decided rows stay editable)
+  const decisionLabels = useMemo(
+    () =>
+      normalization
+        ? reconcileOffers(normalization.bookings, state.data.offers).unmatchedLabels
+        : [],
+    [normalization, state.data.offers]
+  );
+
   // Offers to create from the labels mapped to "create" (suggested values,
   // editable later in the offers view)
   const createdOffers = useMemo<Offer[]>(() => {
     if (!normalization) return [];
-    return normalization.bookings
-      .map((b) => b.theme)
-      .filter((theme, i, all) => all.indexOf(theme) === i) // distinct
-      .filter((theme) => choices[theme] === CREATE_CHOICE)
-      .map((theme) => suggestOfferFromLabel(theme, normalization.bookings));
-  }, [normalization, choices]);
+    return decisionLabels
+      .filter((label) => choices[label] === CREATE_CHOICE)
+      .map((label) => suggestOfferFromLabel(label, normalization.bookings));
+  }, [normalization, decisionLabels, choices]);
+
+  // The domain choice for each label: map (existing or created offer) / ignore.
+  // "create" needs no explicit choice: the created offer auto-matches its label.
+  const structuredChoices = useMemo<Record<string, SecutixLabelChoice>>(() => {
+    const out: Record<string, SecutixLabelChoice> = {};
+    for (const label of decisionLabels) {
+      const value = choices[label];
+      if (value === IGNORE_CHOICE) out[label] = { action: 'ignore' };
+      else if (value && value !== CREATE_CHOICE) out[label] = { action: 'map', offerId: value };
+    }
+    return out;
+  }, [decisionLabels, choices]);
+
+  const resolution = useMemo(
+    () =>
+      normalization
+        ? resolveSecutixChoices(
+            normalization.bookings,
+            state.data.offers,
+            createdOffers,
+            structuredChoices
+          )
+        : null,
+    [normalization, state.data.offers, createdOffers, structuredChoices]
+  );
 
   const effectiveOffers = useMemo(
     () => [...state.data.offers, ...createdOffers],
     [state.data.offers, createdOffers]
   );
 
-  const reconciliation = useMemo(
-    () => (normalization ? reconcileOffers(normalization.bookings, effectiveOffers) : null),
-    [normalization, effectiveOffers]
-  );
-
   const plan = useMemo(
     () =>
-      reconciliation
-        ? buildSecutixImportPlan(reconciliation.matched, effectiveOffers, state.data.slots)
+      resolution
+        ? buildSecutixImportPlan(resolution.matched, effectiveOffers, state.data.slots)
         : null,
-    [reconciliation, effectiveOffers, state.data.slots]
+    [resolution, effectiveOffers, state.data.slots]
   );
 
-  // Display range spans ALL bookings (matched or not yet mapped)
+  // Display range spans ALL bookings (matched, pending or ignored)
   const fullRange = useMemo(() => {
     if (!normalization || normalization.bookings.length === 0) return null;
     const dates = normalization.bookings.map((b) => b.date);
     return { start: dates.reduce((a, b) => (a < b ? a : b)), end: dates.reduce((a, b) => (a > b ? a : b)) };
   }, [normalization]);
 
-  const unmatchedLabels = reconciliation?.unmatchedLabels ?? [];
-  const readyToImport = unmatchedLabels.length === 0 && !!plan;
+  const pendingLabels = resolution?.pendingLabels ?? [];
+  const readyToImport = pendingLabels.length === 0 && !!plan;
 
-  function setChoice(label: string, value: string) {
+  function handleChoice(label: string, value: string) {
     setChoices((prev) => ({ ...prev, [label]: value }));
   }
 
   function handleImport() {
-    if (!readyToImport || !plan) return;
+    if (!readyToImport || !plan || !resolution) return;
     const next = applySecutixImport(state.data, plan, createdOffers);
     // One history entry: a single undo reverts the whole import
     dispatch({ type: 'SET_DATA', data: next });
     commit(next);
-    setResult(plan);
+    setResult({ plan, ignoredCount: resolution.ignoredCount });
   }
 
   function handleUndo() {
@@ -168,31 +203,53 @@ export default function SecutixImportPanel() {
             )}
           </div>
 
-          {unmatchedLabels.length > 0 && (
+          {decisionLabels.length > 0 && (
             <div className="secutix-mapping">
               <h3>
-                Libellés Secutix à recoller ({unmatchedLabels.length}) — l'import est bloqué
-                tant que chaque libellé n'est pas rattaché à une offre
+                Libellés Secutix à recoller ({decisionLabels.length}) — rattachez chaque
+                libellé à une offre, créez l'offre, ou ignorez les réservations
+                {pendingLabels.length > 0 && (
+                  <> · <strong>{pendingLabels.length} en attente</strong></>
+                )}
               </h3>
-              {unmatchedLabels.map((label) => {
-                const count = reconciliation!.unmatchedBookings.filter((b) => b.theme === label).length;
+              {decisionLabels.map((label) => {
+                const count = normalization.bookings.filter((b) => b.theme === label).length;
                 const display = label || '(sans libellé Secutix)';
+                const choice = choices[label] || '';
+                const created = createdOffers.find((o) => o.secutixLabel === label);
                 return (
                   <div key={label || '__empty__'} className="secutix-label-row">
                     <label className="secutix-label">
                       {display}
                       <span className="secutix-label-count">({count})</span>
                     </label>
-                    <select
-                      value={choices[label] || ''}
-                      onChange={(e) => setChoice(label, e.target.value)}
-                    >
-                      <option value="">— Choisir une offre —</option>
-                      {state.data.offers.map((o) => (
-                        <option key={o.id} value={o.id}>{o.name}</option>
-                      ))}
-                      {label && <option value={CREATE_CHOICE}>➕ Créer l'offre « {label} »</option>}
-                    </select>
+                    <div className="secutix-picker">
+                      <SingleSelect
+                        options={[
+                          ...state.data.offers.map((o) => ({ value: o.id, label: o.name, color: o.color })),
+                          ...(label
+                            ? [{ value: CREATE_CHOICE, label: `➕ Créer l'offre « ${label} »` }]
+                            : []),
+                          { value: IGNORE_CHOICE, label: '🚫 Ignorer — ne pas importer' },
+                        ]}
+                        value={choice}
+                        onChange={(value) => handleChoice(label, value)}
+                        ariaLabel={`Offre pour ${display}`}
+                        placeholder="— Choisir —"
+                        noOptionsMessage="Aucune offre trouvée"
+                      />
+                      {choice === CREATE_CHOICE && created && (
+                        <div className="form-hint secutix-choice-hint">
+                          Créera « {created.name} » — {created.duration} min
+                          {created.location ? ` — ${created.location}` : ''} (modifiable ensuite)
+                        </div>
+                      )}
+                      {choice === IGNORE_CHOICE && (
+                        <div className="form-hint secutix-choice-hint">
+                          {count} réservation(s) ne seront pas importées
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -208,6 +265,11 @@ export default function SecutixImportPanel() {
               </span>
               {createdOffers.length > 0 && (
                 <span className="plan-stat plan-create">📂 {createdOffers.length} offre(s) créée(s)</span>
+              )}
+              {!!resolution?.ignoredCount && (
+                <span className="plan-stat plan-ignored">
+                  ⏭️ {resolution.ignoredCount} ignorée(s) — non importée(s)
+                </span>
               )}
             </div>
           )}
@@ -232,11 +294,15 @@ export default function SecutixImportPanel() {
       {result && (
         <div className="secutix-result">
           <p>
-            ✅ Import terminé : <strong>{result.create.length}</strong> réservation(s)
-            ajoutée(s), <strong>{result.update.length}</strong> mise(s) à jour,{' '}
-            <strong>{result.deallocate.length}</strong> désallouée(s) (annulées).
+            ✅ Import terminé : <strong>{result.plan.create.length}</strong> réservation(s)
+            ajoutée(s), <strong>{result.plan.update.length}</strong> mise(s) à jour,{' '}
+            <strong>{result.plan.deallocate.length}</strong> désallouée(s) (annulées)
+            {result.ignoredCount > 0 && (
+              <> · <strong>{result.ignoredCount}</strong> ignorée(s)</>
+            )}
+            .
           </p>
-          <p>Plage couverte : {formatRange(result.coveredRange)}.</p>
+          <p>Plage couverte : {formatRange(result.plan.coveredRange)}.</p>
           <div className="io-actions">
             <button type="button" className="btn btn-danger" onClick={handleUndo}>
               Annuler l'import (revenir à l'état précédent)
