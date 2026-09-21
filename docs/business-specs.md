@@ -57,7 +57,9 @@ Excel export or paper printout).
 - `description`: description (optional)
 - `duration`: duration in minutes
 - `capacity`: maximum number of participants
-- `location`: intervention location (optional)
+- `location`: default "espace" (intervention location, optional). Overridable
+  per slot; the Secutix import sets the slot's own value from the export's
+  "ESPACE" column.
 - `setupTime`: preparation time in minutes before the offer (fixed, same
   for all mediators)
 - `teardownTime`: cleanup time in minutes after the offer (fixed, same
@@ -68,6 +70,9 @@ Excel export or paper printout).
   (green) even when unassigned. Defaults to
   `Réservable encadrée par médiateur`. Legacy persisted data is migrated
   with the default on load.
+- `secutixLabel`: the offer's label ("THÈME" column) in Secutix exports
+  (optional). Used to reconcile imported reservations with the offer
+  catalog. Offers never imported from Secutix have none.
 
 ### Schedule (Planning)
 
@@ -96,13 +101,27 @@ Excel export or paper printout).
   `setupTime`.
 - `participantCount`: number of participants (optional)
 - `status`: `planned` | `confirmed` | `cancelled` | `completed`
-- `notes`: free-form notes (optional)
 - `origin`: `manual` | `imported`
 - `importSource`: source label (e.g. `"Secutix"`, `"Coordination"`)
 - `importedAt`: import timestamp (ISO 8601) — empty for manual slots
 - `modifiedAfterImport`: boolean — true if edited after import
-- `contractNumber`: unique identifier from Secutix for deduplication
-  (reserved slots only)
+- `contractNumber`: Secutix "N° DOSSIER D'ACHAT" — the purchase contract
+  (reserved slots only). NOT unique per slot: one contract can cover
+  several bookings (e.g. entry fee + guided tour for the same class).
+  Deduplication uses the composite key contract + offer + date + time +
+  group name.
+- Booking details (from the Secutix import, or free-text manual entry):
+  - `groupName`: visitor group name (Secutix "NOM DU GROUPE")
+  - `guide`: Secutix "GUIDE" column — free text, usually empty in exports
+  - `location`: "espace" for this booking — overrides the offer's
+    default location when set (`getSlotLocation()`)
+  - `groupNature`: group nature (Secutix "NATURE DU GROUPE", e.g.
+    SCOLAIRES C2, PSH) — free text when entered manually
+  - `contactName`: contract contact (Secutix "CONTACT DU DOSSIER D'ACHAT")
+  - `contactPhone`: contact phone
+  - `contactEmail`: contact email
+- `notes`: free-form notes (optional) — the Secutix import appends the
+  export's "REMARQUE" column here
 
 The stored `startTime`/`endTime` are always the REAL booking period (the
 public-facing time). Setup extends the planning block BEFORE the booking,
@@ -206,12 +225,62 @@ teardown AFTER it — this geometry is derived at display time
   - Slots (imported or manual) are always draggable for mediator assignment
     regardless of lock state
 
+### Slot Modal
+The slot modal is organized in three tabs so the enriched reservation
+model stays readable (imported slots show all Secutix booking details):
+- **Réservation** (first tab, default): offer, group name, mediators
+  (multi-select), date, start/end time, espace (defaults to the offer's
+  when empty, prefilled by the Secutix import), notes / remarques
+- **Contact**: contract number (dossier d'achat — one dossier can cover
+  several slots), contact name, phone, email
+- **Détails**: setup/teardown times, participants, status, guide,
+  group nature
+The origin badges (imported / modified after import) stay visible above
+the tabs on every tab.
+
+Editability rules:
+- Unlocked: everything is editable; imported slots are marked
+  "modified after import" on save
+- Locked, imported slot (or mediator-only mode): only mediator
+  assignment, setup and teardown remain editable; all booking details
+  stay visible but read-only; deletion is disabled
+
 ### Secutix Import (Synchronization)
-- Import Secutix Excel export to create/update reserved slots
-- Deduplicate using contract number — skip slots already imported
-- Update existing slots when reservation modified (headcount, time)
+
+Source file (analyzed from a real export, "sem39sem51.xlsx", weeks 39–51):
+single sheet `visitPlanning`, header on row 2, one booking per data row,
+plus a trailing "Total" row to skip. Reference layout (columns A–V):
+
+| Secutix column | MediaPlan field |
+|---|---|
+| DATE HEURE DU PRODUIT (`dd.mm.yyyy HH:MM`) | `slot.date` + `startTime` |
+| DURÉE (`H:MM`, variable per booking) | `slot.endTime` |
+| THÈME (offer label) | offer lookup via `offer.secutixLabel` |
+| N° DOSSIER D'ACHAT | `slot.contractNumber` |
+| NOM DU GROUPE | `slot.groupName` |
+| GUIDE | `slot.guide` |
+| ESPACE | `slot.location` |
+| NATURE DU GROUPE | `slot.groupNature` |
+| NB TOTAL DE PERSONNES PAR GUIDE | `slot.participantCount` |
+| CONTACT / TÉLÉPHONE / EMAIL DU DOSSIER | `slot.contactName/Phone/Email` |
+| REMARQUE | `slot.notes` |
+| LANGUE DE VISITE, SITE (single value) | not imported |
+
+Import rules:
+- **Filter**: rows with theme `G/ Droit d'accès` (entry fees) are NOT
+  imported — they are not mediation bookings.
+- **Times take priority**: the booking times from the Secutix file
+  override the offer's default duration.
+- **Offer reconciliation**: the THÈME label maps to the offer via
+  `offer.secutixLabel`; unmatched labels are reported for catalog
+  mapping rather than silently creating slots.
+- **Deduplication**: one dossier d'achat covers several slots (one
+  dossier can mix products and dates, and up to several groups share a
+  dossier+product+time). The dedup key is the composite
+  (contractNumber, offer, date, startTime, groupName).
+- Update existing slots when a reservation is modified (headcount,
+  time), preserving mediator assignments when possible
 - Deallocate slots no longer in the Secutix file (cancelled reservations)
-- Preserve mediator assignments on modified slots when possible
 
 ### Excel Import/Export
 - Export the schedule in .xlsx format (one tab per entity or per week)

@@ -1,4 +1,4 @@
-// SlotModal.tsx — Slot creation/editing (full + mediator-only modes)
+// SlotModal.tsx — Slot creation/editing, tabbed (booking, contact, details)
 
 import { useState, useMemo } from 'react';
 import { useData, useCRUD } from './DataContext';
@@ -25,6 +25,14 @@ interface Props {
   onClose: () => void;
 }
 
+type TabId = 'reservation' | 'contact' | 'details';
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'reservation', label: 'Réservation' },
+  { id: 'contact', label: 'Contact' },
+  { id: 'details', label: 'Détails' },
+];
+
 export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: Props) {
   const { state } = useData();
   const crud = useCRUD();
@@ -32,19 +40,24 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
   const locked = state.locked;
 
   const [form, setForm] = useState<Slot>(() => slot || createSlot({ date: defaultDate }));
+  const [activeTab, setActiveTab] = useState<TabId>('reservation');
+
+  // Restricted mode (imported slot while the planning is locked, or
+  // mediator-only mode): only mediator assignment, setup and teardown
+  // stay editable — booking details remain visible but read-only.
+  const isImported = form.origin === 'imported';
+  const restricted = mediatorOnly || (isImported && locked);
 
   // Default setup/teardown from the offer when the slot has none yet
   const currentOffer = state.data.offers.find((o) => o.id === form.offerId);
   const setupDefault = form.setupTime ?? currentOffer?.setupTime ?? 0;
   const teardownDefault = form.teardownTime ?? currentOffer?.teardownTime ?? 0;
 
-  // Mediator warning: overlap or absence for the first selected mediator
   const [selectedMediators, setSelectedMediators] = useState<string[]>(form.mediatorIds);
-
-  // Setup/teardown inputs (string for the number inputs; '' = use default)
   const [setupTimeInput, setSetupTimeInput] = useState<string>(String(setupDefault));
   const [teardownTimeInput, setTeardownTimeInput] = useState<string>(String(teardownDefault));
 
+  // Mediator warning: overlap or absence for the first selected mediator
   const warning = useMemo(() => {
     const firstMed = selectedMediators[0];
     if (!firstMed) return '';
@@ -59,16 +72,6 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleMediatorsChange(selected: string[]) {
-    setSelectedMediators(selected);
-  }
-
-  function handleDelete() {
-    if (!slot) return;
-    crud({ type: 'DELETE_SLOT', id: slot.id });
-    onClose();
-  }
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -78,13 +81,16 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
 
     const updated: Slot = {
       ...form,
-      offerId: form.offerId,
       mediatorIds: selectedMediators,
-      date: form.date,
-      startTime: form.startTime,
-      endTime: form.endTime,
       participantCount: parseInt(String(form.participantCount)) || 0,
-      status: form.status,
+      groupName: form.groupName.trim(),
+      guide: form.guide.trim(),
+      location: form.location.trim(),
+      groupNature: form.groupNature.trim(),
+      contactName: form.contactName.trim(),
+      contactPhone: form.contactPhone.trim(),
+      contactEmail: form.contactEmail.trim(),
+      contractNumber: form.contractNumber?.trim() || undefined,
       notes: form.notes.trim(),
       setupTime: setupVal,
       teardownTime: teardownVal,
@@ -103,6 +109,12 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
     onClose();
   }
 
+  function handleDelete() {
+    if (!slot) return;
+    crud({ type: 'DELETE_SLOT', id: slot.id });
+    onClose();
+  }
+
   // Build mediator options with overlap/absence/competence indicators
   // Sort: confirmed first, then learning, then none — alphabetical within each group
   const mediatorOptions = useMemo(() => {
@@ -115,7 +127,6 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
 
       let label = `${m.firstName} ${m.lastName}`;
 
-      // Add competence indicators
       if (confirmed) {
         label += ' ✅';
       } else if (learning) {
@@ -124,7 +135,6 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
         label += ' ⚠️ Incompétent';
       }
 
-      // Add overlap/absence indicators
       if (overlap) label += ' — Conflit horaire';
       else if (absent) label += ' — Absent';
 
@@ -147,38 +157,192 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
 
   const offer = state.data.offers.find((o) => o.id === form.offerId);
 
-  // ---- Mediator-only mode (locked calendar) ----
-  if (mediatorOnly) {
-    const originBadge = form.origin === 'imported' ? (
-      <>
-        <span className="badge origin-badge-imported">📥 {ORIGIN_LABELS.imported}</span>
-        {form.modifiedAfterImport && <span className="badge origin-badge-modified">✏ Modifié après import</span>}
-      </>
-    ) : (
-      <span className="badge origin-badge-manual">✋ {ORIGIN_LABELS.manual}</span>
-    );
+  // Origin badges — visible above the tabs on every tab
+  const originBadges = isImported ? (
+    <>
+      <span className="badge origin-badge-imported">📥 {ORIGIN_LABELS.imported}</span>
+      {form.modifiedAfterImport && <span className="badge origin-badge-modified">✏ Modifié après import</span>}
+      {form.importSource && <span className="origin-detail">Source : {form.importSource}</span>}
+      {form.importedAt && <span className="origin-detail">Importé le {formatImportDate(form.importedAt)}</span>}
+    </>
+  ) : (
+    <span className="badge origin-badge-manual">✋ {ORIGIN_LABELS.manual}</span>
+  );
 
-    return (
-      <Modal title="Assigner un médiateur" onClose={onClose}>
-        <form id="form-slot" onSubmit={handleSubmit}>
-          <div className="detail-view">
-            <div className="detail-row">
-              <span className="detail-label">Offre</span>
-              <span className="detail-value">
-                {offer ? <OfferPill offer={offer} /> : '—'}
-              </span>
+  return (
+    <Modal title={isEdit ? 'Modifier le créneau' : 'Nouveau créneau'} onClose={onClose}>
+      <form id="form-slot" onSubmit={handleSubmit}>
+        <div className="origin-info">{originBadges}</div>
+
+        <div className="modal-tabs" role="tablist">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === t.id}
+              className={`modal-tab${activeTab === t.id ? ' active' : ''}`}
+              onClick={() => setActiveTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'reservation' && (
+          <div className="tab-panel" role="tabpanel">
+            <div className="form-group">
+              <label>Offre *</label>
+              <select
+                value={form.offerId}
+                onChange={(e) => setField('offerId', e.target.value)}
+                required
+                disabled={restricted}
+              >
+                <option value="">— Choisir —</option>
+                {state.data.offers.map((o) => (
+                  <option key={o.id} value={o.id}>{o.name}</option>
+                ))}
+              </select>
+              {offer && (
+                <div className="form-hint">
+                  <OfferPill offer={offer} id="slot-offer-pill" />
+                </div>
+              )}
             </div>
-            <div className="detail-row">
-              <span className="detail-label">Date</span>
-              <span className="detail-value">
-                {new Date(form.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </span>
+            <div className="form-group">
+              <label>Nom du groupe</label>
+              <input
+                type="text"
+                value={form.groupName}
+                onChange={(e) => setField('groupName', e.target.value)}
+                disabled={restricted}
+                placeholder="Groupe visiteur"
+              />
             </div>
-            <div className="detail-row">
-              <span className="detail-label">Horaire</span>
-              <span className="detail-value">{form.startTime} – {form.endTime}</span>
+            <div className="form-group">
+              <label>Médiateurs</label>
+              <MultiSelect
+                options={mediatorOptions}
+                value={selectedMediators}
+                onChange={setSelectedMediators}
+                ariaLabel="Médiateurs"
+                placeholder="Rechercher un médiateur…"
+                noOptionsMessage="Aucun médiateur disponible"
+              />
+              <div className="form-hint">
+                {warning ? (
+                  <span className="warning-text">{warning}</span>
+                ) : (
+                  'Cliquez pour ajouter, × pour retirer'
+                )}
+              </div>
             </div>
-            <div className="form-row" style={{ marginTop: '12px' }}>
+            <div className="form-group">
+              <label>Date *</label>
+              <input
+                type="date"
+                value={form.date}
+                onChange={(e) => setField('date', e.target.value)}
+                required
+                disabled={restricted}
+              />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Début *</label>
+                <input
+                  type="time"
+                  value={form.startTime}
+                  onChange={(e) => setField('startTime', e.target.value)}
+                  required
+                  disabled={restricted}
+                />
+              </div>
+              <div className="form-group">
+                <label>Fin *</label>
+                <input
+                  type="time"
+                  value={form.endTime}
+                  onChange={(e) => setField('endTime', e.target.value)}
+                  required
+                  disabled={restricted}
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Espace</label>
+              <input
+                type="text"
+                value={form.location}
+                onChange={(e) => setField('location', e.target.value)}
+                disabled={restricted}
+                placeholder={offer?.location || 'Espace'}
+              />
+              {offer?.location && !form.location && (
+                <div className="form-hint">Par défaut : {offer.location} (offre)</div>
+              )}
+            </div>
+            <div className="form-group">
+              <label>Notes / Remarques</label>
+              <textarea
+                value={form.notes}
+                onChange={(e) => setField('notes', e.target.value)}
+                disabled={restricted}
+              ></textarea>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'contact' && (
+          <div className="tab-panel" role="tabpanel">
+            <div className="form-group">
+              <label>N° dossier d'achat</label>
+              <input
+                type="text"
+                value={form.contractNumber ?? ''}
+                onChange={(e) => setField('contractNumber', e.target.value)}
+                disabled={restricted}
+                placeholder="Contrat Secutix"
+              />
+              <div className="form-hint">Un même dossier peut regrouper plusieurs réservations</div>
+            </div>
+            <div className="form-group">
+              <label>Contact</label>
+              <input
+                type="text"
+                value={form.contactName}
+                onChange={(e) => setField('contactName', e.target.value)}
+                disabled={restricted}
+                placeholder="Nom du contact du dossier"
+              />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Téléphone</label>
+                <input
+                  type="tel"
+                  value={form.contactPhone}
+                  onChange={(e) => setField('contactPhone', e.target.value)}
+                  disabled={restricted}
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={form.contactEmail}
+                  onChange={(e) => setField('contactEmail', e.target.value)}
+                  disabled={restricted}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'details' && (
+          <div className="tab-panel" role="tabpanel">
+            <div className="form-row">
               <div className="form-group">
                 <label>Mise en place (min)</label>
                 <input
@@ -204,199 +368,57 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
                 <div className="form-hint">Par défaut : {teardownDefault} min (offre)</div>
               </div>
             </div>
-            <div className="detail-row">
-              <span className="detail-label">Statut</span>
-              <span className="detail-value">
-                <span className={`badge badge-${form.status}`}>
-                  {STATUS_LABELS.slot[form.status] || form.status}
-                </span>
-              </span>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Participants</label>
+                <input
+                  type="number"
+                  value={form.participantCount}
+                  min={0}
+                  onChange={(e) => setField('participantCount', parseInt(e.target.value) || 0)}
+                  disabled={restricted}
+                />
+              </div>
+              <div className="form-group">
+                <label>Statut</label>
+                <select
+                  value={form.status}
+                  onChange={(e) => setField('status', e.target.value as Slot['status'])}
+                  disabled={restricted}
+                >
+                  {SlotStatusValues.map((val) => (
+                    <option key={val} value={val}>{STATUS_LABELS.slot[val]}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="detail-row">
-              <span className="detail-label">Origine</span>
-              <span className="detail-value">{originBadge}</span>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Guide</label>
+                <input
+                  type="text"
+                  value={form.guide}
+                  onChange={(e) => setField('guide', e.target.value)}
+                  disabled={restricted}
+                  placeholder="Guide indiqué dans Secutix (si connu)"
+                />
+              </div>
+              <div className="form-group">
+                <label>Nature du groupe</label>
+                <input
+                  type="text"
+                  value={form.groupNature}
+                  onChange={(e) => setField('groupNature', e.target.value)}
+                  disabled={restricted}
+                  placeholder="ex. SCOLAIRES C2, PSH"
+                />
+              </div>
             </div>
           </div>
-          <hr />
-          <div className="form-group">
-            <label>Médiateurs</label>
-            <MultiSelect
-              options={mediatorOptions}
-              value={selectedMediators}
-              onChange={handleMediatorsChange}
-              ariaLabel="Médiateurs"
-              placeholder="Rechercher un médiateur…"
-              noOptionsMessage="Aucun médiateur disponible"
-            />
-            <div className="form-hint">
-              {warning ? (
-                <span className="warning-text">{warning}</span>
-              ) : (
-                'Cliquez pour ajouter, × pour retirer'
-              )}
-            </div>
-          </div>
-          <div className="form-actions">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>Annuler</button>
-            <button type="submit" className="btn btn-primary">Enregistrer</button>
-          </div>
-        </form>
-      </Modal>
-    );
-  }
+        )}
 
-  // ---- Full edit mode ----
-  const isImported = form.origin === 'imported';
-  const originInfo = isImported ? (
-    <div className="origin-info">
-      <span className="badge origin-badge-imported">📥 {ORIGIN_LABELS.imported}</span>
-      {form.modifiedAfterImport && <span className="badge origin-badge-modified">✏ Modifié après import</span>}
-      {form.importSource && (
-        <div className="origin-detail">Source : <strong>{form.importSource}</strong></div>
-      )}
-      {form.importedAt && (
-        <div className="origin-detail">Importé le : {formatImportDate(form.importedAt)}</div>
-      )}
-    </div>
-  ) : (
-    <div className="origin-info">
-      <span className="badge origin-badge-manual">✋ {ORIGIN_LABELS.manual}</span>
-    </div>
-  );
-
-  return (
-    <Modal title={isEdit ? 'Modifier le créneau' : 'Nouveau créneau'} onClose={onClose}>
-      <form id="form-slot" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Offre *</label>
-          <select
-            value={form.offerId}
-            onChange={(e) => setField('offerId', e.target.value)}
-            required
-            disabled={isImported && locked}
-          >
-            <option value="">— Choisir —</option>
-            {state.data.offers.map((o) => (
-              <option key={o.id} value={o.id}>{o.name}</option>
-            ))}
-          </select>
-          {offer && (
-            <div className="form-hint">
-              <OfferPill offer={offer} id="slot-offer-pill" />
-            </div>
-          )}
-        </div>
-        <div className="form-group">
-          <label>Médiateurs</label>
-          <MultiSelect
-            options={mediatorOptions}
-            value={selectedMediators}
-            onChange={handleMediatorsChange}
-            ariaLabel="Médiateurs"
-            placeholder="Rechercher un médiateur…"
-            noOptionsMessage="Aucun médiateur disponible"
-          />
-          <div className="form-hint">
-            {warning ? (
-              <span className="warning-text">{warning}</span>
-            ) : (
-              'Cliquez pour ajouter, × pour retirer'
-            )}
-          </div>
-        </div>
-        <div className="form-group">
-          <label>Date *</label>
-          <input
-            type="date"
-            value={form.date}
-            onChange={(e) => setField('date', e.target.value)}
-            required
-            disabled={isImported && locked}
-          />
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Début *</label>
-            <input
-              type="time"
-              value={form.startTime}
-              onChange={(e) => setField('startTime', e.target.value)}
-              required
-              disabled={isImported && locked}
-            />
-          </div>
-          <div className="form-group">
-            <label>Fin *</label>
-            <input
-              type="time"
-              value={form.endTime}
-              onChange={(e) => setField('endTime', e.target.value)}
-              required
-              disabled={isImported && locked}
-            />
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Participants</label>
-            <input
-              type="number"
-              value={form.participantCount}
-              min={0}
-              onChange={(e) => setField('participantCount', parseInt(e.target.value) || 0)}
-            />
-          </div>
-          <div className="form-group">
-            <label>Statut</label>
-            <select
-              value={form.status}
-              onChange={(e) => setField('status', e.target.value as Slot['status'])}
-            >
-              {SlotStatusValues.map((val) => (
-                <option key={val} value={val}>{STATUS_LABELS.slot[val]}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Mise en place (min)</label>
-            <input
-              type="number"
-              value={setupTimeInput}
-              min={0}
-              step={5}
-              onChange={(e) => setSetupTimeInput(e.target.value)}
-              title="Durée de préparation avant la réservation"
-            />
-            <div className="form-hint">Par défaut : {setupDefault} min (offre)</div>
-          </div>
-          <div className="form-group">
-            <label>Rangement (min)</label>
-            <input
-              type="number"
-              value={teardownTimeInput}
-              min={0}
-              step={5}
-              onChange={(e) => setTeardownTimeInput(e.target.value)}
-              title="Durée de rangement après la réservation"
-            />
-            <div className="form-hint">Par défaut : {teardownDefault} min (offre)</div>
-          </div>
-        </div>
-        <div className="form-group">
-          <label>Origine</label>
-          {originInfo}
-        </div>
-        <div className="form-group">
-          <label>Notes</label>
-          <textarea
-            value={form.notes}
-            onChange={(e) => setField('notes', e.target.value)}
-          ></textarea>
-        </div>
         <div className="form-actions">
-          {isEdit && !(isImported && locked) && (
+          {isEdit && !restricted && (
             <button type="button" className="btn btn-danger" id="slot-delete" onClick={handleDelete}>
               Supprimer
             </button>
