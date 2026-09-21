@@ -4,6 +4,7 @@ import {
   createSlot,
   createOffer,
   getSlotLocation,
+  formatSlotBookingSummary,
 } from '../src/domain/models';
 
 class LocalStorageMock {
@@ -76,6 +77,66 @@ describe('offer secutixLabel', () => {
       secutixLabel: "G/ CM1 à 6e/ L'Arbre à Clés",
     });
     expect(offer.secutixLabel).toBe("G/ CM1 à 6e/ L'Arbre à Clés");
+  });
+});
+
+describe('formatSlotBookingSummary', () => {
+  const offer = createOffer({
+    name: 'Découvrons le Muséum',
+    secutixLabel: 'G/ CP à CE2/ Découvrons le Muséum',
+    location: 'RZA_MHN_EXPOSITION PERMANENTE',
+  });
+
+  it('formats an imported booking in the Secutix style', () => {
+    const slot = createSlot({
+      site: 'CSTI_MHN',
+      location: 'RZA_MHN_EXPOSITION PERMANENTE',
+      startTime: '10:45',
+      endTime: '11:45',
+      participantCount: 30,
+      groupNature: 'SCOLAIRES C2',
+      contractNumber: '2456008',
+      groupName: 'ECOLE PRIMAIRE DE TERRE CLAPIER GROUPE 1',
+      notes: 'RJV OU BDC CP + QUELQUES GS. Contrat signé + BDC reçus le 07/08/2026',
+      origin: 'imported',
+      importSource: 'Secutix',
+      importedAt: '2026-09-07T10:00:00.000Z',
+      createdAt: '2026-09-07T10:00:00.000Z',
+    });
+    expect(formatSlotBookingSummary(slot, offer)).toBe(
+      'CSTI_MHN ___ RZA_MHN_EXPOSITION PERMANENTE ___ 10h45 - 11h45\n' +
+      '___ (30 pers. SCOLAIRES C2)\n' +
+      'Client : 2456008     ECOLE PRIMAIRE DE TERRE CLAPIER GROUPE 1     G/ CP à CE2/ Découvrons le Muséum (importé le 07/09/2026)\n' +
+      'Commentaires : RJV OU BDC CP + QUELQUES GS. Contrat signé + BDC reçus le 07/08/2026'
+    );
+  });
+
+  it('shows "créé le" for manual slots and uses the offer name without a secutix label', () => {
+    const manualOffer = createOffer({ name: 'Visite libre' });
+    const slot = createSlot({
+      location: 'JARDIN',
+      startTime: '14:00',
+      endTime: '15:00',
+      groupName: 'GROUPE INCONNU',
+      origin: 'manual',
+      createdAt: '2026-09-21T08:00:00.000Z',
+    });
+    expect(formatSlotBookingSummary(slot, manualOffer)).toBe(
+      'JARDIN ___ 14h00 - 15h00\n' +
+      'Client : GROUPE INCONNU     Visite libre (créé le 21/09/2026)'
+    );
+  });
+
+  it('falls back to the offer location when the slot has none', () => {
+    const slot = createSlot({ startTime: '09:00', endTime: '10:00' });
+    expect(formatSlotBookingSummary(slot, offer)).toContain('RZA_MHN_EXPOSITION PERMANENTE ___ 09h00 - 10h00');
+  });
+
+  it('skips the headcount line when there is no participant count and no group nature', () => {
+    const slot = createSlot({ startTime: '09:00', endTime: '10:00' });
+    const summary = formatSlotBookingSummary(slot, offer);
+    expect(summary).not.toContain('pers.');
+    expect(summary).not.toContain('Commentaires :');
   });
 });
 

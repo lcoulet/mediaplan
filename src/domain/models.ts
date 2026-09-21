@@ -217,6 +217,7 @@ interface SlotInput {
   groupName?: string;
   guide?: string;
   location?: string;
+  site?: string;
   groupNature?: string;
   contactName?: string;
   contactPhone?: string;
@@ -259,6 +260,7 @@ export function createSlot(data: SlotInput = {}): Slot {
     contactName: data.contactName || '',
     contactPhone: data.contactPhone || '',
     contactEmail: data.contactEmail || '',
+    ...(data.site !== undefined ? { site: data.site } : {}),
     ...(data.contractNumber !== undefined ? { contractNumber: data.contractNumber } : {}),
     // Optional per-slot logistics durations (minutes). Left undefined on
     // purpose when not provided: the offer's values apply (legacy behavior).
@@ -272,6 +274,62 @@ export function createSlot(data: SlotInput = {}): Slot {
 // slots fall back to the offer default).
 export function getSlotLocation(slot: Slot, offer: Offer | undefined): string {
   return slot.location || offer?.location || '';
+}
+
+/** "10:45" -> "10h45" (French hour style, tooltip display). */
+function toFrenchHour(time: string): string {
+  return time.replace(':', 'h');
+}
+
+/** ISO date (or datetime) -> "dd/mm/yyyy". */
+function toFrenchDate(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split('-');
+  return `${d}/${m}/${y}`;
+}
+
+/**
+ * One-glance booking summary for slot tooltips (daily view), in the
+ * coordinator's Secutix style:
+ *
+ *   CSTI_MHN ___ RZA_MHN_EXPOSITION PERMANENTE ___ 10h45 - 11h45
+ *   ___ (30 pers. SCOLAIRES C2)
+ *   Client : 2456008     ECOLE PRIMAIRE ... GROUPE 1     G/ CP à CE2/ Découvrons le Muséum (importé le 07/09/2026)
+ *   Commentaires : RJV OU BDC CP + ...
+ *
+ * Lines with no data are skipped; manual slots show "créé le" instead of
+ * "importé le". The offer line uses the Secutix label when available.
+ */
+export function formatSlotBookingSummary(slot: Slot, offer: Offer | undefined): string {
+  const lines: string[] = [];
+
+  // Line 1: site ___ espace ___ booking times
+  lines.push(
+    [slot.site, getSlotLocation(slot, offer), `${toFrenchHour(slot.startTime)} - ${toFrenchHour(slot.endTime)}`]
+      .filter(Boolean)
+      .join(' ___ ')
+  );
+
+  // Line 2: ___ (30 pers. SCOLAIRES C2)
+  const headcountBits: string[] = [];
+  if (slot.participantCount > 0) headcountBits.push(`${slot.participantCount} pers.`);
+  if (slot.groupNature) headcountBits.push(slot.groupNature);
+  if (headcountBits.length) lines.push(`___ (${headcountBits.join(' ')})`);
+
+  // Line 3: Client : contract     group     offer label (importé le …)
+  const label = offer?.secutixLabel || offer?.name || '—';
+  const stamp =
+    slot.origin === 'imported' && slot.importedAt
+      ? `(importé le ${toFrenchDate(slot.importedAt)})`
+      : slot.createdAt
+        ? `(créé le ${toFrenchDate(slot.createdAt)})`
+        : '';
+  const clientBits = [slot.contractNumber, slot.groupName, stamp ? `${label} ${stamp}` : label].filter(Boolean);
+  if (clientBits.length) lines.push(`Client : ${clientBits.join('     ')}`);
+
+  // Line 4: Commentaires
+  if (slot.notes) lines.push(`Commentaires : ${slot.notes}`);
+
+  return lines.join('\n');
 }
 
 // Mediator Unavailability (Absence)

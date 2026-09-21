@@ -73,6 +73,9 @@ export interface Slot {
   guide: string;
   // Secutix "ESPACE" — overrides the offer's default location when set
   location: string;
+  // Secutix "SITE" (e.g. DCSTI_MHN) — informational, shown in tooltips.
+  // Optional: manual slots and legacy data have none.
+  site?: string;
   // Secutix "NATURE DU GROUPE" — free text (e.g. SCOLAIRES C2, PSH)
   groupNature: string;
   // Secutix contact details of the purchase contract

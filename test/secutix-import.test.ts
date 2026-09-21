@@ -56,6 +56,7 @@ describe('normalizeSecutixRows', () => {
     expect(b.contractNumber).toBe('3100001');
     expect(b.groupName).toBe('ECOLE LES TOURNESOLS - CE1');
     expect(b.location).toBe('RZA_MHN_EXPOSITION PERMANENTE');
+    expect(b.site).toBe('DCSTI_MHN');
     expect(b.groupNature).toBe('SCOLAIRES C2');
     expect(b.participantCount).toBe(28);
     expect(b.contactName).toBe('(50100421) MERLANDE, Céleste');
@@ -218,6 +219,7 @@ function importedSlot(overrides: Partial<Slot> = {}): Slot {
     groupName: 'ECOLE LES TOURNESOLS - CE1',
     guide: '',
     location: 'RZA_MHN_EXPOSITION PERMANENTE',
+    site: 'DCSTI_MHN',
     groupNature: 'SCOLAIRES C2',
     contactName: '(50100421) MERLANDE, Céleste',
     contactPhone: '06 71 24 85 19',
@@ -255,6 +257,7 @@ describe('buildSecutixImportPlan', () => {
     expect(s.importedAt).toBe(NOW.toISOString());
     expect(s.createdAt).toBe(NOW.toISOString());
     expect(s.contractNumber).toBe('3100001');
+    expect(s.site).toBe('DCSTI_MHN');
     expect(s.groupName).toBe('ECOLE LES TOURNESOLS - CE1');
     expect(s.participantCount).toBe(28);
     expect(s.mediatorIds).toEqual([]);
@@ -274,6 +277,7 @@ describe('buildSecutixImportPlan', () => {
     expect(u.id).toBe('slot_1');
     expect(u.participantCount).toBe(30);
     expect(u.endTime).toBe('11:45');
+    expect(u.site).toBe('DCSTI_MHN');
     expect(u.mediatorIds).toEqual(['med_1']);
     expect(u.setupTime).toBe(10);
     expect(u.teardownTime).toBe(5);

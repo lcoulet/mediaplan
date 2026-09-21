@@ -227,6 +227,23 @@ teardown AFTER it — this geometry is derived at display time
   - Slots (imported or manual) are always draggable for mediator assignment
     regardless of lock state
 
+### Daily View Slot Tooltips
+Hovering a slot block in the daily view shows a one-glance Secutix-style
+summary (`formatSlotBookingSummary`), followed by the block's logistics
+line (setup/teardown, non-assigned notice):
+
+```
+CSTI_MHN ___ RZA_MHN_EXPOSITION PERMANENTE ___ 10h45 - 11h45
+___ (30 pers. SCOLAIRES C2)
+Client : 2456008     ECOLE PRIMAIRE DE TERRE CLAPIER GROUPE 1     G/ CP à CE2/ Découvrons le Muséum (importé le 07/09/2026)
+Commentaires : RJV OU BDC CP + QUELQUES GS. Contrat signé + BDC reçus le 07/08/2026
+```
+
+Empty data skips its line; manual slots show "(créé le …)" instead of
+"(importé le …)"; the offer line prefers the offer's `secutixLabel`.
+Slot blocks are compact (2px/4px padding, 10px title) so the label stays
+readable on short bookings.
+
 ### Slot Modal
 The slot modal is organized in three tabs so the enriched reservation
 model stays readable (imported slots show all Secutix booking details):
@@ -269,11 +286,12 @@ plus a trailing "Total" row to skip. Reference layout (columns A–V):
 | NOM DU GROUPE | `slot.groupName` |
 | GUIDE | `slot.guide` |
 | ESPACE | `slot.location` |
+| SITE | `slot.site` (informational, shown in tooltips) |
 | NATURE DU GROUPE | `slot.groupNature` |
 | NB TOTAL DE PERSONNES PAR GUIDE | `slot.participantCount` |
 | CONTACT / TÉLÉPHONE / EMAIL DU DOSSIER | `slot.contactName/Phone/Email` |
 | REMARQUE | `slot.notes` |
-| LANGUE DE VISITE, SITE (single value) | not imported |
+| LANGUE DE VISITE (single value) | not imported |
 
 Import rules (implemented in `src/domain/secutix-import.ts`, browser reading
 in `src/infrastructure/secutix-reader.ts`, UI in the Import/Export view):

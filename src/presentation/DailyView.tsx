@@ -4,7 +4,7 @@
 import { useState, useMemo } from 'react';
 import { useData, useCRUD } from './DataContext';
 import type { Slot, Mediator, Absence, AbsenceType } from '../domain/types';
-import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString, getSlotTotalRange } from '../domain/models';
+import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString, getSlotTotalRange, formatSlotBookingSummary } from '../domain/models';
 import { ABSENCE_TYPE_LABELS } from '../domain/models';
 import { useElementWidth, pxPerHourFromWidth } from './useElementWidth';
 import SlotModal from './SlotModal';
@@ -522,6 +522,7 @@ export default function DailyView() {
                       draggable
                       onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
                       onDragEnd={handleDragEnd}
+                      title={`${formatSlotBookingSummary(slot, offer)}\nMédiateur : non assigné`}
                     >
                       <div className="slot-time">{slot.startTime} – {slot.endTime}</div>
                       <div className="slot-title">{offer?.name || '—'}</div>
@@ -662,7 +663,7 @@ export default function DailyView() {
                         draggable
                         onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
                         onDragEnd={handleDragEnd}
-                        title={`Réservation : ${slot.startTime} – ${slot.endTime}${hasSetup ? ` (mise en place ${effSetup} min avant)` : ''}${hasTeardown ? ` (rangement ${effTeardown} min après)` : ''}`}
+                        title={`${formatSlotBookingSummary(slot, offer)}\nRéservation : ${slot.startTime} – ${slot.endTime}${hasSetup ? ` (mise en place ${effSetup} min avant)` : ''}${hasTeardown ? ` (rangement ${effTeardown} min après)` : ''}`}
                       >
                         {hasSetup && (
                           <div

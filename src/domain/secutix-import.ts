@@ -84,6 +84,8 @@ export interface SecutixBooking {
   groupName: string;
   guide: string;
   location: string;
+  /** Secutix "SITE" (informational, shown in tooltips) */
+  site: string;
   groupNature: string;
   participantCount: number;
   contactName: string;
@@ -187,6 +189,7 @@ export function normalizeSecutixRows(rows: SecutixRow[]): SecutixNormalization {
       groupName: raw.groupName?.trim() || '',
       guide: raw.guide?.trim() || '',
       location: raw.location?.trim() || '',
+      site: raw.site?.trim() || '',
       groupNature: raw.groupNature?.trim() || '',
       participantCount: parseInt(raw.participantCount, 10) || 0,
       contactName: raw.contactName?.trim() || '',
@@ -390,6 +393,7 @@ function bookingDiffersFromSlot(booking: SecutixBooking, slot: Slot): boolean {
     booking.groupName !== slot.groupName ||
     booking.guide !== slot.guide ||
     booking.location !== slot.location ||
+    booking.site !== (slot.site || '') ||
     booking.groupNature !== slot.groupNature ||
     booking.contactName !== slot.contactName ||
     booking.contactPhone !== slot.contactPhone ||
@@ -415,6 +419,7 @@ function bookingToSlot(booking: SecutixBooking, offerId: string, now: Date): Slo
     contactEmail: booking.contactEmail,
     notes: booking.notes,
     contractNumber: booking.contractNumber || undefined,
+    ...(booking.site ? { site: booking.site } : {}),
     origin: 'imported',
     importSource: SECUTIX_SOURCE,
     importedAt: now.toISOString(),
@@ -505,6 +510,7 @@ export function buildSecutixImportPlan(
         contactEmail: booking.contactEmail,
         notes: booking.notes,
         contractNumber: booking.contractNumber || undefined,
+        ...(booking.site ? { site: booking.site } : {}),
         offerId, // keep in sync with the (re)mapped offer
         importedAt: now.toISOString(),
         modifiedAfterImport: false,
