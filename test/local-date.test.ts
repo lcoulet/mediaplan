@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toLocalDateString, parseLocalDate } from '../src/domain/models';
+import { toLocalDateString, parseLocalDate, getISOWeekNumber } from '../src/domain/models';
 
 describe('parseLocalDate', () => {
   it('round-trips through toLocalDateString without day shift', () => {
@@ -49,5 +49,29 @@ describe('toLocalDateString', () => {
   it('handles end-of-month dates', () => {
     const d = new Date(2026, 8, 30, 23, 59, 0, 0);
     expect(toLocalDateString(d)).toBe('2026-09-30');
+  });
+});
+
+describe('getISOWeekNumber', () => {
+  it('returns the ISO week of a Monday (Secutix sem39 reference)', () => {
+    expect(getISOWeekNumber(parseLocalDate('2026-09-21'))).toBe(39);
+  });
+
+  it('returns the same number for every day of a Monday-Sunday week', () => {
+    const week = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24',
+      '2026-09-25', '2026-09-26', '2026-09-27'];
+    for (const s of week) {
+      expect(getISOWeekNumber(parseLocalDate(s))).toBe(39);
+    }
+  });
+
+  it('gives week 1 to days belonging to the first ISO week of a year', () => {
+    expect(getISOWeekNumber(parseLocalDate('2025-12-29'))).toBe(1); // Monday of week 1, 2026
+    expect(getISOWeekNumber(parseLocalDate('2026-01-01'))).toBe(1); // Thursday
+  });
+
+  it('gives week 53 to days of a 53-week ISO year', () => {
+    expect(getISOWeekNumber(parseLocalDate('2026-12-28'))).toBe(53); // Monday
+    expect(getISOWeekNumber(parseLocalDate('2027-01-03'))).toBe(53); // Sunday
   });
 });

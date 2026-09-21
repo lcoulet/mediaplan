@@ -40,6 +40,17 @@ export function parseLocalDate(s: string): Date {
   return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
 
+// ISO 8601 week number (weeks start Monday; week 1 contains the year's
+// first Thursday). Computed on UTC-anchored dates so daylight-saving
+// transitions cannot shift the day count.
+export function getISOWeekNumber(d: Date): number {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = (date.getUTCDay() + 6) % 7; // Mon=0..Sun=6
+  date.setUTCDate(date.getUTCDate() - dayNum + 3); // Thursday of the ISO week
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
 // ---- Slot total range (setup + booking + teardown) ----
 
 function timeToMinutes(t: string): number {

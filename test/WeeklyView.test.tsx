@@ -52,7 +52,8 @@ describe('WeeklyView', () => {
     );
 
     expect(screen.getByText(/Plan Hebdo/i)).toBeInTheDocument();
-    expect(screen.getByText(/14 sept\. 2026 – 20 sept\. 2026/i)).toBeInTheDocument();
+    // Week of 14–20 Sept 2026 = ISO week 38
+    expect(screen.getByText(/Semaine 38 — 14 sept\. 2026 – 20 sept\. 2026/i)).toBeInTheDocument();
   });
 
   it('should display mediators and slots', () => {

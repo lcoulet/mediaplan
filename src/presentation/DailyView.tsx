@@ -4,7 +4,7 @@
 import { useState, useMemo } from 'react';
 import { useData, useCRUD } from './DataContext';
 import type { Slot, Mediator, Absence, AbsenceType } from '../domain/types';
-import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString, getSlotTotalRange, formatSlotBookingSummary } from '../domain/models';
+import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString, getSlotTotalRange, formatSlotBookingSummary, getISOWeekNumber } from '../domain/models';
 import { ABSENCE_TYPE_LABELS } from '../domain/models';
 import { useElementWidth, pxPerHourFromWidth } from './useElementWidth';
 import SlotModal from './SlotModal';
@@ -405,7 +405,7 @@ export default function DailyView() {
           <button className="btn btn-secondary" onClick={() => goToDay(1)}>→</button>
           <h2>
             <label className="date-picker-label" title="Changer la date">
-              Plan Jour — {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              Plan Jour — Semaine {getISOWeekNumber(selectedDate)} — {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               <input
                 type="date"
                 className="date-picker-input"

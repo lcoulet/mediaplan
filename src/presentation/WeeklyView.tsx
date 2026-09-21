@@ -4,6 +4,7 @@ import { useData, getWeekStart } from './DataContext';
 import {
   ABSENCE_TYPE_LABELS,
   getAbsenceTimeRange,
+  getISOWeekNumber,
   getSlotPlanningStatus,
   toLocalDateString,
 } from '../domain/models';
@@ -96,7 +97,7 @@ export default function WeeklyView() {
     const end = new Date(currentWeekStart);
     end.setDate(end.getDate() + 6);
     const fmt = (d: Date) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-    return `${fmt(currentWeekStart)} – ${fmt(end)}`;
+    return `Semaine ${getISOWeekNumber(currentWeekStart)} — ${fmt(currentWeekStart)} – ${fmt(end)}`;
   }, [currentWeekStart]);
 
   // Day data

@@ -58,6 +58,8 @@ describe('DailyView', () => {
       </DataProvider>
     );
     expect(screen.getByText(/Plan Jour —/i)).toBeInTheDocument();
+    // 2026-09-19 (mocked today) belongs to ISO week 38
+    expect(screen.getByText(/Semaine 38 — samedi 19 septembre 2026/i)).toBeInTheDocument();
   });
 
   it('should show the unassigned count next to the unassigned lane label', () => {
