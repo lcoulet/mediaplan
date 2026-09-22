@@ -4,7 +4,7 @@ import { generateExportFilename, buildExportMetadata } from '../domain/export-ut
 import { defaultOfferColor } from '../domain/models';
 import type { AppData, Offer, Slot } from '../domain/types';
 
-const STORAGE_KEY = 'mediaplan_data_v1';
+export const STORAGE_KEY = 'mediaplan_data_v1';
 const LAST_MODIFIED_KEY = 'mediaplan_last_modified';
 
 const defaultData: AppData = {

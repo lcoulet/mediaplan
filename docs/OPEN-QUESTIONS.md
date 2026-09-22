@@ -71,6 +71,9 @@ weeks 39–51, analyzed locally, never committed):**
 - [x] Absence types: reuse the existing AbsenceType list, extended with
   the full list of codes from the Excel file (Loic to provide meanings)
 - [x] Weekends ARE shown (all days, like the Excel file)
+- [x] ISO week numbers are now displayed in the daily and weekly view
+  labels (commit 45a3475)
+- [x] Unassigned count is shown in the daily view lane label (commit 5c7ac6d)
 
 **Open questions:**
 - [ ] Exact meaning of the main codes: TP (1696×, 2nd most common), CA,

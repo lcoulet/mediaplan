@@ -9,15 +9,13 @@ import type { Absence } from '../domain/types';
 const NAV_ITEMS: { view: ViewName; label: string }[] = [
   { view: 'weekly', label: 'Plan Hebdo' },
   { view: 'daily', label: 'Plan Jour' },
+  { view: 'reservations', label: 'Plan Accueil' },
   { view: 'mediators', label: 'Médiateurs' },
   { view: 'offers', label: 'Offres' },
   { view: 'absences', label: 'Absences' },
+  { view: 'stats', label: 'Statistiques' },
   { view: 'import-export', label: 'Import / Export' },
 ];
-
-interface HeaderProps {
-  onOpenUserGuide: () => void;
-}
 
 // Time selector component for half-day config
 function TimeSelector({ value, onChange }: { value: string; onChange: (value: string) => void }) {
@@ -40,7 +38,7 @@ function TimeSelector({ value, onChange }: { value: string; onChange: (value: st
   );
 }
 
-export default function Header({ onOpenUserGuide }: HeaderProps) {
+export default function Header() {
   const { state, dispatch, canUndo, canRedo, undo, redo } = useData();
   const crud = useCRUD();
   const [showConfig, setShowConfig] = useState(false);
@@ -136,14 +134,16 @@ export default function Header({ onOpenUserGuide }: HeaderProps) {
         >
           ↷
         </button>
-        <button
+        <a
           className="icon-btn"
           id="btn-user-guide"
           title="Ouvrir la documentation utilisateur"
-          onClick={onOpenUserGuide}
+          href="guide/index.html"
+          target="_blank"
+          rel="noreferrer"
         >
           ?
-        </button>
+        </a>
         <button
           className="icon-btn"
           id="btn-settings"

@@ -2,10 +2,8 @@
 // last data modification date. Rendered app-wide below the active view.
 
 import { useMemo, useState, useEffect } from 'react';
-import { getLastModified } from '../infrastructure/store';
+import { getLastModified, STORAGE_KEY } from '../infrastructure/store';
 import { formatImportDate } from '../domain/models';
-
-const STORAGE_KEY = 'mediaplan_data_v1';
 
 // Max localStorage size varies by browser (5-10 MB); use the common
 // conservative denominator for the ratio display.

@@ -516,7 +516,11 @@ body {
     width: 480px;
     max-width: 90vw;
     max-height: 85vh;
-    overflow: auto;
+    /* Flex column: header and (sticky) actions stay visible, only the
+       body scrolls when the content is taller than the modal. */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .modal-header {
@@ -543,6 +547,9 @@ body {
 
 .modal-body {
     padding: 20px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 /* ===== Form ===== */
@@ -590,11 +597,32 @@ body {
     flex: 1;
 }
 
+/* Densified slot form: tighter field spacing (the tabbed modal packs
+   several fields per tab). */
+#form-slot .form-group {
+    margin-bottom: 12px;
+}
+
+/* Three fields on one row (Date / Début / Fin in the slot modal) */
+.form-row.form-row-3 {
+    gap: 10px;
+}
+
+/* Sticky action bar: pinned at the bottom of the scrolling modal body,
+   the buttons stay visible even when the form is taller than the modal.
+   Negative margins cancel the modal-body padding so the bar spans the
+   full modal width. Every .form-actions lives inside a modal body. */
 .form-actions {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    margin-top: 20px;
+    position: sticky;
+    bottom: 0;
+    margin: 16px -20px -20px;
+    padding: 12px 20px;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    border-radius: 0 0 var(--radius) var(--radius);
 }
 
 /* ===== Form hint ===== */
@@ -668,41 +696,6 @@ body {
     border-radius: 50%;
     border: 1px solid var(--color-border);
     display: inline-block;
-}
-
-/* ===== User guide modal ===== */
-.user-guide-content {
-  max-width: 900px;
-  width: 92vw;
-  max-height: 88vh;
-  overflow-y: auto;
-}
-
-.user-guide-body {
-  font-size: 14px;
-  line-height: 1.55;
-}
-
-.user-guide-body h1 { font-size: 20px; margin: 12px 0 8px; }
-.user-guide-body h2 { font-size: 17px; margin: 18px 0 8px; border-bottom: 1px solid var(--color-border); padding-bottom: 4px; }
-.user-guide-body h3 { font-size: 15px; margin: 14px 0 6px; }
-.user-guide-body ul { padding-left: 22px; margin: 6px 0; }
-.user-guide-body li { margin: 2px 0; }
-.user-guide-body table { border-collapse: collapse; margin: 8px 0; }
-.user-guide-body td { border: 1px solid var(--color-border); padding: 4px 8px; font-size: 13px; }
-.user-guide-body hr { border: none; border-top: 1px solid var(--color-border); margin: 14px 0; }
-.user-guide-body img,
-.user-guide-body .guide-img {
-  max-width: 100%;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  margin: 6px 0;
-}
-.user-guide-body code {
-  background: #f0f0f0;
-  border-radius: 3px;
-  padding: 1px 4px;
-  font-size: 12px;
 }
 
 /* ===== Status bar (app-wide footer) ===== */
@@ -918,4 +911,26 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
 .tab-panel.inactive {
     visibility: hidden;
     pointer-events: none;
+}
+
+/* Clear data card options */
+.io-clear-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.io-clear-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.guide-open-link {
+  font-size: 13px;
+  font-weight: 400;
+  margin-left: 8px;
 }
