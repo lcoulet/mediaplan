@@ -13,7 +13,7 @@ import type { AppData, Mediator } from '../domain/types';
 import type { ViewName } from './types';
 import { createMediator, normalizeCompetences, parseLocalDate, toLocalDateString } from '../domain/models';
 import { createHistory, DEFAULT_HISTORY_SIZE } from '../domain/history';
-import { load, save } from '../infrastructure/store';
+import { load, save, STORAGE_KEY } from '../infrastructure/store';
 import type { AppState, Action } from './types';
 import { seedDemoData } from './DemoData';
 
@@ -48,7 +48,10 @@ function getInitialState(): AppState {
       delete m.skills;
     }
   });
-  if (data.mediators.length === 0 && data.offers.length === 0) {
+  // Seed demo data ONLY on first launch (no localStorage key at all).
+  // A user who deliberately cleared all data (Nettoyer les données) must
+  // NOT get demo data back on reload.
+  if (!localStorage.getItem(STORAGE_KEY)) {
     seedDemoData(data);
     save(data);
   }
@@ -66,15 +69,17 @@ function getInitialState(): AppState {
       'jour': 'daily',
       'journee': 'daily',
       'day': 'daily',
+      'reservations': 'reservations',
       'hebdo': 'weekly',
       'week': 'weekly',
       'semaine': 'weekly',
       'mediateurs': 'mediators',
       'offres': 'offers',
       'absences': 'absences',
+      'statistiques': 'stats',
       'import-export': 'import-export',
     };
-    
+
     if (viewParam && viewMap[viewParam]) {
       initialView = viewMap[viewParam];
     }
@@ -258,10 +263,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const urlParams = new URLSearchParams(window.location.search);
     const displayMap: Record<ViewName, string> = {
       'daily': 'day',
+      'reservations': 'reservations',
       'weekly': 'week',
       'mediators': 'mediateurs',
       'offers': 'offres',
       'absences': 'absences',
+      'stats': 'statistiques',
       'import-export': 'import-export',
     };
     urlParams.set('display', displayMap[state.currentView]);
@@ -320,7 +327,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // Reset demo data
   const resetData = useCallback(() => {
-    localStorage.removeItem('mediaplan_data_v1');
+    localStorage.removeItem(STORAGE_KEY);
     const fresh: AppData = { mediators: [], offers: [], schedules: [], slots: [], absences: [] };
     seedDemoData(fresh);
     save(fresh);
