@@ -118,6 +118,18 @@ describe('workbookToSecutixRows', () => {
     expect(workbookToSecutixRows(wb)).toEqual([]);
   });
 
+  it('strips currency formatting from the participant count column', () => {
+    // The real export formats NB TOTAL DE PERSONNES PAR GUIDE as a currency
+    // cell: raw:false yields "$   28" — parseInt alone would give 0.
+    const wb = buildWorkbook([
+      HEADERS.map(() => ''),
+      HEADERS,
+      DATA_ROW.map((c, i) => (i === 14 ? '$   28' : c)),
+    ]);
+    const rows = workbookToSecutixRows(wb);
+    expect(rows[0].participantCount).toBe('28');
+  });
+
   it('picks the visitPlanning sheet by name over other sheets', () => {
     const wb = buildWorkbook([['aucun en-tête ici']], 'Annexe');
     XLSX.utils.book_append_sheet(

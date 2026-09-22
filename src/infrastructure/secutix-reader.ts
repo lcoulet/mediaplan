@@ -49,6 +49,12 @@ function cellToString(cell: unknown): string {
   return String(cell ?? '').trim();
 }
 
+/** The real export formats NB TOTAL DE PERSONNES PAR GUIDE as a currency
+ * cell ("$   28"): keep only digits so parseInt downstream never sees a $ */
+function cellToCount(cell: unknown): string {
+  return String(cell ?? '').replace(/[^\d]/g, '');
+}
+
 function emptyRow(): SecutixRow {
   return {
     productDateTime: '',
@@ -96,7 +102,9 @@ export function matrixToSecutixRows(matrix: unknown[][]): SecutixRow[] {
     if (!Array.isArray(cells)) continue;
     const row = emptyRow();
     for (const [col, field] of fieldByCol) {
-      row[field] = cellToString(cells[col]);
+      row[field] = field === 'participantCount'
+        ? cellToCount(cells[col])
+        : cellToString(cells[col]);
     }
     rows.push(row);
   }
