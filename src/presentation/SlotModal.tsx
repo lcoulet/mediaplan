@@ -279,38 +279,6 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
               </div>
             </div>
             <div className="form-group">
-              <label>Date *</label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={(e) => setField('date', e.target.value)}
-                required
-                disabled={restricted}
-              />
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Début *</label>
-                <input
-                  type="time"
-                  value={form.startTime}
-                  onChange={(e) => setField('startTime', e.target.value)}
-                  required
-                  disabled={restricted}
-                />
-              </div>
-              <div className="form-group">
-                <label>Fin *</label>
-                <input
-                  type="time"
-                  value={form.endTime}
-                  onChange={(e) => setField('endTime', e.target.value)}
-                  required
-                  disabled={restricted}
-                />
-              </div>
-            </div>
-            <div className="form-group">
               <label>Espace</label>
               <input
                 type="text"
@@ -378,6 +346,38 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
           </div>
 
           <div className={panelClass('details')} role="tabpanel" data-tab="details">
+            <div className="form-row form-row-3">
+              <div className="form-group">
+                <label>Date *</label>
+                <input
+                  type="date"
+                  value={form.date}
+                  onChange={(e) => setField('date', e.target.value)}
+                  required
+                  disabled={restricted}
+                />
+              </div>
+              <div className="form-group">
+                <label>Début *</label>
+                <input
+                  type="time"
+                  value={form.startTime}
+                  onChange={(e) => setField('startTime', e.target.value)}
+                  required
+                  disabled={restricted}
+                />
+              </div>
+              <div className="form-group">
+                <label>Fin *</label>
+                <input
+                  type="time"
+                  value={form.endTime}
+                  onChange={(e) => setField('endTime', e.target.value)}
+                  required
+                  disabled={restricted}
+                />
+              </div>
+            </div>
             <div className="form-row">
               <div className="form-group">
                 <label>Mise en place (min)</label>

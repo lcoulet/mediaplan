@@ -102,6 +102,18 @@ describe('WeeklyView', () => {
     expect(screen.getByText(/14 mars/i)).toBeInTheDocument();
   });
 
+  it('navigates to the daily view when clicking a day column header', () => {
+    render(
+      <DataProvider>
+        <WeeklyView />
+      </DataProvider>
+    );
+    // Mocked today is 2026-09-17 (Thursday): Wednesday of that week is 2026-09-16
+    fireEvent.click(screen.getByText('Mercredi'));
+    expect(window.location.search).toContain('display=day');
+    expect(window.location.search).toContain('date=2026-09-16');
+  });
+
   it('renders the weekly stats badge with per-status counts', () => {
     const { container } = render(
       <DataProvider>

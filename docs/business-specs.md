@@ -179,6 +179,8 @@ teardown AFTER it — this geometry is derived at display time
 ### Schedule Management
 - Create a schedule for a given period
 - Visualize the schedule as a calendar/grid
+- Weekly view: clicking a day column header jumps to the daily view
+  for that day
 - Edit slots (drag & drop or selection)
 - Assign one or more mediators to each slot (filtered by competence)
 - Lock/unlock schedule editing (locked by default, warning on unlock)
@@ -244,25 +246,53 @@ Empty data skips its line; manual slots show "(créé le …)" instead of
 Slot blocks are compact (2px/4px padding, 10px title) so the label stays
 readable on short bookings.
 
+### Reservation List View (Plan Accueil)
+A chronological LIST of the day's reservations — same day navigation as
+the daily view, but no time grid and no drag & drop (`ReservationView.tsx`):
+- Rows: the day's slots sorted by ascending BLOCK start (setup included,
+  `sortSlotsByBlockStart`) — a 10:00 booking with a 15-min setup sorts at
+  09:45, before a 09:50 booking without setup; ties break on booking start
+- Left lane: assigned mediators (color dot + name, one line each);
+  unassigned rows show "Non assigné" on a light-orange background
+- Right lane: the full Secutix-style booking summary
+  (`formatSlotBookingSummary`, multi-line)
+- Free visits (`Accueil Libre` offers, `isFreeVisitOffer`) go to a separate
+  bottom section "Réservations visites libres": their left lane shows
+  "Libre" (they need no mediator), and they are excluded from the mediated
+  list
+- Clicking a row opens the slot modal (mediator-only when the planning is
+  locked and the slot is imported — same rule as the daily view)
+- The toolbar shows the day's reservation count (mediated + free visits)
+
+In the DAILY VIEW, free visits also leave the unassigned lane: they have
+their own lane "Réservations visites libres" below the mediators and above
+the draggable offers, with green blocks (quiet green = OK, no mediator
+required) and the lane label "Libre". The unassigned badge next to the
+unassigned lane counts them as ASSIGNED ("X/N" where N = all day slots,
+X excludes free visits).
+
 ### Slot Modal
 The slot modal is organized in three tabs so the enriched reservation
 model stays readable (imported slots show all Secutix booking details):
 - **Réservation** (first tab, default): offer, group name, mediators
-  (multi-select), date, start/end time, espace (defaults to the offer's
-  when empty, prefilled by the Secutix import), notes / remarques
+  (multi-select), espace (defaults to the offer's when empty, prefilled
+  by the Secutix import), notes / remarques
 - **Contact**: contract number (dossier d'achat — one dossier can cover
   several slots), contact name, phone, email
-- **Détails**: setup/teardown times, participants, status, guide,
-  group nature
+- **Détails**: date, start/end time (one compact three-field row on top),
+  setup/teardown times, participants, status, guide, group nature
 The origin badges (imported / modified after import) stay visible above
 the tabs on every tab, on a single compact line: for imported slots the
 source name and import date sit on that line ("Source : … — Importé le …"),
 for manual slots the creation date is shown ("Créé le …").
 
-All three tab panels stay mounted and stacked in a single grid cell, so
+The modal is a flex column: the header and the action bar (sticky at the
+bottom of the scrolling body) stay visible even when a tab's content is
+taller than the modal — no scrolling needed to reach the buttons. All
+three tab panels stay mounted and stacked in a single grid cell, so
 the modal height never changes when switching tabs. Submitting with an
-invalid required field (they live on the Réservation tab) switches back
-to that tab and shows the validation bubble there.
+invalid required field switches to the tab holding that field (offer on
+Réservation, date/time on Détails) and shows the validation bubble there.
 
 Editability rules:
 - Unlocked: everything is editable; imported slots are marked

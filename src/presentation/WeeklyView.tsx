@@ -308,8 +308,18 @@ export default function WeeklyView() {
               const isToday = dd.dateStr === todayStr;
               return (
                 <div key={dd.dateStr} className={`cal-day-name ${isToday ? 'cal-today' : ''}`}>
-                  <span>{DAYS[i]}</span>
-                  <span className="cal-day-num">{d.getDate()}</span>
+                  <button
+                    type="button"
+                    className="cal-day-name-btn"
+                    title="Aller au plan jour"
+                    onClick={() => {
+                      dispatch({ type: 'SET_CURRENT_DATE', date: d });
+                      dispatch({ type: 'SET_VIEW', view: 'daily' });
+                    }}
+                  >
+                    <span>{DAYS[i]}</span>
+                    <span className="cal-day-num">{d.getDate()}</span>
+                  </button>
                 </div>
               );
             })}
