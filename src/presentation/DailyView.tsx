@@ -4,9 +4,13 @@
 import { useState, useMemo } from 'react';
 import { useData, useCRUD } from './DataContext';
 import type { Slot, Mediator, Absence, AbsenceType } from '../domain/types';
-import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString, getSlotTotalRange, formatSlotBookingSummary, getISOWeekNumber } from '../domain/models';
+import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString, getSlotTotalRange, formatSlotBookingSummary, getISOWeekNumber, isFreeVisitOffer } from '../domain/models';
 import { ABSENCE_TYPE_LABELS } from '../domain/models';
 import { useElementWidth, pxPerHourFromWidth } from './useElementWidth';
+import { computeParallelLanes } from '../domain/parallel-lanes';
+import { getDynamicMasking, setDynamicMasking } from '../infrastructure/ui-settings';
+import { mediatorsForPrint } from '../domain/print-selection';
+import { usePrint, printDateLine } from './usePrint';
 import SlotModal from './SlotModal';
 
 const START_HOUR = 8;
@@ -47,12 +51,17 @@ export default function DailyView() {
       });
   }, [data.mediators]);
 
-  // Assigned vs unassigned
-  const { assignedSlots, unassignedSlots } = useMemo(() => {
+  // Assigned vs unassigned. Free visits (Accueil Libre, no mediator
+  // needed) leave the unassigned lane for their own section and COUNT AS
+  // ASSIGNED in the lane badge.
+  const { assignedSlots, unassignedSlots, freeVisitSlots } = useMemo(() => {
+    const offerById = new Map(data.offers.map(o => [o.id, o]));
     const assigned = daySlots.filter(slot => slot.mediatorIds.length > 0);
-    const unassigned = daySlots.filter(slot => slot.mediatorIds.length === 0);
-    return { assignedSlots: assigned, unassignedSlots: unassigned };
-  }, [daySlots]);
+    const withoutMediator = daySlots.filter(slot => slot.mediatorIds.length === 0);
+    const unassigned = withoutMediator.filter(slot => !isFreeVisitOffer(offerById.get(slot.offerId)));
+    const freeVisits = withoutMediator.filter(slot => isFreeVisitOffer(offerById.get(slot.offerId)));
+    return { assignedSlots: assigned, unassignedSlots: unassigned, freeVisitSlots: freeVisits };
+  }, [daySlots, data.offers]);
 
   // Standard offers: rendering uses visibleOffers (search-filtered catalog)
 
@@ -146,6 +155,51 @@ export default function DailyView() {
     }
     return selectedSlot?.offerId || null;
   }, [draggedItem, selectedSlot, data.slots]);
+
+  // While dragging an offer or an unassigned slot, hide the mediator rows of
+  // mediators totally incompetent for that offer ("Masquage dynamique").
+  // - Free-visit offers (Accueil Libre) are exempt: no mediator is required.
+  // - Safety: if NO mediator is competent, hide nobody (assignment stays
+  //   possible — incompetence is flagged, not forbidden).
+  // - Incompetent rows are removed from the layout (compact grid); the drag
+  //   image offset bug this causes is accepted by the stakeholder.
+  // - Persisted per browser in ui-settings (localStorage, NOT in AppData).
+  const [dynamicMasking, setDynamicMaskingState] = useState(() => getDynamicMasking());
+
+  // Print: hide mediator rows with nothing on the day (mediatorsForPrint is
+  // the tested domain rule; the visible list drives both screen and print,
+  // the print stylesheet only hides the app chrome).
+  const print = usePrint();
+  const printableMediatorIds = useMemo(
+    () => new Set(mediatorsForPrint(data, selectedDateStr)),
+    [data, selectedDateStr]
+  );
+
+  const setDynamicMaskingAndPersist = (value: boolean) => {
+    setDynamicMaskingState(value);
+    setDynamicMasking(value);
+  };
+
+  const draggedOfferId = useMemo(() => {
+    if (!draggedItem) return null;
+    if (draggedItem.type === 'offer') return draggedItem.id;
+    // Slot drag: only UNASSIGNED slots are "offres à assigner"
+    const slot = data.slots.find(s => s.id === draggedItem.id);
+    if (!slot || slot.mediatorIds.length > 0) return null;
+    return slot.offerId;
+  }, [draggedItem, data.slots]);
+
+  const hiddenMediatorIds = useMemo(() => {
+    if (!dynamicMasking || !draggedOfferId) return new Set<string>();
+    const offer = data.offers.find(o => o.id === draggedOfferId);
+    if (!offer || isFreeVisitOffer(offer)) return new Set<string>();
+    const incompetent = visibleMediators.filter(m => {
+      const status = getMediatorCompetenceStatus(m, draggedOfferId);
+      return status !== 'confirmed' && status !== 'learning';
+    });
+    if (incompetent.length >= visibleMediators.length) return new Set<string>();
+    return new Set(incompetent.map(m => m.id));
+  }, [dynamicMasking, draggedOfferId, visibleMediators, data.offers]);
 
   // Get competence status for a mediator and offer
   function getMediatorCompetenceStatus(mediator: Mediator, offerId: string): 'confirmed' | 'learning' | 'none' {
@@ -439,6 +493,16 @@ export default function DailyView() {
               </option>
             ))}
           </select>
+          <label className="toggle-switch" title="Masquer les médiateurs incompétents pendant le glisser-déposer d'une offre ou d'une réservation à affecter">
+            <input
+              type="checkbox"
+              id="toggle-dynamic-masking"
+              checked={dynamicMasking}
+              onChange={(e) => setDynamicMaskingAndPersist(e.target.checked)}
+            />
+            <span className="toggle-slider"></span>
+            <span className="toggle-label">Masquage dynamique</span>
+          </label>
           <label className="toggle-switch">
             <input
               type="checkbox"
@@ -464,7 +528,24 @@ export default function DailyView() {
             <span className="toggle-slider"></span>
             <span className="toggle-label">Mode modification</span>
           </label>
+          <button
+            className="btn btn-secondary print-btn"
+            id="btn-print-daily"
+            onClick={print}
+            title="Imprimer la vue du jour (A4 paysage)"
+          >
+            🖨️ Imprimer
+          </button>
         </div>
+      </div>
+
+      {/* Print header: view title + day date (screen-hidden, print-only) */}
+      <div className="print-header">
+        <h1>
+          Plan Jour — Semaine {getISOWeekNumber(selectedDate)} —{' '}
+          {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        </h1>
+        <div className="print-date">{printDateLine()}</div>
       </div>
 
       <div className="daily-grid" ref={gridRef}>
@@ -484,61 +565,63 @@ export default function DailyView() {
 
         {/* Unassigned lane — above mediators */}
         <div className="daily-unassigned-section">
-          <div className="daily-section-title">Réservations non affectées</div>
-          <div className="daily-unassigned-row">
-            <div className="daily-mediator-label">
-              <span className="daily-mediator-name">Non assigné</span>
-              <span
-                className="daily-unassigned-count"
-                title="Réservations non affectées / réservations du jour"
-              >
-                {unassignedSlots.length}/{daySlots.length}
-              </span>
-            </div>
-            <div
-              className="daily-mediator-track"
-              style={{ width: `${totalGridWidth}px`, height: `${TRACK_HEIGHT}px`, position: 'relative' }}
+          <div className="daily-section-title">
+            Réservations non affectées
+            <span
+              className="daily-unassigned-count"
+              title="Réservations non affectées / réservations du jour"
             >
-              {HOURS.map((hour, i) => (
-                <div
-                  key={hour}
-                  className="daily-hour-line"
-                  style={{ left: `${i * pxPerHour}px`, width: `${pxPerHour}px` }}
-                />
-              ))}
-              {unassignedSlots.length === 0 ? (
-                <div className="daily-empty">Aucune réservation non affectée pour aujourd'hui.</div>
-              ) : (
-                unassignedSlots.map(slot => {
-                  const offer = data.offers.find(o => o.id === slot.offerId);
-                  const isSelected = selectedSlot?.id === slot.id;
-                  const isImported = slot.origin === 'imported';
-                  return (
-                    <div
-                      key={slot.id}
-                      className={`daily-slot unassigned${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}`}
-                      style={{
-                        left: `${getSlotTop(slot)}px`,
-                        width: `${getSlotHeight(slot)}px`,
-                      }}
-                      onClick={() => {
-                        setSelectedSlot(slot);
-                        setSlotModal({ slot, mediatorOnly: locked && isImported, defaultDate: slot.date });
-                      }}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
-                      onDragEnd={handleDragEnd}
-                      title={`${formatSlotBookingSummary(slot, offer)}\nMédiateur : non assigné`}
-                    >
-                      <div className="slot-time">{slot.startTime} – {slot.endTime}</div>
-                      <div className="slot-title">{offer?.name || '—'}</div>
-                      <div className="slot-mediator">Non assigné</div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+              {unassignedSlots.length}/{daySlots.length}
+            </span>
           </div>
+          {unassignedSlots.length === 0 ? (
+            <div className="daily-empty">Aucune réservation non affectée pour aujourd'hui.</div>
+          ) : computeParallelLanes(unassignedSlots).map((laneSlots, laneIndex) => (
+            <div key={laneIndex} className="daily-unassigned-row">
+              <div className="daily-mediator-label">
+                <span className="daily-mediator-name">Non assigné</span>
+              </div>
+              <div
+                className="daily-mediator-track"
+                style={{ width: `${totalGridWidth}px`, height: `${TRACK_HEIGHT}px`, position: 'relative' }}
+              >
+                {HOURS.map((hour, i) => (
+                  <div
+                    key={hour}
+                    className="daily-hour-line"
+                    style={{ left: `${i * pxPerHour}px`, width: `${pxPerHour}px` }}
+                  />
+                ))}
+                {laneSlots.map(slot => {
+                    const offer = data.offers.find(o => o.id === slot.offerId);
+                    const isSelected = selectedSlot?.id === slot.id;
+                    const isImported = slot.origin === 'imported';
+                    return (
+                      <div
+                        key={slot.id}
+                        className={`daily-slot unassigned${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}`}
+                        style={{
+                          left: `${getSlotTop(slot)}px`,
+                          width: `${getSlotHeight(slot)}px`,
+                        }}
+                        onClick={() => {
+                          setSelectedSlot(slot);
+                          setSlotModal({ slot, mediatorOnly: locked && isImported, defaultDate: slot.date });
+                        }}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
+                        onDragEnd={handleDragEnd}
+                        title={`${formatSlotBookingSummary(slot, offer)}\nMédiateur : non assigné`}
+                      >
+                        <div className="slot-time">{slot.startTime} – {slot.endTime}</div>
+                        <div className="slot-title">{offer?.name || '—'}</div>
+                        <div className="slot-mediator">Non assigné</div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Mediator rows — below unassigned */}
@@ -548,10 +631,14 @@ export default function DailyView() {
             <div className="daily-empty">Aucun médiateur ne correspond au filtre.</div>
           )}
           {visibleMediators.map(mediator => {
+            if (hiddenMediatorIds.has(mediator.id)) return null; // removed from layout (compact grid)
             const mediatorSlots = assignedSlots.filter(slot =>
               slot.mediatorIds.includes(mediator.id)
             );
             const mediatorAbsences = getMediatorAbsences(mediator.id);
+            // Print: rows with nothing on the day are hidden by the print
+            // stylesheet (screen display unchanged)
+            const printEmpty = !printableMediatorIds.has(mediator.id);
 
             // Get competence status for the highlighted offer (drag or selection)
             const competenceStatus = highlightOfferId ? 
@@ -560,7 +647,7 @@ export default function DailyView() {
             return (
               <div 
                 key={mediator.id} 
-                className={`daily-mediator-row${competenceStatus ? ` competence-${competenceStatus}` : ''}`}
+                className={`daily-mediator-row${competenceStatus ? ` competence-${competenceStatus}` : ''}${printEmpty ? ' print-hidden' : ''}`}
               >
                 <div className="daily-mediator-label">
                   <span className="slot-mediator-glyph daily-mediator-color" style={{ color: mediator.color || '#ccc' }}>●</span>
@@ -669,7 +756,7 @@ export default function DailyView() {
                         draggable
                         onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
                         onDragEnd={handleDragEnd}
-                        title={`${formatSlotBookingSummary(slot, offer)}\nRéservation : ${slot.startTime} – ${slot.endTime}${hasSetup ? ` (mise en place ${effSetup} min avant)` : ''}${hasTeardown ? ` (rangement ${effTeardown} min après)` : ''}`}
+                        title={`${formatSlotBookingSummary(slot, offer)}`}
                       >
                         {hasSetup && (
                           <div
@@ -694,9 +781,71 @@ export default function DailyView() {
           })}
         </div>
 
+        {/* Free visits lane (Accueil Libre) — below mediators, above offers */}
+        {freeVisitSlots.length > 0 && (
+          <div className="daily-freevisits-section">
+            <div className="daily-section-title">
+              Réservations visites libres
+              <span
+                className="daily-unassigned-count"
+                title="Réservations visites libres / réservations du jour"
+              >
+                {freeVisitSlots.length}/{daySlots.length}
+              </span>
+            </div>
+            {computeParallelLanes(freeVisitSlots).map((laneSlots, laneIndex) => (
+              <div key={laneIndex} className="daily-unassigned-row">
+                <div className="daily-mediator-label">
+                  <span className="daily-mediator-name">Libre</span>
+                </div>
+                <div
+                  className="daily-mediator-track"
+                  style={{
+                    width: `${totalGridWidth}px`,
+                    height: `${TRACK_HEIGHT}px`,
+                    position: 'relative',
+                  }}
+                >
+                  {HOURS.map((hour, i) => (
+                    <div
+                      key={hour}
+                      className="daily-hour-line"
+                      style={{ left: `${i * pxPerHour}px`, width: `${pxPerHour}px` }}
+                    />
+                  ))}
+                  {laneSlots.map(slot => {
+                    const offer = data.offers.find(o => o.id === slot.offerId);
+                    const isSelected = selectedSlot?.id === slot.id;
+                    const isImported = slot.origin === 'imported';
+                    return (
+                      <div
+                        key={slot.id}
+                        className={`daily-slot free${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}`}
+                        style={{
+                          left: `${getSlotTop(slot)}px`,
+                          width: `${getSlotHeight(slot)}px`,
+                        }}
+                        onClick={() => {
+                          setSelectedSlot(slot);
+                          setSlotModal({ slot, mediatorOnly: locked && isImported, defaultDate: slot.date });
+                        }}
+                        title={`${formatSlotBookingSummary(slot, offer)}\nVisite libre : aucun médiateur requis`}
+                      >
+                        <div className="slot-time">{slot.startTime} – {slot.endTime}</div>
+                        <div className="slot-title">{offer?.name || '—'}</div>
+                        <div className="slot-mediator">Libre</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Standard offers lane — no time positioning */}
         <div className="daily-offers-section">
-          <div className="daily-section-title">Offres libres (glissables)</div>
+          <div className="daily-section-title">Offres non programmées (glissables)</div>
           <input
             id="daily-offer-search"
             type="text"
@@ -709,7 +858,7 @@ export default function DailyView() {
             {visibleOffers.length === 0 ? (
               <div className="daily-empty">
                 {data.offers.length === 0
-                  ? 'Aucune offre libre disponible.'
+                  ? 'Aucune offre non programmée disponible.'
                   : 'Aucune offre ne correspond à la recherche.'}
               </div>
             ) : (

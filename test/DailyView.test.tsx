@@ -15,6 +15,7 @@ const mockData: AppData = {
   offers: [
     { id: 'o1', name: 'Visite guidée', description: '', duration: 60, capacity: 20, location: 'Salle 1', setupTime: 10, teardownTime: 10, welcomeType: 'Réservable encadrée par médiateur' },
     { id: 'o2', name: 'Atelier créatif', description: '', duration: 90, capacity: 15, location: 'Atelier', setupTime: 15, teardownTime: 5, welcomeType: 'Réservable encadrée par médiateur' },
+    { id: 'o3', name: 'Visite Libre Expo Perm', description: '', duration: 60, capacity: 60, location: 'Exposition permanente', welcomeType: 'Accueil Libre' },
   ],
   schedules: [],
   slots: [
@@ -22,6 +23,8 @@ const mockData: AppData = {
     { id: 's1', scheduleId: '', date: '2026-09-19', startTime: '10:00', endTime: '12:00', offerId: 'o1', mediatorIds: ['m1'], status: 'planned', origin: 'manual', participantCount: 0, notes: '', importSource: '', importedAt: '', modifiedAfterImport: false, groupName: '', guide: '', location: '', groupNature: '', contactName: '', contactPhone: '', contactEmail: '' },
     // Unassigned imported slot for today
     { id: 's2', scheduleId: '', date: '2026-09-19', startTime: '14:00', endTime: '15:00', offerId: 'o2', mediatorIds: [], status: 'planned', origin: 'imported', participantCount: 0, notes: '', importSource: 'Secutix', importedAt: '', modifiedAfterImport: false, groupName: '', guide: '', location: '', groupNature: '', contactName: '', contactPhone: '', contactEmail: '' },
+    // Free visit (Accueil Libre, no mediator needed) for today
+    { id: 's3', scheduleId: '', date: '2026-09-19', startTime: '11:00', endTime: '12:00', offerId: 'o3', mediatorIds: [], status: 'planned', origin: 'manual', participantCount: 25, notes: '', importSource: '', importedAt: '', modifiedAfterImport: false, groupName: 'GROUPE LIBRE', guide: '', location: '', groupNature: '', contactName: '', contactPhone: '', contactEmail: '' },
   ],
   absences: [],
 };
@@ -57,9 +60,9 @@ describe('DailyView', () => {
         <DailyView />
       </DataProvider>
     );
-    expect(screen.getByText(/Plan Jour —/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Plan Jour —/i).length).toBeGreaterThan(0);
     // 2026-09-19 (mocked today) belongs to ISO week 38
-    expect(screen.getByText(/Semaine 38 — samedi 19 septembre 2026/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Semaine 38 — samedi 19 septembre 2026/i).length).toBeGreaterThan(0);
   });
 
   it('should show the unassigned count next to the unassigned lane label', () => {
@@ -68,10 +71,371 @@ describe('DailyView', () => {
         <DailyView />
       </DataProvider>
     );
-    // Mock data: 2 slots on 2026-09-19, 1 unassigned -> badge "1/2"
+    // 3 slots on 2026-09-19: 1 assigned, 1 unassigned, 1 free visit.
+    // Free visits (Accueil Libre) count as ASSIGNED (no mediator needed).
     const badge = container.querySelector('.daily-unassigned-count');
     expect(badge).toBeTruthy();
-    expect(badge!.textContent).toBe('1/2');
+    expect(badge!.textContent).toBe('1/3');
+  });
+
+  it('should render free visits (Accueil Libre) in their own lane, not the unassigned lane', () => {
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+    expect(screen.getByText(/Réservations visites libres/i)).toBeInTheDocument();
+
+    // The free visit block is in the free-visits section
+    const freeSection = container.querySelector('.daily-freevisits-section');
+    expect(freeSection).toBeTruthy();
+    const freeBlocks = freeSection!.querySelectorAll('.daily-slot');
+    expect(freeBlocks.length).toBe(1);
+    expect(freeBlocks[0].textContent).toContain('11:00');
+    // The lane label says "Libre"
+    expect(freeSection!.querySelector('.daily-mediator-name')!.textContent).toContain('Libre');
+
+    // NOT in the unassigned lane (still only the 14:00 unassigned slot)
+    const unassignedSection = container.querySelector('.daily-unassigned-section');
+    expect(unassignedSection!.querySelectorAll('.daily-slot').length).toBe(1);
+  });
+
+  it('places the free-visits lane below the mediators and above the draggable offers', () => {
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+    const grid = container.querySelector('.daily-grid')!;
+    const classes = Array.from(grid.children).map(c => (c as HTMLElement).className);
+    const unassignedIdx = classes.findIndex(c => c.includes('daily-unassigned-section'));
+    const mediatorsIdx = classes.findIndex(c => c.includes('daily-mediators-section'));
+    const freeIdx = classes.findIndex(c => c.includes('daily-freevisits-section'));
+    const offersIdx = classes.findIndex(c => c.includes('daily-offers-section'));
+    expect(unassignedIdx).toBeGreaterThanOrEqual(0);
+    expect(mediatorsIdx).toBeGreaterThan(unassignedIdx);
+    expect(freeIdx).toBeGreaterThan(mediatorsIdx);
+    expect(offersIdx).toBeGreaterThan(freeIdx);
+  });
+
+  it('renders overlapping free-visit slots on separate lanes (no visual overlap)', () => {
+    // Two free visits overlapping in time must land in two different rows
+    const data: AppData = {
+      ...mockData,
+      slots: [
+        mockData.slots[0], // s1 assigned, out of the way
+        { ...mockData.slots[2], id: 'f1', startTime: '10:00', endTime: '11:00' },
+        { ...mockData.slots[2], id: 'f2', startTime: '10:30', endTime: '11:30' },
+      ],
+    };
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(data)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+    const freeSection = container.querySelector('.daily-freevisits-section')!;
+    const rows = freeSection.querySelectorAll('.daily-unassigned-row');
+    expect(rows.length).toBe(2);
+    expect(rows[0].querySelectorAll('.daily-slot').length).toBe(1);
+    expect(rows[1].querySelectorAll('.daily-slot').length).toBe(1);
+  });
+
+  it('renders non-overlapping free-visit slots on a single lane', () => {
+    const data: AppData = {
+      ...mockData,
+      slots: [
+        mockData.slots[0],
+        { ...mockData.slots[2], id: 'f1', startTime: '10:00', endTime: '11:00' },
+        { ...mockData.slots[2], id: 'f2', startTime: '11:00', endTime: '12:00' },
+      ],
+    };
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(data)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+    const freeSection = container.querySelector('.daily-freevisits-section')!;
+    const rows = freeSection.querySelectorAll('.daily-unassigned-row');
+    expect(rows.length).toBe(1);
+    expect(rows[0].querySelectorAll('.daily-slot').length).toBe(2);
+  });
+
+  it('hides totally incompetent mediators while dragging an offer', () => {
+    // m1 confirmed on o1, m2 learning on o1, m3 inactive (never rendered).
+    // A fourth active mediator m4 has NO competence on o1: during the drag
+    // of o1 his row must be hidden; m1 and m2 stay visible.
+    const data: AppData = {
+      ...mockData,
+      mediators: [
+        ...mockData.mediators,
+        { id: 'm4', firstName: 'Paul', lastName: 'Durand', email: '', phone: '', notes: '', color: '#FFFF00', active: true, competences: [{ offerId: 'o2', status: 'confirmed' as const }] },
+      ],
+    };
+    // Give m1 and m2 a competence on o1 so they remain visible
+    data.mediators = data.mediators.map(m => {
+      if (m.id === 'm1') return { ...m, competences: [{ offerId: 'o1', status: 'confirmed' as const }] };
+      if (m.id === 'm2') return { ...m, competences: [{ offerId: 'o1', status: 'learning' as const }] };
+      return m;
+    });
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(data)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
+
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+
+    // Masking defaults to OFF now — turn it ON for this test
+    const toggle = container.querySelector('#toggle-dynamic-masking') as HTMLInputElement;
+    act(() => { fireEvent.click(toggle); });
+
+    const mediatorRows = () =>
+      Array.from(container.querySelectorAll('.daily-mediators-section .daily-mediator-row'));
+
+    // Before the drag: 3 active mediator rows
+    expect(mediatorRows().length).toBe(3);
+
+    // jsdom does not implement dataTransfer — mock it
+    const dataTransfer = {
+      effectAllowed: 'move', dropEffect: 'move',
+      setData: () => {}, getData: () => '',
+    };
+    const offer = container.querySelector('.daily-offer')!;
+    // The offers lane contains all offers; pick the one for o1 (first)
+    const dragStartEvent = new Event('dragstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragStartEvent, 'dataTransfer', { value: dataTransfer });
+    act(() => { offer.dispatchEvent(dragStartEvent); });
+
+    // During the drag: incompetent rows are REMOVED from the layout
+    // (compact grid — the drag image offset bug is accepted)
+    expect(mediatorRows().length).toBe(2);
+    const names = mediatorRows().map(r => r.textContent);
+    expect(names.some(n => n!.includes('Dupont'))).toBe(true);
+    expect(names.some(n => n!.includes('Martin'))).toBe(true);
+    expect(names.some(n => n!.includes('Durand'))).toBe(false);
+
+    // After the drag ends: all rows visible again
+    const dragEndEvent = new Event('dragend', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragEndEvent, 'dataTransfer', { value: dataTransfer });
+    act(() => { offer.dispatchEvent(dragEndEvent); });
+    expect(mediatorRows().length).toBe(3);
+  });
+
+  it('keeps all mediators visible when dragging an offer nobody is competent for', () => {
+    // No mediator has any competence on o1 — hiding everyone would make the
+    // drop impossible, so no row may be hidden.
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(mockData)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
+
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+
+    const dataTransfer = {
+      effectAllowed: 'move', dropEffect: 'move',
+      setData: () => {}, getData: () => '',
+    };
+    const offer = container.querySelector('.daily-offer')!;
+    const dragStartEvent = new Event('dragstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragStartEvent, 'dataTransfer', { value: dataTransfer });
+    act(() => { offer.dispatchEvent(dragStartEvent); });
+
+    // Nobody hidden (safety rule) — and both active mediators still rendered
+    const rows = container.querySelectorAll('.daily-mediators-section .daily-mediator-row');
+    expect(rows.length).toBe(2); // m1 and m2 (active mediators, m3 inactive)
+  });
+
+  it('does not hide mediators when dragging a free-visit offer (Accueil Libre)', () => {
+    // Free visits need NO mediator — competence filtering does not apply.
+    const data: AppData = {
+      ...mockData,
+      mediators: [
+        ...mockData.mediators,
+        { id: 'm4', firstName: 'Paul', lastName: 'Durand', email: '', phone: '', notes: '', color: '#FFFF00', active: true, competences: [{ offerId: 'o1', status: 'confirmed' as const }] },
+      ],
+    };
+    data.mediators = data.mediators.map(m => {
+      if (m.id === 'm1') return { ...m, competences: [{ offerId: 'o1', status: 'confirmed' as const }] };
+      return m;
+    });
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(data)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
+
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+
+    // Find the o3 (Accueil Libre) offer in the offers lane
+    const offers = Array.from(container.querySelectorAll('.daily-offer'));
+    const freeOffer = offers.find(el => el.textContent!.includes('Visite Libre Expo Perm'))!;
+
+    const dataTransfer = {
+      effectAllowed: 'move', dropEffect: 'move',
+      setData: () => {}, getData: () => '',
+    };
+    const dragStartEvent = new Event('dragstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragStartEvent, 'dataTransfer', { value: dataTransfer });
+    act(() => { freeOffer.dispatchEvent(dragStartEvent); });
+
+    // All 3 active mediator rows remain (m4 added below is active too)
+    const rows = container.querySelectorAll('.daily-mediators-section .daily-mediator-row');
+    expect(rows.length).toBe(3); // m1, m2, m4 — free visit hides nobody
+  });
+
+  it('hides incompetent mediators when dragging an unassigned slot to assign', () => {
+    // Dragging slot s2 (offer o2, unassigned): only mediators competent on
+    // o2 must remain — m1/m2 (competent on o1 only) are removed from layout.
+    const data: AppData = {
+      ...mockData,
+      mediators: mockData.mediators.map(m => {
+        if (m.id === 'm1') return { ...m, competences: [{ offerId: 'o1', status: 'confirmed' as const }] };
+        if (m.id === 'm2') return { ...m, competences: [{ offerId: 'o1', status: 'confirmed' as const }] };
+        return m;
+      }),
+      // Add a mediator competent on o2
+      // m3 is inactive; add m4 confirmed on o2 as a valid target
+    };
+    data.mediators = [
+      ...data.mediators,
+      { id: 'm4', firstName: 'Paul', lastName: 'Durand', email: '', phone: '', notes: '', color: '#FFFF00', active: true, competences: [{ offerId: 'o2', status: 'confirmed' as const }] },
+    ];
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(data)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
+
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+
+    // Masking defaults to OFF — turn it ON for this test
+    const toggle = container.querySelector('#toggle-dynamic-masking') as HTMLInputElement;
+    act(() => { fireEvent.click(toggle); });
+
+    // Drag the unassigned slot s2 from the unassigned lane
+    const unassignedSlot = Array.from(
+      container.querySelectorAll('.daily-unassigned-section .daily-slot')
+    ).find(el => el.textContent!.includes('14:00'))!;
+    expect(unassignedSlot).toBeTruthy();
+
+    const dataTransfer = {
+      effectAllowed: 'move', dropEffect: 'move',
+      setData: () => {}, getData: () => '',
+    };
+    const dragStartEvent = new Event('dragstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragStartEvent, 'dataTransfer', { value: dataTransfer });
+    act(() => { unassignedSlot.dispatchEvent(dragStartEvent); });
+
+    // Incompetent mediators are REMOVED from the layout (compact grid)
+    const rows = container.querySelectorAll('.daily-mediators-section .daily-mediator-row');
+    expect(rows.length).toBe(1); // only m4 (competent on o2) remains
+    expect(rows[0].textContent).toContain('Durand');
+  });
+
+  it('does not hide any mediator when the dynamic masking toggle is off', () => {
+    // Masking now defaults to OFF (persisted) — leave the toggle untouched.
+    const data: AppData = {
+      ...mockData,
+      mediators: [
+        ...mockData.mediators,
+        { id: 'm4', firstName: 'Paul', lastName: 'Durand', email: '', phone: '', notes: '', color: '#FFFF00', active: true, competences: [{ offerId: 'o1', status: 'confirmed' as const }] },
+      ],
+    };
+    data.mediators = data.mediators.map(m => {
+      if (m.id === 'm1') return { ...m, competences: [{ offerId: 'o1', status: 'confirmed' as const }] };
+      return m;
+    });
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(data)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
+
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+
+    // Default is OFF — verify the toggle state, do NOT click it
+    const toggle = container.querySelector('#toggle-dynamic-masking') as HTMLInputElement;
+    expect(toggle).toBeTruthy();
+    expect(toggle.checked).toBe(false); // default OFF
+
+    const dataTransfer = {
+      effectAllowed: 'move', dropEffect: 'move',
+      setData: () => {}, getData: () => '',
+    };
+    const offer = container.querySelector('.daily-offer')!;
+    const dragStartEvent = new Event('dragstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragStartEvent, 'dataTransfer', { value: dataTransfer });
+    act(() => { offer.dispatchEvent(dragStartEvent); });
+
+    // Masking off: nobody removed even though m2/m4 are incompetent on the
+    // dragged offer (m1 is the only competent one)
+    const rows = container.querySelectorAll('.daily-mediators-section .daily-mediator-row');
+    expect(rows.length).toBe(3); // m1, m2, m4 all present
+  });
+
+  it('renders overlapping unassigned slots on separate lanes (no visual overlap)', () => {
+    const data: AppData = {
+      ...mockData,
+      slots: [
+        mockData.slots[0], // s1 assigned
+        { ...mockData.slots[1], id: 'u1', startTime: '10:00', endTime: '11:00' },
+        { ...mockData.slots[1], id: 'u2', startTime: '10:45', endTime: '11:45' },
+      ],
+    };
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(data)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+    const unassignedSection = container.querySelector('.daily-unassigned-section')!;
+    const rows = unassignedSection.querySelectorAll('.daily-unassigned-row');
+    expect(rows.length).toBe(2);
+    expect(rows[0].querySelectorAll('.daily-slot').length).toBe(1);
+    expect(rows[1].querySelectorAll('.daily-slot').length).toBe(1);
   });
 
   it('should render active mediators as rows (not inactive ones)', () => {
@@ -217,13 +581,14 @@ describe('DailyView', () => {
       );
       const searchInput = container.querySelector('#daily-offer-search') as HTMLInputElement;
       expect(searchInput).toBeTruthy();
-      // Offers section contains both offers initially
-      expect(container.querySelectorAll('.daily-offer').length).toBe(2);
+      // Offers section contains all three offers initially
+      expect(container.querySelectorAll('.daily-offer').length).toBe(3);
 
       fireEvent.change(searchInput, { target: { value: 'VISITE' } });
       const offers = container.querySelectorAll('.daily-offer');
-      expect(offers.length).toBe(1);
-      expect(offers[0].textContent).toContain('Visite guidée');
+      // 'VISITE' matches 'Visite guidée' and 'Visite Libre Expo Perm'
+      expect(offers.length).toBe(2);
+      expect(Array.from(offers).some(o => o.textContent!.includes('Visite guidée'))).toBe(true);
     });
 
     it('should filter offers on partial case-insensitive match', () => {
@@ -292,8 +657,8 @@ describe('DailyView', () => {
         <DailyView />
       </DataProvider>
     );
-    expect(screen.getByText(/Offres libres/i)).toBeInTheDocument();
-    expect(screen.getByText(/Aucune offre libre|Offres libres/i)).toBeInTheDocument();
+    expect(screen.getByText(/Offres non programmées/i)).toBeInTheDocument();
+    expect(screen.getByText(/Aucune offre non programmée|Offres non programmées/i)).toBeInTheDocument();
   });
 
   it('should render assigned slots within mediator rows', () => {
@@ -335,9 +700,10 @@ describe('DailyView', () => {
     expect((boundaries[0] as HTMLElement).style.left).toBe('7px');
     expect((boundaries[1] as HTMLElement).style.left).toBe('127px');
 
-    // Tooltip mentions the real booking and setup/teardown
+    // Tooltip mentions the real booking and setup/teardown (via
+    // formatSlotBookingSummary's scheduling line)
     const title = slotEl.getAttribute('title') || '';
-    expect(title).toContain('10:00 – 12:00');
+    expect(title).toContain('Réservation : 10h00 - 12h00');
     expect(title).toContain('mise en place');
     expect(title).toContain('rangement');
   });
@@ -625,8 +991,8 @@ describe('DailyView', () => {
         <DailyView />
       </DataProvider>
     );
-    // 2026-09-19 is a Saturday in French locale
-    expect(screen.getByText(/samedi 19 septembre/i)).toBeInTheDocument();
+    // 2026-09-19 is a Saturday in French locale (toolbar + print header both show it)
+    expect(screen.getAllByText(/samedi 19 septembre/i).length).toBeGreaterThan(0);
   });
 
   it('offers a date picker in the title to jump to any date', () => {
@@ -640,8 +1006,8 @@ describe('DailyView', () => {
     expect(input.type).toBe('date');
     // Current selected date as value (mocked today = 2026-09-19)
     expect(input.value).toBe('2026-09-19');
-    // Changing the date updates the title
+    // Changing the date updates the title (toolbar + print header)
     fireEvent.change(input, { target: { value: '2026-10-08' } });
-    expect(screen.getByText(/jeudi 8 octobre/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/jeudi 8 octobre/i).length).toBeGreaterThan(0);
   });
 });

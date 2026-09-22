@@ -22,6 +22,20 @@ show, etc.). Has: name, duration, capacity, location, **setup time**
 No recurring offers exist in the current scope. All offers are unique
 instances.
 
+### Reservation vs Free Visit (Réservation)
+A **reservation** is any booked slot in the planning, including free visits
+(Accueil Libre) — a reservation CAN be a free visit without mediation
+escort. All Secutix imports are reservations. The distinction that matters
+for the planning is the offer's welcomeType (accompanied vs free), not
+reservation vs non-reservation.
+
+### Unprogrammed Offers (Offres non programmées)
+The offers listed at the bottom of the daily view, draggable onto the
+planning to create a manual slot. Labeled "Offres non programmées
+(glissables)" — they are NOT "free" offers (that name collides with
+"visites libres" / Accueil Libre). Free visits are a welcomeType; this lane
+is about scheduling, not escort.
+
 ### Welcome Type (Type d’Accueil)
 Categorizes how an offer is managed in the planning. Values:
 - **Accueil Libre** : offer reservable without requiring a mediator assignment
@@ -147,11 +161,25 @@ Planning state preventing modifications to slots. Mediator assignment
 remains allowed in locked mode (mediator-only modal). Locking is
 instant, unlocking requires a confirmation warning.
 
+### Free Visits Lane
+Slots of offers with `welcomeType: Accueil Libre` (e.g., free-entry visits) are displayed in a dedicated lane above the mediator rows, labeled "Réservations visites libres". These slots require no mediator assignment and are always shown as OK (green). They are excluded from the unassigned count badge (X/N) and from mediator assignment workflows.
+
+The lane uses **parallel lanes** (up to 2 slots per lane) when multiple free-visit slots exist for the same day. Each lane is a separate `.daily-unassigned-row` with its own track. The lane label shows the count of free-visit slots vs. total slots for the day (e.g., "Réservations visites libres 3/12").
+
+Free-visit slots are rendered side-by-side (parallel lanes) when their time ranges overlap, similar to mediator rows for overlapping assignments. The lane has a fixed height of 32px per lane; additional lanes are stacked vertically.
+
+In the daily view, the unassigned badge shows "X/N" where N = total slots for the day and X = number of unassigned imported slots (excluding free visits).
+
+---
+
 ### Day Planning View (Vue planning du jour)
 A calendar view focused on a single day. Layout:
-- Rows: two non-mediator lanes at the top, then mediators:
+- Rows: three lanes at the top, then mediators:
   - **Unassigned lane** (top): imported offers not yet allocated to a mediator,
     shown only for the selected day, positioned on their time slot
+  - **Free visits lane** (second): slots of offers with `welcomeType: Accueil Libre`
+    (no mediator required). Green blocks, label "Libre". Counted in the unassigned
+    badge as "assigned" (X/N where N = all day slots, X excludes free visits).
   - **Mediator rows**: active mediators (with cycle week label as a pill/badge
     to the right of their name, e.g. "S1", "S2")
     **Competence highlighting**: When a slot is selected (click or drag),
@@ -165,7 +193,7 @@ A calendar view focused on a single day. Layout:
     using the offer's default duration. The offer stays in the lane for
     reuse. Filters will be added later.
 - Columns: time axis with thin lines every 10 minutes, thick lines every
-  hour
+  hour. The day column header displays the ISO week number (e.g. "S 37").
 - Display: mediator availability/unavailability (from work cycle + absences)
   as background, assigned offers as blocks
 - Slot block: visually divided into setup / offer / teardown zones with
