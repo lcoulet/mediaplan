@@ -105,6 +105,7 @@ describe('formatSlotBookingSummary', () => {
     });
     expect(formatSlotBookingSummary(slot, offer)).toBe(
       'CSTI_MHN ___ RZA_MHN_EXPOSITION PERMANENTE ___ 10h45 - 11h45\n' +
+      'Réservation : 10h45 - 11h45\n' +
       '___ (30 pers. SCOLAIRES C2)\n' +
       'Client : 2456008     ECOLE PRIMAIRE DE TERRE CLAPIER GROUPE 1     G/ CP à CE2/ Découvrons le Muséum (importé le 07/09/2026)\n' +
       'Commentaires : RJV OU BDC CP + QUELQUES GS. Contrat signé + BDC reçus le 07/08/2026'
@@ -123,6 +124,7 @@ describe('formatSlotBookingSummary', () => {
     });
     expect(formatSlotBookingSummary(slot, manualOffer)).toBe(
       'JARDIN ___ 14h00 - 15h00\n' +
+      'Réservation : 14h00 - 15h00\n' +
       'Client : GROUPE INCONNU     Visite libre (créé le 21/09/2026)'
     );
   });
@@ -137,6 +139,27 @@ describe('formatSlotBookingSummary', () => {
     const summary = formatSlotBookingSummary(slot, offer);
     expect(summary).not.toContain('pers.');
     expect(summary).not.toContain('Commentaires :');
+  });
+
+  it('adds a scheduling line with setup and teardown times', () => {
+    const slot = createSlot({
+      startTime: '10:45',
+      endTime: '11:45',
+      setupTime: 15,
+      teardownTime: 10,
+    });
+    const summary = formatSlotBookingSummary(slot, offer);
+    expect(summary).toContain(
+      'Réservation : 10h45 - 11h45 (mise en place 15 min avant) (rangement 10 min après)'
+    );
+  });
+
+  it('adds a scheduling line without setup/teardown when none is set', () => {
+    const slot = createSlot({ startTime: '09:00', endTime: '10:00' });
+    const summary = formatSlotBookingSummary(slot, offer);
+    expect(summary).toContain('Réservation : 09h00 - 10h00');
+    expect(summary).not.toContain('mise en place');
+    expect(summary).not.toContain('rangement');
   });
 });
 
