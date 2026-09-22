@@ -13,6 +13,18 @@
 - [ ] TDD: week numbering (ISO 8601), cycle rotation, half-day cell state
   computation (cycle + absence overlay)
 
+## Reservation Planning View (day list)
+
+- [x] New view "Plan Accueil": same day-based navigation as the
+  daily view, but a chronological LIST of the day's reservations instead of
+  a time grid (`src/presentation/ReservationView.tsx`)
+  - Rows: slots sorted by ascending block start (setup start, not booking
+    start) — `sortSlotsByBlockStart()` in `src/domain/models.ts`
+  - Left lane: assigned mediators (names/colors) of each slot
+  - Right: slot booking summary (Secutix-style, `formatSlotBookingSummary`)
+  - No time axis (no px/hour positioning, no drag & drop)
+  - [x] TDD: setup-aware sort key computation
+
 ## Competence Visibility (next)
 
 - [ ] Offers view: add a column showing how many mediators know the offer,

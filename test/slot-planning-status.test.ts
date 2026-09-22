@@ -1,6 +1,6 @@
 // getSlotPlanningStatus — weekly view planning state of a slot
 import { describe, it, expect } from 'vitest';
-import { getSlotPlanningStatus } from '../src/domain/models';
+import { getSlotPlanningStatus, isFreeVisitOffer } from '../src/domain/models';
 import type { AppData, Mediator, Offer, Slot, Absence } from '../src/domain/types';
 
 const offer: Offer = {
@@ -124,5 +124,19 @@ describe('getSlotPlanningStatus', () => {
     const m2 = mediator('m2', [{ offerId: 'other', status: 'confirmed' }]);
     const s = slot(['m1', 'm2']);
     expect(getSlotPlanningStatus(s, data([s], [], [m1, m2]))).toBe('ok');
+  });
+});
+
+describe('isFreeVisitOffer', () => {
+  it('is true for "Accueil Libre" offers', () => {
+    expect(isFreeVisitOffer(libreOffer)).toBe(true);
+  });
+
+  it('is false for mediated offers', () => {
+    expect(isFreeVisitOffer(offer)).toBe(false);
+  });
+
+  it('is false for unknown offers', () => {
+    expect(isFreeVisitOffer(undefined)).toBe(false);
   });
 });

@@ -1,15 +1,15 @@
 // App.tsx — Root component: composes header + view router
 
-import { useState } from 'react';
 import { DataProvider, useData } from './presentation/DataContext';
 import Header from './presentation/Header';
 import WeeklyView from './presentation/WeeklyView';
 import DailyView from './presentation/DailyView';
+import ReservationView from './presentation/ReservationView';
 import MediatorsView from './presentation/MediatorsView';
 import OffersView from './presentation/OffersView';
 import AbsencesView from './presentation/AbsencesView';
+import StatsView from './presentation/StatsView';
 import ImportExportView from './presentation/ImportExportView';
-import UserGuideModal from './presentation/UserGuideModal';
 import StatusBar from './presentation/StatusBar';
 
 function ViewRouter() {
@@ -20,12 +20,16 @@ function ViewRouter() {
       return <WeeklyView />;
     case 'daily':
       return <DailyView />;
+    case 'reservations':
+      return <ReservationView />;
     case 'mediators':
       return <MediatorsView />;
     case 'offers':
       return <OffersView />;
     case 'absences':
       return <AbsencesView />;
+    case 'stats':
+      return <StatsView />;
     case 'import-export':
       return <ImportExportView />;
     default:
@@ -34,20 +38,13 @@ function ViewRouter() {
 }
 
 function App() {
-  const [showUserGuide, setShowUserGuide] = useState(false);
-
-  const handleOpenUserGuide = () => {
-    setShowUserGuide(true);
-  };
-
   return (
     <DataProvider>
-      <Header onOpenUserGuide={handleOpenUserGuide} />
+      <Header />
       <main className="app-main">
         <ViewRouter />
       </main>
       <StatusBar />
-      {showUserGuide && <UserGuideModal onClose={() => setShowUserGuide(false)} />}
     </DataProvider>
   );
 }

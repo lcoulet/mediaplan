@@ -109,6 +109,21 @@ export function slotBookingFromDropPosition(
   };
 }
 
+// Sort a day's slots by ascending BLOCK start (setup included): a 10:00
+// booking with a 15-min setup begins at 09:45 and sorts before a 09:50
+// booking without setup. Slots whose setup extends before their booking
+// are the first the mediators actually work on. Ties break on booking
+// start. Returns a new array; the input is not mutated.
+export function sortSlotsByBlockStart(slots: Slot[], offers: Offer[]): Slot[] {
+  const offerById = new Map(offers.map(o => [o.id, o]));
+  return [...slots].sort((a, b) => {
+    const aStart = timeToMinutes(getSlotTotalRange(a, offerById.get(a.offerId)).start);
+    const bStart = timeToMinutes(getSlotTotalRange(b, offerById.get(b.offerId)).start);
+    if (aStart !== bStart) return aStart - bStart;
+    return a.startTime.localeCompare(b.startTime);
+  });
+}
+
 // Mediator
 const MEDIATOR_COLORS = [
   '#2c6e49', '#d68c45', '#2980b9', '#8e44ad',
@@ -320,7 +335,18 @@ export function formatSlotBookingSummary(slot: Slot, offer: Offer | undefined): 
       .join(' ___ ')
   );
 
-  // Line 2: ___ (30 pers. SCOLAIRES C2)
+  // Line 2: Réservation : start - end (mise en place N min avant) (rangement M min après)
+  // Setup/teardown fall back to the offer's defaults when the slot carries none.
+  const effSetup = slot.setupTime ?? offer?.setupTime ?? 0;
+  const effTeardown = slot.teardownTime ?? offer?.teardownTime ?? 0;
+  const scheduleBits: string[] = [
+    `${toFrenchHour(slot.startTime)} - ${toFrenchHour(slot.endTime)}`,
+  ];
+  if (effSetup > 0) scheduleBits.push(`(mise en place ${effSetup} min avant)`);
+  if (effTeardown > 0) scheduleBits.push(`(rangement ${effTeardown} min après)`);
+  lines.push(`Réservation : ${scheduleBits.join(' ')}`);
+
+  // Line 3: ___ (30 pers. SCOLAIRES C2)
   const headcountBits: string[] = [];
   if (slot.participantCount > 0) headcountBits.push(`${slot.participantCount} pers.`);
   if (slot.groupNature) headcountBits.push(slot.groupNature);
@@ -471,6 +497,12 @@ export function hasMediatorOverlap(
 // staff the slot, regardless of their competences.
 export type SlotPlanningStatus = 'ok' | 'unassigned' | 'dispo_issue' | 'learning' | 'incompetent';
 
+// "Accueil Libre" offers need NO mediator: their slots are always OK and
+// count as staffed (assigned) in the daily view's unassigned counter.
+export function isFreeVisitOffer(offer: Offer | undefined): boolean {
+  return offer?.welcomeType === 'Accueil Libre';
+}
+
 export function getSlotPlanningStatus(
   slot: Slot,
   data: AppData
@@ -478,7 +510,7 @@ export function getSlotPlanningStatus(
   // Offres "Accueil Libre": no mediator required — the slot is OK even
   // when unassigned, so it displays like a fully staffed slot (green).
   const offer = data.offers.find((o) => o.id === slot.offerId);
-  if (offer?.welcomeType === 'Accueil Libre') return 'ok';
+  if (isFreeVisitOffer(offer)) return 'ok';
   if (slot.mediatorIds.length === 0) return 'unassigned';
 
   // Mediators that exist and are active

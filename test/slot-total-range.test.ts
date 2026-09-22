@@ -3,6 +3,7 @@ import {
   getSlotTotalRange,
   slotBookingFromDropPosition,
   getOfferTotalDuration,
+  sortSlotsByBlockStart,
 } from '../src/domain/models';
 import type { Offer, Slot } from '../src/domain/types';
 
@@ -131,5 +132,56 @@ describe('getOfferTotalDuration', () => {
 
   it('handles partial values', () => {
     expect(getOfferTotalDuration(offer(30))).toBe(90);
+  });
+});
+
+describe('sortSlotsByBlockStart', () => {
+  const mkOffer = (id: string, setup?: number): Offer => ({ ...offer(setup), id, name: `Offre ${id}` });
+  const mkSlot = (id: string, offerId: string, startTime: string, endTime: string): Slot =>
+    ({ ...slot(startTime, endTime), id, offerId });
+
+  it('sorts by booking start when no setup', () => {
+    const slots = [mkSlot('s2', 'o1', '11:00', '12:00'), mkSlot('s1', 'o1', '09:00', '10:00')];
+    const sorted = sortSlotsByBlockStart(slots, [mkOffer('o1')]);
+    expect(sorted.map(s => s.id)).toEqual(['s1', 's2']);
+  });
+
+  it('sorts by block start: setup makes the block begin earlier than a later booking', () => {
+    // o1 has a 15-min setup: booking 10:00 -> block 09:45
+    // o2 has no setup: booking 09:50 -> block 09:50
+    const slots = [mkSlot('late', 'o2', '09:50', '10:20'), mkSlot('early', 'o1', '10:00', '11:00')];
+    const sorted = sortSlotsByBlockStart(slots, [mkOffer('o1', 15), mkOffer('o2')]);
+    expect(sorted.map(s => s.id)).toEqual(['early', 'late']);
+  });
+
+  it('uses the slot setup override, not the offer value', () => {
+    // Offer has no setup, but the slot overrides with 30 min: 10:00 -> 09:30
+    const slots = [
+      mkSlot('override', 'o1', '10:00', '11:00'),
+      mkSlot('plain', 'o2', '09:45', '10:00'),
+    ];
+    const withSetup = { ...slots[0], setupTime: 30 };
+    const sorted = sortSlotsByBlockStart([slots[1], withSetup], [mkOffer('o1'), mkOffer('o2')]);
+    expect(sorted.map(s => s.id)).toEqual(['override', 'plain']);
+  });
+
+  it('falls back to booking start for unknown offers', () => {
+    const slots = [mkSlot('s2', 'ghost', '11:00', '12:00'), mkSlot('s1', 'ghost', '09:00', '10:00')];
+    const sorted = sortSlotsByBlockStart(slots, [mkOffer('o1')]);
+    expect(sorted.map(s => s.id)).toEqual(['s1', 's2']);
+  });
+
+  it('breaks ties on booking start', () => {
+    // Both blocks start 09:45 (o1 setup 15 on 10:00, o2 booking 09:45)
+    const slots = [mkSlot('b', 'o2', '09:45', '10:00'), mkSlot('a', 'o1', '10:00', '11:00')];
+    const sorted = sortSlotsByBlockStart(slots, [mkOffer('o1', 15), mkOffer('o2')]);
+    // Identical block starts -> booking start decides: 09:45 before 10:00
+    expect(sorted.map(s => s.id)).toEqual(['b', 'a']);
+  });
+
+  it('does not mutate the input array', () => {
+    const slots = [mkSlot('s2', 'o1', '11:00', '12:00'), mkSlot('s1', 'o1', '09:00', '10:00')];
+    sortSlotsByBlockStart(slots, [mkOffer('o1')]);
+    expect(slots.map(s => s.id)).toEqual(['s2', 's1']);
   });
 });

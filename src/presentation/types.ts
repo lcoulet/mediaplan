@@ -11,7 +11,7 @@ import type {
   AbsenceHalfDay,
 } from '../domain/types';
 
-export type ViewName = 'weekly' | 'daily' | 'mediators' | 'offers' | 'absences' | 'import-export';
+export type ViewName = 'weekly' | 'daily' | 'reservations' | 'mediators' | 'offers' | 'absences' | 'stats' | 'import-export';
 
 export interface Filters {
   mediatorId: string;

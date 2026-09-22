@@ -172,6 +172,25 @@
     gap: 2px;
 }
 
+/* Day headers are clickable: jump to the daily view for that day */
+.cal-day-name-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    padding: 2px 10px;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.cal-day-name-btn:hover {
+    background: #f0f0f0;
+}
+
 .cal-header .cal-day-num {
     font-size: 18px;
     font-weight: 700;
@@ -567,6 +586,13 @@ body.edit-mode .cal-day-col:hover {
   border-left-color: #ff9800;
 }
 
+/* Free visits (Accueil Libre): no mediator needed — quiet green like a
+   fully staffed slot, instead of the orange unassigned style */
+.daily-slot.free {
+  background: #e8f5e9;
+  border-left-color: #2e7d32;
+}
+
 .daily-slot.imported {
   border-left-style: double;
   border-left-width: 4px;
@@ -603,7 +629,8 @@ body.edit-mode .cal-day-col:hover {
   display: flex;
   align-items: stretch;
   border-bottom: 1px solid var(--color-border-light);
-  min-height: 50px;
+  /* Same height as mediator rows (TRACK_HEIGHT = 32px) for coherence */
+  min-height: 32px;
 }
 
 /* Mediator filter label in daily view toolbar */
@@ -753,5 +780,634 @@ body.edit-mode .cal-day-col:hover {
   text-overflow: ellipsis;
   text-align: center;
   pointer-events: none;
+}
+
+
+/* ============================================================
+   Reservation list view (Plan Réservations)
+   Chronological LIST of the day's reservations: mediators on the
+   left, Secutix-style booking summary on the right. No time grid,
+   no drag & drop — rows sorted by block start (setup included).
+   ============================================================ */
+
+.res-list {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.res-header {
+  display: flex;
+  align-items: center;
+  background: #f0f0f0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.res-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--color-border-light);
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+
+.res-row:last-child {
+  border-bottom: none;
+}
+
+.res-row:hover {
+  background: #f7f9ff;
+}
+
+.res-row.imported {
+  border-left-color: var(--color-primary);
+  border-left-style: double;
+  border-left-width: 4px;
+}
+
+.res-row.unassigned {
+  background: #fff8f0;
+}
+
+.res-mediators {
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-right: 1px solid var(--color-border);
+  font-size: 13px;
+}
+
+.res-header .res-mediators,
+.res-header .res-summary {
+  padding: 8px 12px;
+}
+
+.res-mediator {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.res-unassigned {
+  color: #c0392b;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.res-free-label {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+/* Free-visits section (bottom of the Plan Accueil view) */
+.res-freevisits {
+  margin-top: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.res-freevisits .daily-section-title {
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 8px 8px 0 0;
+}
+
+.res-summary {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  /* formatSlotBookingSummary is a multi-line Secutix-style text */
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+.res-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: #f0f0f0;
+  border-radius: 12px;
+  padding: 3px 10px;
+}
+
+/* ===================== Stats view ===================== */
+
+.stats-view {
+  padding: 16px;
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.stats-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.stats-period {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.stats-period-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stats-period-inputs label {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.stats-period-inputs input[type="date"] {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius, 4px);
+  font-size: 13px;
+}
+
+.stats-period-quick {
+  display: flex;
+  gap: 6px;
+}
+
+.stats-quick-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius, 4px);
+  background: #fff;
+  cursor: pointer;
+}
+
+.stats-quick-btn:hover {
+  background: var(--color-primary-light, #e3f2fd);
+}
+
+.stats-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--color-border);
+  margin-bottom: 16px;
+}
+
+.stats-tab {
+  padding: 8px 16px;
+  font-size: 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  color: var(--color-text-secondary, #666);
+}
+
+.stats-tab.active {
+  color: var(--color-primary, #0064ff);
+  font-weight: 600;
+  background: var(--color-primary-light, #e3f2fd);
+}
+
+.stats-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stats-section-title {
+  font-size: 15px;
+  margin: 0 0 8px 0;
+  color: var(--color-text, #333);
+}
+
+.stats-summary {
+  font-size: 14px;
+  margin: 0;
+}
+
+.stats-tooltip-line {
+  font-size: 13px;
+  margin: 0;
+  color: var(--color-text-secondary, #666);
+  min-height: 18px;
+}
+
+.stats-empty {
+  color: var(--color-text-secondary, #666);
+  font-style: italic;
+  margin: 4px 0;
+}
+
+/* Tables */
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.stats-table th,
+.stats-table td {
+  border: 1px solid var(--color-border-light, #e5e5e5);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.stats-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.stats-inactive td {
+  color: var(--color-text-secondary, #666);
+}
+
+.stats-inactive-badge {
+  font-size: 11px;
+  color: var(--color-text-secondary, #666);
+}
+
+.stats-offer-chip {
+  display: inline-block;
+  background: #f0f0f0;
+  border-radius: 10px;
+  padding: 1px 8px;
+  margin: 1px 3px 1px 0;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Weekly load table */
+.stats-load-cell {
+  position: relative;
+  min-width: 60px;
+  height: 22px;
+}
+
+.stats-load-bar {
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 2px;
+  max-width: 100%;
+  background: var(--color-primary, #0064ff);
+  opacity: 0.25;
+  border-radius: 2px;
+}
+
+.stats-load-value {
+  position: relative;
+  font-size: 11px;
+}
+
+/* Weekday mini chart */
+.stats-weekday-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.stats-weekday-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.stats-weekday-bar {
+  width: 26px;
+  background: var(--color-primary, #0064ff);
+  opacity: 0.8;
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+}
+
+.stats-weekday-count {
+  font-size: 11px;
+  color: var(--color-text-secondary, #666);
+}
+
+.stats-weekday-label {
+  font-size: 11px;
+}
+
+/* Top groups */
+.stats-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stats-group-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.stats-group-name {
+  width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats-group-bar {
+  height: 12px;
+  min-width: 2px;
+  background: var(--color-primary, #0064ff);
+  opacity: 0.7;
+  border-radius: 2px;
+}
+
+.stats-group-value {
+  font-size: 12px;
+  color: var(--color-text-secondary, #666);
+}
+
+/* SVG charts */
+.stats-bar-chart,
+.stats-candle-chart,
+.stats-line-chart,
+.stats-stacked-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid var(--color-border-light, #eee);
+  border-radius: var(--radius, 4px);
+  background: #fff;
+}
+
+.stats-bar {
+  fill: var(--color-primary, #0064ff);
+}
+
+.stats-bar-duration {
+  fill: #2ecc71;
+}
+
+.stats-bar-value {
+  font-size: 11px;
+  fill: var(--color-text, #333);
+}
+
+.stats-candle-whisker {
+  stroke: var(--color-text-secondary, #666);
+  stroke-width: 1.5;
+}
+
+.stats-candle-cap {
+  stroke: var(--color-text-secondary, #666);
+  stroke-width: 1.5;
+}
+
+.stats-candle-body {
+  fill: var(--color-primary, #0064ff);
+}
+
+.stats-candle-avg {
+  fill: #e74c3c;
+}
+
+.stats-line {
+  fill: none;
+  stroke: var(--color-primary, #0064ff);
+  stroke-width: 2;
+}
+
+.stats-line-dot {
+  fill: var(--color-primary, #0064ff);
+}
+
+.stats-axis-label {
+  font-size: 10px;
+  fill: var(--color-text-secondary, #666);
+}
+
+.stats-hover-zones {
+  width: 100%;
+  height: 0;
+  display: block;
+  position: relative;
+  top: -100%;
+  pointer-events: none;
+}
+
+.stats-offer-labels {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.stats-offer-label {
+  position: absolute;
+  transform: translateX(-50%) rotate(30deg);
+  transform-origin: top left;
+  font-size: 11px;
+  color: var(--color-text-secondary, #666);
+  white-space: nowrap;
+}
+
+.stats-offer-label.highlighted {
+  color: var(--color-primary, #0064ff);
+  font-weight: 600;
+}
+
+/* Pie */
+.stats-pie-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.stats-pie {
+  width: 180px;
+  height: 180px;
+}
+
+.stats-pie-legend {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.stats-pie-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stats-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.stats-legend-label {
+  font-weight: 500;
+}
+
+.stats-legend-value {
+  color: var(--color-text-secondary, #666);
+}
+
+.stats-stacked-legend {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Stats — totals row + SVG labels */
+.stats-total-row td {
+  font-weight: 600;
+  background: #f5f5f5;
+}
+
+.stats-total-cell {
+  font-weight: 600;
+}
+
+.stats-load-total {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stats-pie-summary p {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+}
+
+.stats-label-highlight {
+  fill: var(--color-primary, #0064ff);
+  font-weight: 600;
+}
+
+/* ---- Print (A4 landscape) — Plan Jour & Plan Accueil ---- */
+.print-header {
+  display: none;
+}
+
+.print-btn {
+  white-space: nowrap;
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  html, body {
+    background: #fff !important;
+  }
+
+  /* Hide the app chrome: header, nav, status bar, toolbars, everything
+     outside the current view */
+  body.print-mode .app-header,
+  body.print-mode .status-bar,
+  body.print-mode .toolbar,
+  body.print-mode .print-btn {
+    display: none !important;
+  }
+
+  /* Show the print header (title + small print date) */
+  body.print-mode .print-header {
+    display: block !important;
+    border-bottom: 2px solid #000;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+  }
+  body.print-mode .print-header h1 {
+    font-size: 16pt;
+    margin: 0;
+    padding: 0;
+  }
+  body.print-mode .print-date {
+    font-size: 8pt;
+    color: #555;
+    margin-top: 2px;
+  }
+
+  /* Daily view: hide mediator rows with nothing on the day */
+  body.print-mode .daily-mediator-row.print-hidden {
+    display: none !important;
+  }
+
+  /* Hide the unprogrammed-offers catalog: planning tools, not day content */
+  body.print-mode .daily-offers-section {
+    display: none !important;
+  }
+  body.print-mode .daily-grid {
+    overflow: visible !important;
+  }
+
+  body.print-mode .view {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  /* Scale BOTH views to fit one page: calibrated for the worst case
+     (many rows), so the daily grid and the Plan Accueil bands fit A4. */
+  body.print-mode .view {
+    zoom: 0.55;
+  }
+
+  /* Colors print faithfully (slot pills, mediator colors) */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Plan Accueil print: compact bands so all fit ONE A4 landscape page.
+   The generic .view zoom (above) scales everything; per-row rules compact
+   the text. page-break-inside avoid keeps a band whole across pages. */
+@media print {
+  body.print-mode .res-summary {
+    line-height: 1.25 !important;
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+  }
+  body.print-mode .res-mediators {
+    padding: 2px 6px !important;
+  }
+  body.print-mode .res-freevisits {
+    margin-top: 4px;
+  }
+  body.print-mode .res-list,
+  body.print-mode .res-freevisits {
+    page-break-inside: auto;
+  }
+  body.print-mode .res-row {
+    page-break-inside: avoid;
+  }
 }
 
