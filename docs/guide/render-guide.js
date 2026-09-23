@@ -1,10 +1,19 @@
 // render-guide.js — minimal markdown renderer for the standalone user
-// guide page (public/guide/index.html). Mirrors the in-app UserGuideModal
-// renderer: headings, lists, tables, images, bold/italic, code, links.
+// guide page (public/guide/index.html). Renders headings (with anchor ids
+// for the chapter TOC), lists, tables, images, bold/italic, code, links.
 // The guide references captures/ — served alongside as guide/captures/.
 
 function esc(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function slug(s) {
+  return s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 function inline(s) {
@@ -28,6 +37,7 @@ function renderMarkdown(md) {
   var lines = md.split('\n');
   var out = [];
   var inList = false, inTable = false, inCode = false;
+  var usedIds = {};
   function closeList() { if (inList) { out.push('</ul>'); inList = false; } }
   function closeTable() { if (inTable) { out.push('</table>'); inTable = false; } }
 
@@ -42,7 +52,15 @@ function renderMarkdown(md) {
     var m;
     if ((m = raw.match(/^(#{1,6})\s+(.*)$/))) {
       closeList(); closeTable();
-      out.push('<h' + m[1].length + '>' + inline(m[2]) + '</h' + m[1].length + '>');
+      // Anchor ids on H2 (chapters) so the sidebar TOC can link to them.
+      var open = '<h' + m[1].length + '>';
+      if (m[1].length === 2) {
+        var id = slug(m[2]);
+        while (usedIds[id]) { id += '-x'; }
+        usedIds[id] = true;
+        open = '<h2 id="' + id + '">';
+      }
+      out.push(open + inline(m[2]) + '</h' + m[1].length + '>');
     } else if (t.charAt(0) === '|' && t.charAt(t.length - 1) === '|') {
       var cells = t.slice(1, -1).split('|').map(function (c) { return c.trim(); });
       var allSep = cells.every(function (c) { return /^:?-+:?$/.test(c) || c === ''; });
@@ -69,12 +87,53 @@ function renderMarkdown(md) {
   return out.join('\n');
 }
 
+function buildToc(container) {
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var heads = container.querySelectorAll('h2[id]');
+  if (!heads.length) return;
+  var ul = document.createElement('ul');
+  heads.forEach(function (h) {
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + h.id;
+    a.textContent = h.textContent;
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      h.scrollIntoView({ behavior: 'smooth' });
+      history.replaceState(null, '', '#' + h.id);
+    });
+    li.appendChild(a);
+    ul.appendChild(li);
+  });
+  toc.appendChild(ul);
+  // Highlight the chapter currently in view while scrolling.
+  var links = Array.prototype.slice.call(ul.querySelectorAll('a'));
+  var setActive = function (id) {
+    links.forEach(function (a) {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+    });
+  };
+  function onScroll() {
+    var mark = (window.scrollY || document.documentElement.scrollTop) + window.innerHeight * 0.25;
+    var current = heads[0];
+    for (var i = 0; i < heads.length; i++) {
+      if (heads[i].offsetTop <= mark) current = heads[i];
+    }
+    if (current) setActive(current.id);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
+
 fetch('user-guide.md')
   .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
   .then(function (md) {
-    document.getElementById('guide').innerHTML = renderMarkdown(
-      md.replace(/\]\(captures\//g, '](captures/')
+    var guide = document.getElementById('guide');
+    guide.innerHTML = renderMarkdown(
+      md.replace(/]\(captures\//g, '](captures/')
     );
+    buildToc(guide);
     var titleMatch = md.match(/^#\s+(.+)$/m);
     if (titleMatch) document.title = titleMatch[1];
   })
