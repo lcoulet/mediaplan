@@ -1,6 +1,7 @@
 // App.tsx — Root component: composes header + view router
 
 import { DataProvider, useData } from './presentation/DataContext';
+import useKeyboardShortcuts from './presentation/useKeyboardShortcuts';
 import Header from './presentation/Header';
 import WeeklyView from './presentation/WeeklyView';
 import DailyView from './presentation/DailyView';
@@ -14,6 +15,8 @@ import StatusBar from './presentation/StatusBar';
 
 function ViewRouter() {
   const { state } = useData();
+  // Global keyboard shortcuts, mounted once inside the provider
+  useKeyboardShortcuts();
 
   switch (state.currentView) {
     case 'weekly':
