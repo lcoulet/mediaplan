@@ -256,8 +256,19 @@ Les statistiques portent sur **toutes les réservations** de la période, visite
 
 ### Raccourcis clavier
 
-- **Ctrl+Z** : Annuler
-- **Ctrl+Shift+Z** : Rétablir
+MediaPlan se pilote au clavier : les touches ci-dessous fonctionnent partout dans l'application, **sauf lorsqu'un champ de saisie ou une fenêtre modale a le focus** — dans ce cas les touches restent dédiées à la saisie. Elles sont rappelées dans les info-bulles des boutons concernés (survoldez un bouton pour voir sa touche).
+
+| Touche | Action |
+|--------|--------|
+| `1` – `8` | Changer de vue : `1` Jour, `2` Hebdo, `3` Accueil, `4` Médiateurs, `5` Offres, `6` Absences, `7` Statistiques, `8` Import / Export |
+| `←` / `→` | Vue Jour : jour précédent / suivant — vue Hebdo : semaine précédente / suivante (même jour de la semaine) |
+| `T` | Revenir à aujourd'hui (vues Jour et Hebdo) |
+| `N` | Créer un nouvel élément dans la vue courante : médiateur (`4`), offre (`5`) ou absence (`6`) — sans effet dans les autres vues |
+| `?` | Ouvrir la documentation dans un nouvel onglet |
+| `Ctrl+Z` | Annuler la dernière modification |
+| `Ctrl+Shift+Z` ou `Ctrl+Y` | Rétablir |
+
+Les raccourcis ne s'exécutent pas avec les touches de modification (Ctrl, Alt, ⌘) : ces combinaisons restent réservées au navigateur et à l'annulation/rétablissement.
 
 ### Liens et URLs
 
