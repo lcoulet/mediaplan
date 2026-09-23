@@ -150,6 +150,16 @@ try {
   await page.waitForTimeout(800);
   await shot('absences-view');
 
+  // 6. Mediators view
+  await page.goto(`${BASE_URL}/?display=mediators`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(800);
+  await shot('mediators-view');
+
+  // 7. Import / Export view
+  await page.goto(`${BASE_URL}/?display=import-export`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(800);
+  await shot('import-export-view');
+
   console.log('✅ All captures done');
 } catch (e) {
   console.error('❌ Capture failed:', e.message);
