@@ -11,7 +11,7 @@ import type {
   AbsenceHalfDay,
 } from '../domain/types';
 
-export type ViewName = 'calendar' | 'mediators' | 'offers' | 'absences' | 'import-export';
+export type ViewName = 'weekly' | 'daily' | 'reservations' | 'mediators' | 'offers' | 'absences' | 'stats' | 'import-export';
 
 export interface Filters {
   mediatorId: string;
@@ -25,7 +25,7 @@ export interface AbsenceFilter {
 export interface AppState {
   data: AppData;
   currentView: ViewName;
-  currentWeekStart: Date;
+  currentDate: Date;
   filters: Filters;
   absenceFilter: AbsenceFilter;
   locked: boolean;
@@ -59,12 +59,13 @@ export interface ModalState {
 export type Action =
   | { type: 'SET_DATA'; data: AppData }
   | { type: 'SET_VIEW'; view: ViewName }
-  | { type: 'SET_WEEK_START'; date: Date }
+  | { type: 'SET_CURRENT_DATE'; date: Date }
   | { type: 'SET_FILTER_MEDIATOR'; mediatorId: string }
   | { type: 'SET_FILTER_OFFER'; offerId: string }
   | { type: 'SET_ABSENCE_FILTER_MEDIATOR'; mediatorId: string }
   | { type: 'SET_LOCKED'; locked: boolean }
   | { type: 'SET_SHOW_ABSENCES'; show: boolean }
+  | { type: 'SET_HALF_DAY_CONFIG'; config: { morningEnd: string; afternoonStart: string } }
   // CRUD operations that also commit to history
   | { type: 'ADD_MEDIATOR'; mediator: Mediator }
   | { type: 'UPDATE_MEDIATOR'; mediator: Mediator }
@@ -84,7 +85,7 @@ export type Action =
   | { type: 'RESET_DATA'; data: AppData };
 
 export const SlotStatusValues: SlotStatus[] = ['planned', 'confirmed', 'cancelled', 'completed'];
-export const AbsenceTypeValues: AbsenceType[] = ['leave', 'mission', 'training', 'sick', 'other'];
+export const AbsenceTypeValues: AbsenceType[] = ['leave', 'mission', 'training', 'sick', 'other', 'leave_request'];
 export const AbsenceHalfDayValues: AbsenceHalfDay[] = ['none', 'morning', 'afternoon'];
 
 export const HALF_DAY_LABELS: Record<AbsenceHalfDay, string> = {

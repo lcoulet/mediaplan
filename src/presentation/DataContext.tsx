@@ -10,9 +10,10 @@ import {
   type ReactNode,
 } from 'react';
 import type { AppData, Mediator } from '../domain/types';
-import { createMediator } from '../domain/models';
+import type { ViewName } from './types';
+import { createMediator, normalizeCompetences, parseLocalDate, toLocalDateString } from '../domain/models';
 import { createHistory, DEFAULT_HISTORY_SIZE } from '../domain/history';
-import { load, save } from '../infrastructure/store';
+import { load, save, STORAGE_KEY } from '../infrastructure/store';
 import type { AppState, Action } from './types';
 import { seedDemoData } from './DemoData';
 
@@ -37,14 +38,62 @@ function getInitialState(): AppState {
       m.color = createMediator().color;
     }
   });
-  if (data.mediators.length === 0 && data.offers.length === 0) {
+  // Migrate: skills -> competences
+  data.mediators.forEach((m: Mediator) => {
+    if (m.hasOwnProperty('skills') && !m.hasOwnProperty('competences')) {
+      // @ts-ignore - legacy field
+      const skills: string[] = m.skills || [];
+      m.competences = skills.map(offerId => ({ offerId, status: 'confirmed' as const }));
+      // @ts-ignore - remove legacy field
+      delete m.skills;
+    }
+  });
+  // Seed demo data ONLY on first launch (no localStorage key at all).
+  // A user who deliberately cleared all data (Nettoyer les données) must
+  // NOT get demo data back on reload.
+  if (!localStorage.getItem(STORAGE_KEY)) {
     seedDemoData(data);
     save(data);
   }
+  
+  // Read view and date from URL if present
+  let initialView: ViewName = 'daily';
+  let initialDate = new Date();
+
+  if (typeof window !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewParam = urlParams.get('view') || urlParams.get('display');
+    const dateParam = urlParams.get('date');
+
+    const viewMap: Record<string, ViewName> = {
+      'jour': 'daily',
+      'journee': 'daily',
+      'day': 'daily',
+      'reservations': 'reservations',
+      'hebdo': 'weekly',
+      'week': 'weekly',
+      'semaine': 'weekly',
+      'mediateurs': 'mediators',
+      'offres': 'offers',
+      'absences': 'absences',
+      'statistiques': 'stats',
+      'import-export': 'import-export',
+    };
+
+    if (viewParam && viewMap[viewParam]) {
+      initialView = viewMap[viewParam];
+    }
+    
+    // If date is provided, use it (parsed as LOCAL midnight, no UTC shift)
+    if (dateParam && !isNaN(parseLocalDate(dateParam).getTime())) {
+      initialDate = parseLocalDate(dateParam);
+    }
+  }
+  
   return {
     data,
-    currentView: 'calendar',
-    currentWeekStart: getWeekStart(new Date()),
+    currentView: initialView,
+    currentDate: initialDate,
     filters: { mediatorId: '', offerId: '' },
     absenceFilter: { mediatorId: '' },
     locked: true,
@@ -60,8 +109,8 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, data: action.data };
     case 'SET_VIEW':
       return { ...state, currentView: action.view };
-    case 'SET_WEEK_START':
-      return { ...state, currentWeekStart: action.date };
+    case 'SET_CURRENT_DATE':
+      return { ...state, currentDate: action.date };
     case 'SET_FILTER_MEDIATOR':
       return { ...state, filters: { ...state.filters, mediatorId: action.mediatorId } };
     case 'SET_FILTER_OFFER':
@@ -72,6 +121,14 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, locked: action.locked };
     case 'SET_SHOW_ABSENCES':
       return { ...state, showAbsences: action.show };
+    case 'SET_HALF_DAY_CONFIG':
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          halfDayConfig: action.config,
+        },
+      };
     case 'ADD_MEDIATOR':
       return {
         ...state,
@@ -120,7 +177,7 @@ function reducer(state: AppState, action: Action): AppState {
           slots: state.data.slots.filter((s) => s.offerId !== action.id),
           mediators: state.data.mediators.map((m) => ({
             ...m,
-            skills: m.skills.filter((sid) => sid !== action.id),
+            competences: normalizeCompetences(m.competences.filter((c) => c.offerId !== action.id)),
           })),
         },
       };
@@ -199,6 +256,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, getInitialState);
   const history = useMemo(() => createHistory<AppData>(DEFAULT_HISTORY_SIZE), []);
 
+  // Keep the URL in sync with view + date (single source of truth).
+  // Changing the view does NOT touch the date — the date param only
+  // changes when the user navigates dates or weeks.
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const displayMap: Record<ViewName, string> = {
+      'daily': 'day',
+      'reservations': 'reservations',
+      'weekly': 'week',
+      'mediators': 'mediateurs',
+      'offers': 'offres',
+      'absences': 'absences',
+      'stats': 'statistiques',
+      'import-export': 'import-export',
+    };
+    urlParams.set('display', displayMap[state.currentView]);
+    urlParams.set('date', toLocalDateString(state.currentDate));
+    // Remove legacy 'view' param to avoid conflicting sources
+    urlParams.delete('view');
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  }, [state.currentView, state.currentDate]);
+
   // Track undo/redo capability
   const [undoRedo, setUndoRedo] = useReducer(
     (_s: { canUndo: boolean; canRedo: boolean }, v: { canUndo: boolean; canRedo: boolean }) => v,
@@ -247,7 +327,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // Reset demo data
   const resetData = useCallback(() => {
-    localStorage.removeItem('mediaplan_data_v1');
+    localStorage.removeItem(STORAGE_KEY);
     const fresh: AppData = { mediators: [], offers: [], schedules: [], slots: [], absences: [] };
     seedDemoData(fresh);
     save(fresh);
@@ -355,7 +435,7 @@ export function useCRUD() {
             slots: state.data.slots.filter((s) => s.offerId !== action.id),
             mediators: state.data.mediators.map((m) => ({
               ...m,
-              skills: m.skills.filter((sid) => sid !== action.id),
+              competences: normalizeCompetences(m.competences.filter((c) => c.offerId !== action.id)),
             })),
           };
           break;
@@ -384,6 +464,9 @@ export function useCRUD() {
           break;
         case 'DELETE_ABSENCE':
           nextData = { ...state.data, absences: state.data.absences.filter((a) => a.id !== action.id) };
+          break;
+        case 'SET_HALF_DAY_CONFIG':
+          nextData = { ...state.data, halfDayConfig: action.config };
           break;
         default:
           return; // non-CRUD action

@@ -4,11 +4,15 @@ import { useState, useRef } from 'react';
 import { useData } from './DataContext';
 import { exportJSON, importJSON } from '../infrastructure/store';
 import { exportExcel, importExcel } from '../infrastructure/excel';
+import { clearPlanningData } from '../domain/clear-data';
+import SecutixImportPanel from './SecutixImportPanel';
 
 export default function ImportExportView() {
-  const { state, commit } = useData();
+  const { state, commit, resetData } = useData();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [clearMediators, setClearMediators] = useState(false);
+  const [clearOffers, setClearOffers] = useState(false);
 
   function handleExportJSON() {
     exportJSON().catch((err) => alert('Erreur lors de l\u2019export : ' + err.message));
@@ -42,6 +46,37 @@ export default function ImportExportView() {
     }
   }
 
+  function handleResetDemo() {
+    if (
+      confirm(
+        "⚠️ Charger les données de démonstration va SUPPRIMER toutes vos données actuelles.\n\nCette action est irréversible. Faites une sauvegarde JSON d'abord.\n\nContinuer ?"
+      )
+    ) {
+      resetData();
+    }
+  }
+
+  function handleClearData() {
+    const scope: string[] = ['réservations', 'absences', 'plannings'];
+    if (clearMediators) scope.push('médiateurs');
+    if (clearOffers) scope.push('offres');
+    const ok = confirm(
+      `⚠️ Nettoyer les données va SUPPRIMER définitivement : ${scope.join(', ')}.\n\n` +
+        `Cette action est irréversible.\n\n` +
+        `Sauvegardez vos données au format JSON AVANT de continuer ` +
+        `(bouton « 💾 Sauvegarde JSON (complète) » de cette page).\n\n` +
+        `Continuer ?`
+    );
+    if (!ok) return;
+    const backup = confirm(
+      'Avez-vous fait une sauvegarde JSON de vos données ?\n\n' +
+        'OK = Oui, nettoyer maintenant\n' +
+        'Annuler = Non, je fais d\'abord ma sauvegarde'
+    );
+    if (!backup) return;
+    commit(clearPlanningData(state.data, { clearMediators, clearOffers }));
+  }
+
   return (
     <div className="view active">
       <div className="toolbar">
@@ -51,6 +86,9 @@ export default function ImportExportView() {
       </div>
 
       <div className="import-export-container">
+        {/* Secutix synchronization card */}
+        <SecutixImportPanel />
+
         {/* Export card */}
         <div className="io-card">
           <h2>Exporter</h2>
@@ -95,6 +133,60 @@ export default function ImportExportView() {
           </div>
           <div className="io-hint">
             ⚠️ L'import remplace toutes les données actuelles. Faites une sauvegarde JSON d'abord.
+          </div>
+        </div>
+
+        {/* Clear data card */}
+        <div className="io-card">
+          <h2>Nettoyer les données</h2>
+          <p>Supprime les données de planification. Les médiateurs et les offres sont conservés par défaut.</p>
+          <div className="io-actions io-clear-options">
+            <label className="io-clear-option">
+              <input
+                type="checkbox"
+                checked={clearMediators}
+                onChange={(e) => setClearMediators(e.target.checked)}
+              />
+              Supprimer aussi les médiateurs
+            </label>
+            <label className="io-clear-option">
+              <input
+                type="checkbox"
+                checked={clearOffers}
+                onChange={(e) => setClearOffers(e.target.checked)}
+              />
+              Supprimer aussi les offres
+            </label>
+            <button
+              className="btn btn-danger"
+              id="btn-clear-data"
+              onClick={handleClearData}
+            >
+              🧹 Nettoyer les données
+            </button>
+          </div>
+          <div className="io-hint">
+            ⚠️ Action irréversible. Faites d'abord une <strong>sauvegarde JSON complète</strong> avec le
+            bouton « 💾 Sauvegarde JSON (complète) » de la page Exporter. Les réglages d'affichage
+            (masquage dynamique) ne sont pas concernés.
+          </div>
+        </div>
+
+        {/* Demo data card */}
+        <div className="io-card">
+          <h2>Données de démonstration</h2>
+          <p>Rechargez les données de démonstration pour tester l'application.</p>
+          <div className="io-actions">
+            <button
+              className="btn btn-secondary"
+              id="btn-load-demo"
+              onClick={handleResetDemo}
+            >
+              🔄 Charger les données de démonstration
+            </button>
+          </div>
+          <div className="io-hint">
+            ⚠️ Cette action supprime toutes les données actuelles et les remplace par les données de démonstration.
           </div>
         </div>
       </div>

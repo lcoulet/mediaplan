@@ -1,9 +1,10 @@
 // store.ts — localStorage persistence
 
 import { generateExportFilename, buildExportMetadata } from '../domain/export-utils';
-import type { AppData } from '../domain/types';
+import { defaultOfferColor } from '../domain/models';
+import type { AppData, Offer, Slot } from '../domain/types';
 
-const STORAGE_KEY = 'mediaplan_data_v1';
+export const STORAGE_KEY = 'mediaplan_data_v1';
 const LAST_MODIFIED_KEY = 'mediaplan_last_modified';
 
 const defaultData: AppData = {
@@ -19,11 +20,31 @@ export function load(): AppData {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...defaultData };
     const parsed = JSON.parse(raw) as Partial<AppData>;
+    // Migrate: assign a palette color to offers persisted before the color field existed,
+    // and a default welcomeType to offers persisted before the field existed
+    const offers: Offer[] = (parsed.offers || []).map((o) => ({
+      ...o,
+      ...(o.color ? {} : { color: defaultOfferColor() }),
+      ...(o.welcomeType ? {} : { welcomeType: 'Réservable encadrée par médiateur' as const }),
+    }));
+    // Migrate: default the booking-detail fields on slots persisted before
+    // the Secutix import fields existed (groupName, guide, location,
+    // groupNature, contact*)
+    const slots: Slot[] = (parsed.slots || []).map((s) => ({
+      ...s,
+      groupName: s.groupName || '',
+      guide: s.guide || '',
+      location: s.location || '',
+      groupNature: s.groupNature || '',
+      contactName: s.contactName || '',
+      contactPhone: s.contactPhone || '',
+      contactEmail: s.contactEmail || '',
+    }));
     return {
       mediators: parsed.mediators || [],
-      offers: parsed.offers || [],
+      offers,
       schedules: parsed.schedules || [],
-      slots: parsed.slots || [],
+      slots,
       absences: parsed.absences || [],
     };
   } catch (e) {

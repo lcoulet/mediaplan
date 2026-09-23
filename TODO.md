@@ -1,15 +1,49 @@
 # TODO — MediaPlan
 
+## Mediator Annual Planning View (next)
+
+- [ ] New view "Planning médiateurs": annual grid (year switchable)
+  - Rows: days of the year (with standard ISO week numbers, e.g. "S38")
+  - Columns: mediators, one cell per half-day (morning / afternoon)
+  - Cells show presences (work cycle) and absences (type + half-day)
+- [ ] Define work cycles in this view (e.g. S1, S2, S3... rotating weekly
+  patterns) — editable grid, cycle assignment per mediator
+- [ ] Reference: stakeholder's Excel example (to be provided) defines the
+  target layout
+- [ ] TDD: week numbering (ISO 8601), cycle rotation, half-day cell state
+  computation (cycle + absence overlay)
+
+## Reservation Planning View (day list)
+
+- [x] New view "Plan Accueil": same day-based navigation as the
+  daily view, but a chronological LIST of the day's reservations instead of
+  a time grid (`src/presentation/ReservationView.tsx`)
+  - Rows: slots sorted by ascending block start (setup start, not booking
+    start) — `sortSlotsByBlockStart()` in `src/domain/models.ts`
+  - Left lane: assigned mediators (names/colors) of each slot
+  - Right: slot booking summary (Secutix-style, `formatSlotBookingSummary`)
+  - No time axis (no px/hour positioning, no drag & drop)
+  - [x] TDD: setup-aware sort key computation
+
+## Competence Visibility (next)
+
+- [ ] Offers view: add a column showing how many mediators know the offer,
+  e.g. `5 (3✅ + 2📚)` (confirmed count + learning count)
+- [ ] Offer modal: list the mediators in question (confirmed and learning,
+  with their names/colors)
+- [ ] Mediators view: show the count of mastered offers FIRST, then the
+  offers in parentheses, then the count of learning offers (and those
+  offers in parentheses), e.g. `3✅ (Visite, Atelier, Parcours) · 2📚 (Conférence, Spectacle)`
+
 ## Build System & Release
 
-- [ ] Set up a build system (esbuild or Rollup) to bundle the app
-- [ ] Download SheetJS (xlsx) as a build dependency (not committed to git)
-- [ ] Generate a `dist/` folder with bundled assets for production
-- [ ] Add app versioning (semantic version, displayed in UI footer)
+- [x] Set up a build system (Vite)
+- [x] Generate a `dist/` folder with bundled assets for production
+- [x] Add version number to `package.json`, injected into the app at build
+  time and shown in the status bar
 - [ ] Create a release script (tag + build + GitHub release via `gh`)
-- [ ] Add version number to `package.json` and inject into the app at build time
 - [ ] GitHub Actions CI: run tests on push (vitest) and build preview
-- [ ] GitHub Actions: deploy preview builds to VPS /home/loic/mediaplan/preview/
+- [ ] GitHub Actions: deploy preview builds to the server (details kept private)
 
 ## Export Format (V1 sharing)
 
@@ -23,20 +57,28 @@
 - [ ] Implement Excel export (.xlsx) using SheetJS
   - Export schedule (one tab per week or per entity)
   - Export mediator list and their assignments
-- [ ] Implement Excel import using SheetJS
-  - Configurable column mapping
-  - Support Secutix export format
-  - Support internal coordination files format
-- [ ] Implement Secutix synchronization logic:
-  - Deduplicate by contract number
+- [x] Implement Secutix import using SheetJS (`src/infrastructure/secutix-reader.ts`
+  + `src/domain/secutix-import.ts` + Secutix panel in the Import/Export view)
+- [ ] Implement Excel import for coordination files (configurable column mapping)
+- [x] Secutix synchronization logic:
+  - Skip rows with theme "G/ Droit d'accès" (entry fees — not mediation)
+  - Deduplicate with the composite key (contract + offer + date + time +
+    group name) — the dossier d'achat alone covers several slots
+  - Booking times from the file take priority over the offer's default
+    duration
   - Update modified reservations (headcount, time)
-  - Deallocate cancelled reservations (not in Secutix file)
+  - Remove cancelled reservations (not in the Secutix file): the slot is
+    deleted from the planning, recoverable via the import's undo
   - Preserve mediator assignments where possible
-- [ ] Obtain sample files (Secutix + coordination) to define column mappings
+  - Offer reconciliation UX: an imported THÈME matching no offer blocks
+    the import; the user maps the label to an existing offer or creates
+    the offer from the label
+- [x] Obtain sample files (Secutix done — analyzed locally; coordination
+  format still to be provided) to define column mappings
 
 ## Work Cycles
 
-- [ ] Add WorkCycle and CycleWeek entities to models.js (TDD)
+- [ ] Add WorkCycle and CycleWeek entities to models.ts (TDD)
 - [ ] Add cycle rotation logic (S1 → S2 → S3 → S1)
 - [ ] Add per-week override mechanism
 - [ ] Add Cycle Override entity
@@ -44,31 +86,15 @@
 - [ ] Integrate cycle availability into assignment suggestions
 - [ ] Cycle management UI in mediator view/settings
 
-## Competence Status
+## Assignment UX
 
-- [ ] Migrate mediator skills from string[] to [{ offerId, status }] (TDD)
-- [ ] Update assignment UI to show competence status (confirmed/learning)
 - [ ] Allow learning mediator as supplemental assignment with visible indicator
 - [ ] Allow learning mediator as sole assignment (exception, with warning)
-
-## Setup/Teardown Time
-
-- [ ] Add setupTime and teardownTime to offer entity (TDD)
-- [ ] Update overlap detection to use extended range (start - setup, end + teardown)
-- [ ] Display setup/teardown on calendar for assigned mediators
+- [ ] Slot resize by dragging block edges (daily view)
 
 ## Testing
 
-- [ ] Extract logic from `app.js` into testable modules (calendar logic, CRUD, filters)
-- [ ] Write tests for extracted modules (TDD)
-- [ ] Add DOM/UI tests (jsdom or similar)
 - [ ] Set up CI to run tests on push (GitHub Actions)
-
-## Deployment
-
-- [ ] Configure Caddy to serve static files directly (no Python dev server)
-- [ ] Or: add systemd service for the Python server
-- [ ] Open ports 80/443 on firewall if needed
 
 ## V2 — Server & Sync (future)
 
@@ -81,19 +107,6 @@
 
 ## Features (Future)
 
-- [ ] Calendar views: day / week / month toggle in the planning view
-  - Day view: mediators as rows, time as columns, 10min grid lines
-  - Unassigned lane for imported offers awaiting assignment
-  - Standard offers lane: drag onto mediator+time to create manual slot
-  - Drag-and-drop assignment, slot resize, slot move (same day only)
-  - Slot duplication onto other mediators (multi-mediator assignment)
-  - Overlap: red hatching/highlight + warning confirmation
-  - Day navigation tabs (prev/next/today)
-- [ ] Migrate slot model from `mediatorId` to `mediatorIds` (array)
-  - Update models.js, store.js, app.js, overlap detection
-  - Update demo data generation
-  - Update tests
-- [ ] Drag & drop on calendar to move slots
 - [ ] Schedule entity management (create/edit/delete schedules as distinct objects)
 - [ ] Statistics and dashboards
 - [ ] Read-only mediator view

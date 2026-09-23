@@ -57,11 +57,22 @@ Excel export or paper printout).
 - `description`: description (optional)
 - `duration`: duration in minutes
 - `capacity`: maximum number of participants
-- `location`: intervention location (optional)
+- `location`: default "espace" (intervention location, optional). Overridable
+  per slot; the Secutix import sets the slot's own value from the export's
+  "ESPACE" column.
 - `setupTime`: preparation time in minutes before the offer (fixed, same
   for all mediators)
 - `teardownTime`: cleanup time in minutes after the offer (fixed, same
   for all mediators)
+- `welcomeType`: `Accueil Libre` | `Réservable encadrée par médiateur` |
+  `Animation par médiateur` — how the offer is staffed. An
+  `Accueil Libre` offer needs NO mediator: its slots display as OK
+  (green) even when unassigned. Defaults to
+  `Réservable encadrée par médiateur`. Legacy persisted data is migrated
+  with the default on load.
+- `secutixLabel`: the offer's label ("THÈME" column) in Secutix exports
+  (optional). Used to reconcile imported reservations with the offer
+  catalog. Offers never imported from Secutix have none.
 
 ### Schedule (Planning)
 
@@ -83,15 +94,41 @@ Excel export or paper printout).
 - `date`: slot date (ISO 8601, e.g. `2026-09-15`)
 - `startTime`: start time (10-minute increments, e.g. `09:00`, `09:10`)
 - `endTime`: end time (10-minute increments)
+- `setupTime`: setup duration in minutes (optional). Defaults to the offer's
+  `setupTime` at creation; editable per slot regardless of lock state.
+  `0` is a real override; undefined (legacy) falls back to the offer.
+- `teardownTime`: teardown duration in minutes (optional). Same rules as
+  `setupTime`.
 - `participantCount`: number of participants (optional)
 - `status`: `planned` | `confirmed` | `cancelled` | `completed`
-- `notes`: free-form notes (optional)
 - `origin`: `manual` | `imported`
 - `importSource`: source label (e.g. `"Secutix"`, `"Coordination"`)
 - `importedAt`: import timestamp (ISO 8601) — empty for manual slots
+- `createdAt`: creation timestamp (ISO 8601), stamped at creation.
+  Optional: slots persisted before the field existed have none
 - `modifiedAfterImport`: boolean — true if edited after import
-- `contractNumber`: unique identifier from Secutix for deduplication
-  (reserved slots only)
+- `contractNumber`: Secutix "N° DOSSIER D'ACHAT" — the purchase contract
+  (reserved slots only). NOT unique per slot: one contract can cover
+  several bookings (e.g. entry fee + guided tour for the same class).
+  Deduplication uses the composite key contract + offer + date + time +
+  group name.
+- Booking details (from the Secutix import, or free-text manual entry):
+  - `groupName`: visitor group name (Secutix "NOM DU GROUPE")
+  - `guide`: Secutix "GUIDE" column — free text, usually empty in exports
+  - `location`: "espace" for this booking — overrides the offer's
+    default location when set (`getSlotLocation()`)
+  - `groupNature`: group nature (Secutix "NATURE DU GROUPE", e.g.
+    SCOLAIRES C2, PSH) — free text when entered manually
+  - `contactName`: contract contact (Secutix "CONTACT DU DOSSIER D'ACHAT")
+  - `contactPhone`: contact phone
+  - `contactEmail`: contact email
+- `notes`: free-form notes (optional) — the Secutix import appends the
+  export's "REMARQUE" column here
+
+The stored `startTime`/`endTime` are always the REAL booking period (the
+public-facing time). Setup extends the planning block BEFORE the booking,
+teardown AFTER it — this geometry is derived at display time
+(`getSlotTotalRange()`), never stored on the booking hours.
 
 ### Mediator Unavailability (Absence)
 
@@ -100,8 +137,11 @@ Excel export or paper printout).
 - `startDate`: absence start date
 - `endDate`: absence end date (inclusive)
 - `halfDay`: `none` (full day) | `morning` | `afternoon`
-- `type`: `leave` | `mission` | `training` | `sick` | `other`
+- `type`: `leave` | `mission` | `training` | `sick` | `other` | `leave_request`
 - `notes`: free-form notes (optional)
+- `startTime`/`endTime`: display-only time range derived from `halfDay` and
+  the configurable half-day boundaries (`halfDayConfig` in AppData:
+  `morningEnd`, default `13:00`; `afternoonStart`, default `13:00`)
 
 ## Features
 
@@ -124,6 +164,8 @@ Excel export or paper printout).
 ### Mediation Offer Management
 - List, add, edit, delete an offer
 - Define setup time and teardown time per offer
+- Set the welcome type (Accueil Libre / Réservable encadrée par
+  médiateur / Animation par médiateur)
 - Associate offers with mediators (competences)
 
 ### Mediator Unavailability Management
@@ -137,6 +179,8 @@ Excel export or paper printout).
 ### Schedule Management
 - Create a schedule for a given period
 - Visualize the schedule as a calendar/grid
+- Weekly view: clicking a day column header jumps to the daily view
+  for that day
 - Edit slots (drag & drop or selection)
 - Assign one or more mediators to each slot (filtered by competence)
 - Lock/unlock schedule editing (locked by default, warning on unlock)
@@ -147,33 +191,183 @@ Excel export or paper printout).
 - Setup/teardown time displayed on calendar for assigned mediators
 - Overlap detection uses extended time range (start - setup, end + teardown)
 
-### Day Planning View
-- Layout: mediators as rows (with cycle week label), time as columns
+### Day Planning View (Plan Jour)
+- Layout: time as horizontal columns (8h-19h), rows organized as:
+  - **Unassigned lane** (top): imported offers not yet allocated to a mediator,
+    shown only for the selected day, positioned on their time slot
+  - **Mediator rows**: active mediators with their color badge, each row
+    displays assigned slots for that mediator
+    - **Competence highlighting**: When a slot is selected (click) or dragged,
+      mediator rows are highlighted by competence for the slot's offer:
+      - Blue: confirmed competence
+      - Yellow: learning competence
+      - Hatched: no competence
+  - **Standard offers lane** (bottom): catalog of all standard offers, draggable
+    onto a mediator row + time position to create a manual slot
 - Time grid: thin lines every 10 minutes, thick lines every hour
 - Background: mediator availability (work cycle) + unavailability (absences)
-- Two non-mediator lanes:
-  - Unassigned lane: imported offers not yet allocated to a mediator
-  - Standard offers lane: catalog of standard offers, draggable onto a
-    mediator row + time position to create a manual slot. Offer stays in
-    the lane for reuse.
 - Drag-and-drop offers from unassigned lane to a mediator row to assign
 - Drag standard offer onto mediator row + time to create manual slot
-- Drag slot edge to modify start/end time (same day only)
 - Drag slot body to move within same day (no day change)
 - Duplicate slot onto other mediators — adds mediator to same slot
   (multi-mediator assignment, not independent copy)
 - Slot overlap on same mediator: red hatching and/or red highlight,
   warning confirmation required
-- Navigation: day tabs with prev/next/today buttons
-- Toggle between day / week / month views
+- Navigation: prev/next/today buttons to change the selected day
+- Toggle between day / week views
+- Slot assignment: can assign mediators from the slot modal (multi-select)
+- Mediator selector sorted by competence (confirmed → learning → none),
+  then alphabetical within each group
+- Mediator colors: displayed as colored badges/pills next to mediator names
 - Overlap detection uses extended time range (start - setup, end + teardown)
+- **Lock toggle** ("Mode modification"): same switch as Weekly View
+  - Locked (default): imported slots open in mediator-only mode (assign only);
+    standard offers remain draggable to create manual slots; manual slots
+    remain fully editable
+  - Unlocked: all slots (imported and manual) fully editable (offer, date,
+    time, deletion); imported slots marked "modified after import" on save
+  - Slots (imported or manual) are always draggable for mediator assignment
+    regardless of lock state
+
+### Daily View Slot Tooltips
+Hovering a slot block in the daily view shows a one-glance Secutix-style
+summary (`formatSlotBookingSummary`), followed by the block's logistics
+line (setup/teardown, non-assigned notice):
+
+```
+CSTI_MHN ___ RZA_MHN_EXPOSITION PERMANENTE ___ 10h45 - 11h45
+___ (30 pers. SCOLAIRES C2)
+Client : 2456008     ECOLE PRIMAIRE DE TERRE CLAPIER GROUPE 1     G/ CP à CE2/ Découvrons le Muséum (importé le 07/09/2026)
+Commentaires : RJV OU BDC CP + QUELQUES GS. Contrat signé + BDC reçus le 07/08/2026
+```
+
+Empty data skips its line; manual slots show "(créé le …)" instead of
+"(importé le …)"; the offer line prefers the offer's `secutixLabel`.
+Slot blocks are compact (2px/4px padding, 10px title) so the label stays
+readable on short bookings.
+
+### Reservation List View (Plan Accueil)
+A chronological LIST of the day's reservations — same day navigation as
+the daily view, but no time grid and no drag & drop (`ReservationView.tsx`):
+- Rows: the day's slots sorted by ascending BLOCK start (setup included,
+  `sortSlotsByBlockStart`) — a 10:00 booking with a 15-min setup sorts at
+  09:45, before a 09:50 booking without setup; ties break on booking start
+- Left lane: assigned mediators (color dot + name, one line each);
+  unassigned rows show "Non assigné" on a light-orange background
+- Right lane: the full Secutix-style booking summary
+  (`formatSlotBookingSummary`, multi-line)
+- Free visits (`Accueil Libre` offers, `isFreeVisitOffer`) go to a separate
+  bottom section "Réservations visites libres": their left lane shows
+  "Libre" (they need no mediator), and they are excluded from the mediated
+  list
+- Clicking a row opens the slot modal (mediator-only when the planning is
+  locked and the slot is imported — same rule as the daily view)
+- The toolbar shows the day's reservation count (mediated + free visits)
+
+In the DAILY VIEW, free visits also leave the unassigned lane: they have
+their own lane "Réservations visites libres" below the mediators and above
+the draggable offers, with green blocks (quiet green = OK, no mediator
+required) and the lane label "Libre". The unassigned badge next to the
+unassigned lane counts them as ASSIGNED ("X/N" where N = all day slots,
+X excludes free visits).
+
+### Slot Modal
+The slot modal is organized in three tabs so the enriched reservation
+model stays readable (imported slots show all Secutix booking details):
+- **Réservation** (first tab, default): offer, group name, mediators
+  (multi-select), espace (defaults to the offer's when empty, prefilled
+  by the Secutix import), notes / remarques
+- **Contact**: contract number (dossier d'achat — one dossier can cover
+  several slots), contact name, phone, email
+- **Détails**: date, start/end time (one compact three-field row on top),
+  setup/teardown times, participants, status, guide, group nature
+The origin badges (imported / modified after import) stay visible above
+the tabs on every tab, on a single compact line: for imported slots the
+source name and import date sit on that line ("Source : … — Importé le …"),
+for manual slots the creation date is shown ("Créé le …").
+
+The modal is a flex column: the header and the action bar (sticky at the
+bottom of the scrolling body) stay visible even when a tab's content is
+taller than the modal — no scrolling needed to reach the buttons. All
+three tab panels stay mounted and stacked in a single grid cell, so
+the modal height never changes when switching tabs. Submitting with an
+invalid required field switches to the tab holding that field (offer on
+Réservation, date/time on Détails) and shows the validation bubble there.
+
+Editability rules:
+- Unlocked: everything is editable; imported slots are marked
+  "modified after import" on save
+- Locked, imported slot (or mediator-only mode): only mediator
+  assignment, setup and teardown remain editable; all booking details
+  stay visible but read-only; deletion is disabled
 
 ### Secutix Import (Synchronization)
-- Import Secutix Excel export to create/update reserved slots
-- Deduplicate using contract number — skip slots already imported
-- Update existing slots when reservation modified (headcount, time)
-- Deallocate slots no longer in the Secutix file (cancelled reservations)
-- Preserve mediator assignments on modified slots when possible
+
+Source file (analyzed from a real export, "sem39sem51.xlsx", weeks 39–51):
+single sheet `visitPlanning`, header on row 2, one booking per data row,
+plus a trailing "Total" row to skip. Reference layout (columns A–V):
+
+| Secutix column | MediaPlan field |
+|---|---|
+| DATE HEURE DU PRODUIT (`dd.mm.yyyy HH:MM`) | `slot.date` + `startTime` |
+| DURÉE (`H:MM`, variable per booking) | `slot.endTime` |
+| THÈME (offer label) | offer lookup via `offer.secutixLabel` |
+| N° DOSSIER D'ACHAT | `slot.contractNumber` |
+| NOM DU GROUPE | `slot.groupName` |
+| GUIDE | `slot.guide` |
+| ESPACE | `slot.location` |
+| SITE | `slot.site` (informational, shown in tooltips) |
+| NATURE DU GROUPE | `slot.groupNature` |
+| NB TOTAL DE PERSONNES PAR GUIDE | `slot.participantCount` |
+| CONTACT / TÉLÉPHONE / EMAIL DU DOSSIER | `slot.contactName/Phone/Email` |
+| REMARQUE | `slot.notes` |
+| LANGUE DE VISITE (single value) | not imported |
+
+Import rules (implemented in `src/domain/secutix-import.ts`, browser reading
+in `src/infrastructure/secutix-reader.ts`, UI in the Import/Export view):
+- **Filter**: rows with theme `G/ Droit d'accès` (entry fees) are NOT
+  imported — they are not mediation bookings. The trailing "Total" row and
+  rows without a parsable product datetime are skipped as well.
+- **Times take priority**: the booking times from the Secutix file
+  override the offer's default duration (endTime = startTime + DURÉE,
+  clamped to 23:59).
+- **Offer reconciliation**: the THÈME label maps to the offer via
+  `offer.secutixLabel` (whitespace-tolerant comparison). Labels matching
+  no offer need a user decision before the import can run — the review
+  UI lists each label with its booking count and a searchable offer
+  picker offering three choices:
+  - **map**: re-link the label's bookings to an existing offer
+  - **create**: create the offer from the label (suggested espace and
+    duration from the label's bookings, welcome type defaults to
+    "Réservable encadrée par médiateur" — editable later)
+  - **ignore**: do not import these bookings (they are not created, not
+    updated, never deallocated) — e.g. rows with an EMPTY theme
+    (private ANNIVERSAIRE products, shown as "(sans libellé Secutix)")
+    can only be mapped or ignored, not created
+  Decided rows stay editable until the import runs; the plan preview and
+  the summary popup report the ignored count.
+- **Deduplication**: one dossier d'achat covers several slots (one
+  dossier can mix products and dates, and up to several groups share a
+  dossier+product+time). The dedup key is the composite
+  (contractNumber, theme, date, startTime, groupName).
+- **Synchronization** (full sync):
+  - new bookings create slots stamped `origin: imported`,
+    `importSource: "Secutix"`, `importedAt`
+  - bookings whose slot already exists update it (headcount, times,
+    contact, notes…), preserving mediator assignments, setup/teardown and
+    status; `modifiedAfterImport` resets (values are re-synced with the file)
+  - imported Secutix slots INSIDE the file's covered date range whose
+    booking left the file are REMOVED from the planning (the reservation
+    was cancelled in Secutix). Provenance decides, not the offer label:
+    a slot with origin `imported` and `importSource: "Secutix"` is managed
+    by the sync even if its offer lost (or never had) a secutixLabel.
+    Removed slots are recoverable through the import's one-click undo.
+    Manual slots, slots from other import sources (e.g. a future
+    coordination-file import) and slots outside the covered range are
+    never touched
+  - the whole import is applied as a single history entry: the summary
+    (added / updated / deallocated counts + covered date range) offers
+    a one-click undo that reverts everything
 
 ### Excel Import/Export
 - Export the schedule in .xlsx format (one tab per entity or per week)

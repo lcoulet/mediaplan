@@ -19,3 +19,8 @@ coverage/
 
 # Logs
 *.log
+# User guide synced from docs/ at build time (scripts/sync-guide.mjs)
+public/guide/
+
+# Private environment description (share manually, never commit)
+ENVIRONMENT.local.md

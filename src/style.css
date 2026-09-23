@@ -15,6 +15,7 @@
     --color-text: #2b2b2b;
     --color-text-muted: #6b6b6b;
     --color-border: #d9d9d9;
+    --color-border-light: #eaeaea;
     --color-danger: #c0392b;
     --color-danger-bg: #fdecea;
     --color-warning: #d68c45;
@@ -266,6 +267,11 @@ body {
 .data-table td {
     padding: 10px 16px;
     border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+}
+
+.data-table tr {
+    height: 48px;
 }
 
 .data-table tbody tr:hover {
@@ -273,8 +279,8 @@ body {
 }
 
 .data-table .actions-cell {
-    display: flex;
-    gap: 4px;
+    text-align: center;
+    white-space: nowrap;
 }
 
 .data-table .action-btn {
@@ -285,6 +291,12 @@ body {
     padding: 4px;
     border-radius: 4px;
     opacity: 0.6;
+    line-height: 1;
+    display: inline-block;
+}
+
+.data-table .action-btn + .action-btn {
+    margin-left: 4px;
 }
 
 .data-table .action-btn:hover {
@@ -388,6 +400,100 @@ body {
     color: var(--color-text-muted);
 }
 
+/* ===== Secutix import review ===== */
+.import-error {
+    color: #c0392b;
+}
+
+.secutix-review {
+    margin-top: 12px;
+}
+
+.secutix-summary {
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.secutix-mapping h3 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #c0392b;
+}
+
+.secutix-label-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.secutix-label {
+    flex: 1;
+    font-size: 13px;
+    min-width: 0;
+    word-break: break-word;
+    padding-top: 10px;
+}
+
+.secutix-label-count {
+    color: var(--color-text-muted);
+    margin-left: 4px;
+}
+
+.secutix-picker {
+    flex: 1;
+    min-width: 240px;
+}
+
+.secutix-choice-hint {
+    margin-top: 4px;
+}
+
+.single-select-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.single-select-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex: none;
+}
+
+.secutix-plan-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.plan-stat {
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #f4f6f6;
+    color: #2c3e50;
+}
+
+.plan-ignored {
+    background: #f4f6f6;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.plan-removed {
+    background: #fdeaea;
+    color: #c0392b;
+}
+
+.secutix-result p {
+    margin-bottom: 8px;
+}
+
 /* ===== Modal ===== */
 .modal-overlay {
     display: none;
@@ -410,19 +516,23 @@ body {
     width: 480px;
     max-width: 90vw;
     max-height: 85vh;
-    overflow: auto;
+    /* Flex column: header and (sticky) actions stay visible, only the
+       body scrolls when the content is taller than the modal. */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
+    padding: 10px 16px;
     border-bottom: 1px solid var(--color-border);
 }
 
 .modal-header h3 {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 600;
 }
 
@@ -437,6 +547,9 @@ body {
 
 .modal-body {
     padding: 20px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 /* ===== Form ===== */
@@ -484,11 +597,32 @@ body {
     flex: 1;
 }
 
+/* Densified slot form: tighter field spacing (the tabbed modal packs
+   several fields per tab). */
+#form-slot .form-group {
+    margin-bottom: 12px;
+}
+
+/* Three fields on one row (Date / Début / Fin in the slot modal) */
+.form-row.form-row-3 {
+    gap: 10px;
+}
+
+/* Sticky action bar: pinned at the bottom of the scrolling modal body,
+   the buttons stay visible even when the form is taller than the modal.
+   Negative margins cancel the modal-body padding so the bar spans the
+   full modal width. Every .form-actions lives inside a modal body. */
 .form-actions {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    margin-top: 20px;
+    position: sticky;
+    bottom: 0;
+    margin: 16px -20px -20px;
+    padding: 12px 20px;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    border-radius: 0 0 var(--radius) var(--radius);
 }
 
 /* ===== Form hint ===== */
@@ -564,17 +698,74 @@ body {
     display: inline-block;
 }
 
-/* ===== Mediator color dot ===== */
-.mediator-color-dot,
-.slot-mediator-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    margin-right: 6px;
-    vertical-align: middle;
-    border: 1px solid rgba(0,0,0,0.1);
+/* ===== Status bar (app-wide footer) ===== */
+.status-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 4px 16px;
+    font-size: 11px;
+    color: var(--color-text-muted, #888);
+    background: var(--color-surface, #fafafa);
+    border-top: 1px solid var(--color-border, #e0e0e0);
 }
+
+.status-item {
+    white-space: nowrap;
+}
+.date-picker-label {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.date-picker-input {
+    /* Nearly invisible: clicking the date text opens the native picker */
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 1px dashed var(--color-border);
+    border-radius: 3px;
+    background: transparent;
+    cursor: pointer;
+    opacity: 0.45;
+}
+
+.date-picker-input:hover,
+.date-picker-label:hover .date-picker-input {
+    opacity: 1;
+}
+
+/* ===== Mediator color glyph ===== */
+/* Replaced the old CSS dot (10px box) with a UTF ● colored via `color`:
+   text-metric rendering aligns with adjacent text/emoji on the same
+   baseline. Global version (weekly full mode, tables, modals). */
+.slot-mediator-glyph {
+    font-size: 12px;
+    line-height: 1;
+    margin-right: 4px;
+    vertical-align: middle;
+    text-shadow: 0 0 1px rgba(0,0,0,0.25);
+}
+
+/* ===== Offer color pill ===== */
+.offer-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    border: 1px solid rgba(0,0,0,0.15);
+    white-space: nowrap;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+/* Keep several pills in a cell readable */
+td .offer-pill + .offer-pill { margin-left: 4px; }
 
 /* ===== Detail view (read-only slot modal) ===== */
 .detail-view { font-size: 14px; }
@@ -605,10 +796,141 @@ body {
     margin-bottom: 16px;
 }
 
+/* ===== Config popup ===== */
+.config-popup {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 16px;
+  z-index: 1000;
+  min-width: 240px;
+  border: 1px solid var(--color-border);
+}
+
+.config-popup::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: 20px;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid var(--color-surface);
+}
+
+.config-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--color-text);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.config-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.config-row span {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.config-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.time-select {
+  width: 80px !important;
+  padding: 4px 8px !important;
+  font-size: 13px !important;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
     .app-subtitle { display: none; }
     .import-export-container { grid-template-columns: 1fr; }
     .toolbar { flex-direction: column; align-items: stretch; }
     .toolbar-right { flex-wrap: wrap; }
+    .config-popup { position: fixed; top: auto; right: 8px; bottom: 8px; left: 8px; max-width: none; }
+}
+
+/* ===== Modal tabs (slot modal) ===== */
+.modal-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 16px;
+}
+
+.modal-tab {
+    padding: 8px 14px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    font: inherit;
+    color: #666;
+    cursor: pointer;
+    border-radius: 4px 4px 0 0;
+}
+
+.modal-tab:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.modal-tab.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+    font-weight: 600;
+}
+
+.tab-panels {
+    display: grid;
+}
+
+/* All panels share one grid cell: the container is as tall as the tallest
+   panel, so the modal keeps a constant height when switching tabs. */
+.tab-panel {
+    grid-area: 1 / 1;
+    min-height: 200px;
+}
+
+.tab-panel.inactive {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Clear data card options */
+.io-clear-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.io-clear-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.guide-open-link {
+  font-size: 13px;
+  font-weight: 400;
+  margin-left: 8px;
 }

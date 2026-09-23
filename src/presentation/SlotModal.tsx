@@ -1,6 +1,6 @@
-// SlotModal.tsx — Slot creation/editing (full + mediator-only modes)
+// SlotModal.tsx — Slot creation/editing, tabbed (booking, contact, details)
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useData, useCRUD } from './DataContext';
 import {
   createSlot,
@@ -9,9 +9,13 @@ import {
   STATUS_LABELS,
   ORIGIN_LABELS,
   formatImportDate,
+  mediatorConfirmedForOffer,
+  mediatorLearningOffer,
 } from '../domain/models';
 import type { Slot } from '../domain/types';
 import Modal from './Modal';
+import MultiSelect from './MultiSelect';
+import OfferPill from './OfferPill';
 import { SlotStatusValues } from './types';
 
 interface Props {
@@ -21,21 +25,57 @@ interface Props {
   onClose: () => void;
 }
 
+type TabId = 'reservation' | 'contact' | 'details';
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'reservation', label: 'Réservation' },
+  { id: 'contact', label: 'Contact' },
+  { id: 'details', label: 'Détails' },
+];
+
 export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: Props) {
   const { state } = useData();
   const crud = useCRUD();
   const isEdit = !!slot;
+  const locked = state.locked;
 
   const [form, setForm] = useState<Slot>(() => slot || createSlot({ date: defaultDate }));
+  const [activeTab, setActiveTab] = useState<TabId>('reservation');
+
+  // Restricted mode (imported slot while the planning is locked, or
+  // mediator-only mode): only mediator assignment, setup and teardown
+  // stay editable — booking details remain visible but read-only.
+  const isImported = form.origin === 'imported';
+  const restricted = mediatorOnly || (isImported && locked);
+
+  // Default setup/teardown from the offer when the slot has none yet
+  const currentOffer = state.data.offers.find((o) => o.id === form.offerId);
+  const setupDefault = form.setupTime ?? currentOffer?.setupTime ?? 0;
+  const teardownDefault = form.teardownTime ?? currentOffer?.teardownTime ?? 0;
+
+  const [selectedMediators, setSelectedMediators] = useState<string[]>(form.mediatorIds);
+  const [setupTimeInput, setSetupTimeInput] = useState<string>(String(setupDefault));
+  const [teardownTimeInput, setTeardownTimeInput] = useState<string>(String(teardownDefault));
+
+  // Deferred validation report: when the submit hits an invalid field on a
+  // hidden panel, we switch to its tab first, then show the browser bubble
+  // after the re-render.
+  const formRef = useRef<HTMLFormElement>(null);
+  const pendingValidate = useRef(false);
+
+  useEffect(() => {
+    if (pendingValidate.current) {
+      pendingValidate.current = false;
+      formRef.current?.reportValidity();
+    }
+  }, [activeTab]);
 
   // Mediator warning: overlap or absence for the first selected mediator
-  const [selectedMediators, setSelectedMediators] = useState<string[]>(form.mediatorIds);
-
   const warning = useMemo(() => {
     const firstMed = selectedMediators[0];
     if (!firstMed) return '';
     const overlap = hasMediatorOverlap(firstMed, form.date, form.startTime, form.endTime, state.data.slots, form.id);
-    const absent = !isMediatorAvailable(firstMed, form.date, form.startTime, form.endTime, state.data.absences);
+    const absent = !isMediatorAvailable(firstMed, form.date, form.startTime, form.endTime, state.data.absences, state.data.halfDayConfig);
     if (overlap) return '⚠️ Ce médiateur a déjà un créneau à cet horaire';
     if (absent) return '🚫 Ce médiateur est absent à ce créneau';
     return '';
@@ -45,30 +85,43 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleMediatorChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const selected = Array.from(e.target.selectedOptions).map((o) => o.value).filter(Boolean);
-    setSelectedMediators(selected);
-  }
-
-  function handleDelete() {
-    if (!slot) return;
-    crud({ type: 'DELETE_SLOT', id: slot.id });
-    onClose();
-  }
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    // Required fields live on the hidden reservation panel. When submit hits
+    // an invalid field, switch to its tab first and let the deferred
+    // reportValidity show the browser bubble there.
+    const formEl = e.currentTarget as HTMLFormElement;
+    if (!formEl.checkValidity()) {
+      const invalidTab = formEl.querySelector<HTMLElement>(':invalid')?.closest<HTMLElement>('.tab-panel')?.dataset.tab;
+      if (invalidTab && invalidTab !== activeTab) {
+        pendingValidate.current = true;
+        setActiveTab(invalidTab as TabId);
+      } else {
+        formEl.reportValidity();
+      }
+      return;
+    }
+
+    // Setup/teardown are editable regardless of lock state
+    const setupVal = setupTimeInput !== '' ? parseInt(setupTimeInput) || 0 : setupDefault;
+    const teardownVal = teardownTimeInput !== '' ? parseInt(teardownTimeInput) || 0 : teardownDefault;
+
     const updated: Slot = {
       ...form,
-      offerId: form.offerId,
       mediatorIds: selectedMediators,
-      date: form.date,
-      startTime: form.startTime,
-      endTime: form.endTime,
       participantCount: parseInt(String(form.participantCount)) || 0,
-      status: form.status,
+      groupName: form.groupName.trim(),
+      guide: form.guide.trim(),
+      location: form.location.trim(),
+      groupNature: form.groupNature.trim(),
+      contactName: form.contactName.trim(),
+      contactPhone: form.contactPhone.trim(),
+      contactEmail: form.contactEmail.trim(),
+      contractNumber: form.contractNumber?.trim() || undefined,
       notes: form.notes.trim(),
+      setupTime: setupVal,
+      teardownTime: teardownVal,
     };
 
     if (isEdit) {
@@ -84,214 +137,324 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
     onClose();
   }
 
-  // Build mediator options with overlap/absence indicators
+  function handleDelete() {
+    if (!slot) return;
+    crud({ type: 'DELETE_SLOT', id: slot.id });
+    onClose();
+  }
+
+  // Build mediator options with overlap/absence/competence indicators
+  // Sort: confirmed first, then learning, then none — alphabetical within each group
   const mediatorOptions = useMemo(() => {
+    const offerId = form.offerId;
     return state.data.mediators.map((m) => {
       const overlap = hasMediatorOverlap(m.id, form.date, form.startTime, form.endTime, state.data.slots, form.id);
-      const absent = !isMediatorAvailable(m.id, form.date, form.startTime, form.endTime, state.data.absences);
+      const absent = !isMediatorAvailable(m.id, form.date, form.startTime, form.endTime, state.data.absences, state.data.halfDayConfig);
+      const confirmed = mediatorConfirmedForOffer(m, offerId);
+      const learning = mediatorLearningOffer(m, offerId);
+
       let label = `${m.firstName} ${m.lastName}`;
-      if (overlap) label += ' ⚠️ Conflit horaire';
-      else if (absent) label += ' 🚫 Absent';
-      return { id: m.id, label, overlap, selected: selectedMediators.includes(m.id) };
+
+      if (confirmed) {
+        label += ' ✅';
+      } else if (learning) {
+        label += ' 📚';
+      } else if (offerId) {
+        label += ' ⚠️ Incompétent';
+      }
+
+      if (overlap) label += ' — Conflit horaire';
+      else if (absent) label += ' — Absent';
+
+      const competenceRank = confirmed ? 0 : learning ? 1 : 2;
+
+      return {
+        value: m.id,
+        label,
+        color: m.color,
+        isDisabled: overlap,
+        competenceStatus: confirmed ? 'confirmed' : learning ? 'learning' : null,
+        competenceRank,
+        sortName: `${m.lastName} ${m.firstName}`.toLowerCase(),
+      };
+    }).sort((a, b) => {
+      if (a.competenceRank !== b.competenceRank) return a.competenceRank - b.competenceRank;
+      return a.sortName.localeCompare(b.sortName);
     });
-  }, [state.data.mediators, state.data.slots, state.data.absences, form.date, form.startTime, form.endTime, form.id, selectedMediators]);
+  }, [state.data.mediators, state.data.slots, state.data.absences, form.date, form.startTime, form.endTime, form.id, form.offerId]);
 
   const offer = state.data.offers.find((o) => o.id === form.offerId);
 
-  // ---- Mediator-only mode (locked calendar) ----
-  if (mediatorOnly) {
-    const originBadge = form.origin === 'imported' ? (
-      <>
-        <span className="badge origin-badge-imported">📥 {ORIGIN_LABELS.imported}</span>
-        {form.modifiedAfterImport && <span className="badge origin-badge-modified">✏ Modifié après import</span>}
-      </>
-    ) : (
-      <span className="badge origin-badge-manual">✋ {ORIGIN_LABELS.manual}</span>
-    );
+  // Panels are always mounted and stacked in one grid cell (see .tab-panels),
+  // so the modal keeps a constant height across tabs.
+  const panelClass = (id: TabId) => `tab-panel${activeTab === id ? '' : ' inactive'}`;
 
-    return (
-      <Modal title="Assigner un médiateur" onClose={onClose}>
-        <form id="form-slot" onSubmit={handleSubmit}>
-          <div className="detail-view">
-            <div className="detail-row">
-              <span className="detail-label">Offre</span>
-              <span className="detail-value">{offer ? offer.name : '—'}</span>
-            </div>
-            <div className="detail-row">
-              <span className="detail-label">Date</span>
-              <span className="detail-value">
-                {new Date(form.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </span>
-            </div>
-            <div className="detail-row">
-              <span className="detail-label">Horaire</span>
-              <span className="detail-value">{form.startTime} – {form.endTime}</span>
-            </div>
-            <div className="detail-row">
-              <span className="detail-label">Statut</span>
-              <span className="detail-value">
-                <span className={`badge badge-${form.status}`}>
-                  {STATUS_LABELS.slot[form.status] || form.status}
-                </span>
-              </span>
-            </div>
-            <div className="detail-row">
-              <span className="detail-label">Origine</span>
-              <span className="detail-value">{originBadge}</span>
-            </div>
-          </div>
-          <hr />
-          <div className="form-group">
-            <label>Médiateurs</label>
-            <select
-              multiple
-              size={5}
-              value={selectedMediators}
-              onChange={handleMediatorChange}
-            >
-              {mediatorOptions.map((opt) => (
-                <option key={opt.id} value={opt.id} disabled={opt.overlap}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <div className="form-hint">
-              {warning ? (
-                <span className="warning-text">{warning}</span>
-              ) : (
-                'Ctrl+clic pour sélectionner plusieurs'
-              )}
-            </div>
-          </div>
-          <div className="form-actions">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>Annuler</button>
-            <button type="submit" className="btn btn-primary">Enregistrer</button>
-          </div>
-        </form>
-      </Modal>
-    );
-  }
-
-  // ---- Full edit mode ----
-  const originInfo = form.origin === 'imported' ? (
-    <div className="origin-info">
+  // Origin badges — visible above the tabs on every tab
+  const originBadges = isImported ? (
+    <>
       <span className="badge origin-badge-imported">📥 {ORIGIN_LABELS.imported}</span>
       {form.modifiedAfterImport && <span className="badge origin-badge-modified">✏ Modifié après import</span>}
-      {form.importSource && (
-        <div className="origin-detail">Source : <strong>{form.importSource}</strong></div>
+      {(form.importSource || form.importedAt) && (
+        <span className="origin-detail">
+          {[form.importSource && `Source : ${form.importSource}`, form.importedAt && `Importé le ${formatImportDate(form.importedAt)}`]
+            .filter(Boolean)
+            .join(' — ')}
+        </span>
       )}
-      {form.importedAt && (
-        <div className="origin-detail">Importé le : {formatImportDate(form.importedAt)}</div>
-      )}
-    </div>
+    </>
   ) : (
-    <div className="origin-info">
+    <>
       <span className="badge origin-badge-manual">✋ {ORIGIN_LABELS.manual}</span>
-    </div>
+      {form.createdAt && <span className="origin-detail">Créé le {formatImportDate(form.createdAt)}</span>}
+    </>
   );
 
   return (
     <Modal title={isEdit ? 'Modifier le créneau' : 'Nouveau créneau'} onClose={onClose}>
-      <form id="form-slot" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Offre *</label>
-          <select
-            value={form.offerId}
-            onChange={(e) => setField('offerId', e.target.value)}
-            required
-          >
-            <option value="">— Choisir —</option>
-            {state.data.offers.map((o) => (
-              <option key={o.id} value={o.id}>{o.name}</option>
-            ))}
-          </select>
-        </div>
-        <div className="form-group">
-          <label>Médiateurs</label>
-          <select
-            multiple
-            size={5}
-            value={selectedMediators}
-            onChange={handleMediatorChange}
-          >
-            {mediatorOptions.map((opt) => (
-              <option key={opt.id} value={opt.id} disabled={opt.overlap}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <div className="form-hint">
-            {warning ? (
-              <span className="warning-text">{warning}</span>
-            ) : (
-              'Ctrl+clic pour sélectionner plusieurs'
-            )}
-          </div>
-        </div>
-        <div className="form-group">
-          <label>Date *</label>
-          <input
-            type="date"
-            value={form.date}
-            onChange={(e) => setField('date', e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Début *</label>
-            <input
-              type="time"
-              value={form.startTime}
-              onChange={(e) => setField('startTime', e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Fin *</label>
-            <input
-              type="time"
-              value={form.endTime}
-              onChange={(e) => setField('endTime', e.target.value)}
-              required
-            />
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Participants</label>
-            <input
-              type="number"
-              value={form.participantCount}
-              min={0}
-              onChange={(e) => setField('participantCount', parseInt(e.target.value) || 0)}
-            />
-          </div>
-          <div className="form-group">
-            <label>Statut</label>
-            <select
-              value={form.status}
-              onChange={(e) => setField('status', e.target.value as Slot['status'])}
+      <form id="form-slot" onSubmit={handleSubmit} noValidate ref={formRef}>
+        <div className="origin-info">{originBadges}</div>
+
+        <div className="modal-tabs" role="tablist">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === t.id}
+              className={`modal-tab${activeTab === t.id ? ' active' : ''}`}
+              onClick={() => setActiveTab(t.id)}
             >
-              {SlotStatusValues.map((val) => (
-                <option key={val} value={val}>{STATUS_LABELS.slot[val]}</option>
-              ))}
-            </select>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="tab-panels">
+          <div className={panelClass('reservation')} role="tabpanel" data-tab="reservation">
+            <div className="form-group">
+              <label>Offre *</label>
+              <select
+                value={form.offerId}
+                onChange={(e) => setField('offerId', e.target.value)}
+                required
+                disabled={restricted}
+              >
+                <option value="">— Choisir —</option>
+                {state.data.offers.map((o) => (
+                  <option key={o.id} value={o.id}>{o.name}</option>
+                ))}
+              </select>
+              {offer && (
+                <div className="form-hint">
+                  <OfferPill offer={offer} id="slot-offer-pill" />
+                </div>
+              )}
+            </div>
+            <div className="form-group">
+              <label>Nom du groupe</label>
+              <input
+                type="text"
+                value={form.groupName}
+                onChange={(e) => setField('groupName', e.target.value)}
+                disabled={restricted}
+                placeholder="Groupe visiteur"
+              />
+            </div>
+            <div className="form-group">
+              <label>Médiateurs</label>
+              <MultiSelect
+                options={mediatorOptions}
+                value={selectedMediators}
+                onChange={setSelectedMediators}
+                ariaLabel="Médiateurs"
+                placeholder="Rechercher un médiateur…"
+                noOptionsMessage="Aucun médiateur disponible"
+              />
+              <div className="form-hint">
+                {warning ? (
+                  <span className="warning-text">{warning}</span>
+                ) : (
+                  'Cliquez pour ajouter, × pour retirer'
+                )}
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Espace</label>
+              <input
+                type="text"
+                value={form.location}
+                onChange={(e) => setField('location', e.target.value)}
+                disabled={restricted}
+                placeholder={offer?.location || 'Espace'}
+              />
+              {offer?.location && !form.location && (
+                <div className="form-hint">Par défaut : {offer.location} (offre)</div>
+              )}
+            </div>
+            <div className="form-group">
+              <label>Notes / Remarques</label>
+              <textarea
+                value={form.notes}
+                onChange={(e) => setField('notes', e.target.value)}
+                disabled={restricted}
+              ></textarea>
+            </div>
+          </div>
+
+          <div className={panelClass('contact')} role="tabpanel" data-tab="contact">
+            <div className="form-group">
+              <label>N° dossier d'achat</label>
+              <input
+                type="text"
+                value={form.contractNumber ?? ''}
+                onChange={(e) => setField('contractNumber', e.target.value)}
+                disabled={restricted}
+                placeholder="Contrat Secutix"
+              />
+              <div className="form-hint">Un même dossier peut regrouper plusieurs réservations</div>
+            </div>
+            <div className="form-group">
+              <label>Contact</label>
+              <input
+                type="text"
+                value={form.contactName}
+                onChange={(e) => setField('contactName', e.target.value)}
+                disabled={restricted}
+                placeholder="Nom du contact du dossier"
+              />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Téléphone</label>
+                <input
+                  type="tel"
+                  value={form.contactPhone}
+                  onChange={(e) => setField('contactPhone', e.target.value)}
+                  disabled={restricted}
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={form.contactEmail}
+                  onChange={(e) => setField('contactEmail', e.target.value)}
+                  disabled={restricted}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className={panelClass('details')} role="tabpanel" data-tab="details">
+            <div className="form-row form-row-3">
+              <div className="form-group">
+                <label>Date *</label>
+                <input
+                  type="date"
+                  value={form.date}
+                  onChange={(e) => setField('date', e.target.value)}
+                  required
+                  disabled={restricted}
+                />
+              </div>
+              <div className="form-group">
+                <label>Début *</label>
+                <input
+                  type="time"
+                  value={form.startTime}
+                  onChange={(e) => setField('startTime', e.target.value)}
+                  required
+                  disabled={restricted}
+                />
+              </div>
+              <div className="form-group">
+                <label>Fin *</label>
+                <input
+                  type="time"
+                  value={form.endTime}
+                  onChange={(e) => setField('endTime', e.target.value)}
+                  required
+                  disabled={restricted}
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Mise en place (min)</label>
+                <input
+                  type="number"
+                  value={setupTimeInput}
+                  min={0}
+                  step={5}
+                  onChange={(e) => setSetupTimeInput(e.target.value)}
+                  title="Durée de préparation avant la réservation"
+                />
+                <div className="form-hint">Par défaut : {setupDefault} min (offre)</div>
+              </div>
+              <div className="form-group">
+                <label>Rangement (min)</label>
+                <input
+                  type="number"
+                  value={teardownTimeInput}
+                  min={0}
+                  step={5}
+                  onChange={(e) => setTeardownTimeInput(e.target.value)}
+                  title="Durée de rangement après la réservation"
+                />
+                <div className="form-hint">Par défaut : {teardownDefault} min (offre)</div>
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Participants</label>
+                <input
+                  type="number"
+                  value={form.participantCount}
+                  min={0}
+                  onChange={(e) => setField('participantCount', parseInt(e.target.value) || 0)}
+                  disabled={restricted}
+                />
+              </div>
+              <div className="form-group">
+                <label>Statut</label>
+                <select
+                  value={form.status}
+                  onChange={(e) => setField('status', e.target.value as Slot['status'])}
+                  disabled={restricted}
+                >
+                  {SlotStatusValues.map((val) => (
+                    <option key={val} value={val}>{STATUS_LABELS.slot[val]}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Guide</label>
+                <input
+                  type="text"
+                  value={form.guide}
+                  onChange={(e) => setField('guide', e.target.value)}
+                  disabled={restricted}
+                  placeholder="Guide indiqué dans Secutix (si connu)"
+                />
+              </div>
+              <div className="form-group">
+                <label>Nature du groupe</label>
+                <input
+                  type="text"
+                  value={form.groupNature}
+                  onChange={(e) => setField('groupNature', e.target.value)}
+                  disabled={restricted}
+                  placeholder="ex. SCOLAIRES C2, PSH"
+                />
+              </div>
+            </div>
           </div>
         </div>
-        <div className="form-group">
-          <label>Origine</label>
-          {originInfo}
-        </div>
-        <div className="form-group">
-          <label>Notes</label>
-          <textarea
-            value={form.notes}
-            onChange={(e) => setField('notes', e.target.value)}
-          ></textarea>
-        </div>
+
         <div className="form-actions">
-          {isEdit && (
+          {isEdit && !restricted && (
             <button type="button" className="btn btn-danger" id="slot-delete" onClick={handleDelete}>
               Supprimer
             </button>

@@ -11,6 +11,12 @@ interface Props {
   onClose: () => void;
 }
 
+export const WELCOME_TYPE_LABELS: Record<Offer['welcomeType'], string> = {
+  'Accueil Libre': 'Accueil libre',
+  'Réservable encadrée par médiateur': 'Réservable encadrée par médiateur',
+  'Animation par médiateur': 'Animation par médiateur',
+};
+
 export default function OfferModal({ offer, onClose }: Props) {
   const crud = useCRUD();
   const isEdit = !!offer;
@@ -30,12 +36,11 @@ export default function OfferModal({ offer, onClose }: Props) {
       duration: parseInt(String(form.duration)) || 60,
       capacity: parseInt(String(form.capacity)) || 30,
       location: form.location.trim(),
+      secutixLabel: form.secutixLabel?.trim(),
+      setupTime: form.setupTime ? parseInt(String(form.setupTime)) || 0 : 0,
+      teardownTime: form.teardownTime ? parseInt(String(form.teardownTime)) || 0 : 0,
     };
-    if (isEdit) {
-      crud({ type: 'UPDATE_OFFER', offer: o });
-    } else {
-      crud({ type: 'ADD_OFFER', offer: o });
-    }
+    crud(isEdit ? { type: 'UPDATE_OFFER', offer: o } : { type: 'ADD_OFFER', offer: o });
     onClose();
   }
 
@@ -81,13 +86,74 @@ export default function OfferModal({ offer, onClose }: Props) {
             />
           </div>
         </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Mise en place (min)</label>
+            <input
+              type="number"
+              value={form.setupTime ?? 0}
+              min={0}
+              step={5}
+              onChange={(e) => setField('setupTime', parseInt(e.target.value) || 0)}
+              title="Durée de préparation avant la réservation"
+            />
+          </div>
+          <div className="form-group">
+            <label>Rangement (min)</label>
+            <input
+              type="number"
+              value={form.teardownTime ?? 0}
+              min={0}
+              step={5}
+              onChange={(e) => setField('teardownTime', parseInt(e.target.value) || 0)}
+              title="Durée de rangement après la réservation"
+            />
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Libellé Secutix</label>
+            <input
+              type="text"
+              value={form.secutixLabel ?? ''}
+              onChange={(e) => setField('secutixLabel', e.target.value)}
+              title="Libellé exact de l\u2019offre dans les exports Secutix (colonne THÈME), utilisé pour le recollement à l\u2019import"
+              placeholder="ex. G/ CP à CE2/ Minéraux"
+            />
+          </div>
+        </div>
         <div className="form-group">
-          <label>Lieu</label>
-          <input
-            type="text"
-            value={form.location}
-            onChange={(e) => setField('location', e.target.value)}
-          />
+          <label>Type d'accueil</label>
+          <select
+            value={form.welcomeType}
+            onChange={(e) => setField('welcomeType', e.target.value as Offer['welcomeType'])}
+            title="Une offre « Accueil libre » n'a pas besoin de médiateur : ses créneaux s'affichent comme OK même sans assignation"
+          >
+            {Object.entries(WELCOME_TYPE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Lieu</label>
+            <input
+              type="text"
+              value={form.location}
+              onChange={(e) => setField('location', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Couleur</label>
+            <div className="color-picker">
+              <input
+                type="color"
+                value={form.color || '#2c6e49'}
+                onChange={(e) => setField('color', e.target.value)}
+              />
+              <span className="color-preview" style={{ background: form.color || '#2c6e49' }}></span>
+            </div>
+          </div>
         </div>
         <div className="form-actions">
           <button type="button" className="btn btn-secondary" onClick={onClose}>Annuler</button>

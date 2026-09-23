@@ -9,30 +9,83 @@ listed, the English term is used in code, the French term in the UI.
 
 ### Mediator (Médiateur)
 A staff member who leads mediation activities at the museum.
-Has: name, color (for calendar display), skills (list of offers they
-can lead), active status (can be deactivated without deletion).
+Has: name, color (for calendar display), **competences** (list of offers they
+can lead with a status: confirmed or learning), active status (can be deactivated without deletion).
 
 ### Mediation Offer (Offre de médiation)
 An activity proposed by the museum to visitors (guided tour, workshop,
 show, etc.). Has: name, duration, capacity, location, **setup time**
-(temps de mise en place), **teardown time** (temps de démontage). Can be:
+(temps de mise en place), **teardown time** (temps de démontage), **welcomeType** (type d’accueil). Can be:
 - **Reserved** (réservée) — booked by a visitor group via Secutix import
 - **Ad hoc** (ponctuelle) — entered manually, scheduled once without reservation
 
 No recurring offers exist in the current scope. All offers are unique
 instances.
 
+### Reservation vs Free Visit (Réservation)
+A **reservation** is any booked slot in the planning, including free visits
+(Accueil Libre) — a reservation CAN be a free visit without mediation
+escort. All Secutix imports are reservations. The distinction that matters
+for the planning is the offer's welcomeType (accompanied vs free), not
+reservation vs non-reservation.
+
+### Unprogrammed Offers (Offres non programmées)
+The offers listed at the bottom of the daily view, draggable onto the
+planning to create a manual slot. Labeled "Offres non programmées
+(glissables)" — they are NOT "free" offers (that name collides with
+"visites libres" / Accueil Libre). Free visits are a welcomeType; this lane
+is about scheduling, not escort.
+
+### Welcome Type (Type d’Accueil)
+Categorizes how an offer is managed in the planning. Values:
+- **Accueil Libre** : offer reservable without requiring a mediator assignment
+  (e.g., free-entry visits). Its slots display as **OK** (green) even when
+  unassigned — no mediator is needed, so no "to assign" state applies.
+- **Réservable encadrée par médiateur** : offer requiring a mediator assignment (e.g., guided tour).
+- **Animation par médiateur** : offer always requiring a mediator (e.g., educational workshop).
+
 ### Setup Time (Temps de mise en place)
 The time needed before an offer to prepare the activity (room, equipment).
-Part of the offer definition. When a mediator is assigned to a slot, the
-setup time extends the mediator's occupied time range before the offer
-start. Used for overlap detection.
+Defined on the offer (default value) and OVERRIDABLE PER SLOT: a slot created
+from an offer copies the offer's setup time, and coordinators can adjust it
+per reservation without touching the booking hours or unlocking the planning.
+The setup time extends the mediator's occupied block BEFORE the booking start.
+Used for overlap detection and planning display.
 
 ### Teardown Time (Temps de démontage)
 The time needed after an offer to clean up and store equipment.
-Part of the offer definition. When a mediator is assigned to a slot, the
-teardown time extends the mediator's occupied time range after the offer
-end. Used for overlap detection.
+Same per-slot override rules as setup time. Extends the mediator's occupied
+block AFTER the booking end.
+
+### Booking (Réservation)
+The PUBLIC-FACING time of a slot: the period during which visitors benefit
+from the offer. Stored as `slot.startTime`/`slot.endTime`, ALWAYS distinct
+from setup/teardown — the offer's `duration` is the booking duration,
+logistics extend around it and are never included in it. When dragging an
+offer onto the planning, the cursor aims at the booking start (snapped to the
+10-minute grid); the setup block extends before the cursor and the teardown
+block after the booking.
+
+### Total Block (Bloc total)
+The full planning footprint of a slot: setup + booking + teardown. Derived
+at display time by `getSlotTotalRange()` (slot values override offer
+values), never stored. Rendered as one block with red delimiters marking
+the booking start/end inside it.
+
+### Planning Status (État du planning)
+The single most important piece of information on a slot, displayed on the
+weekly view. Mutually exclusive states computed by
+`getSlotPlanningStatus()` in priority order:
+- **Unassigned** (❌, hatched red): no mediator on the slot
+- **Dispo issue** (🚫, red): no assigned mediator is available (absence
+  or overlap) — availability is evaluated BEFORE competence
+- **Incompetent** (⚠️, amber): available mediators hold no competence for
+  the offer
+- **Learning** (📚, pale yellow): no confirmed mediator, but a learning one
+- **OK** (✔️, green): at least one mediator available AND confirmed
+
+The weekly view shows a per-status count badge (toolbar), a legend below
+the grid, and slot details in a native tooltip.
 
 ### Slot (Créneau)
 An instance of an offer assigned to a date, time, and one or more
@@ -45,7 +98,11 @@ is not needed. Tracks:
 - `importSource`: e.g. "Secutix"
 - `importedAt`: timestamp of import
 - `modifiedAfterImport`: boolean, true if edited after import
-- `contractNumber`: unique identifier from Secutix (reserved slots only)
+- `contractNumber`: Secutix dossier d'achat (reserved slots only) — NOT
+  unique per slot, one contract covers several bookings
+- Booking details carried from Secutix (or manual entry): `groupName`,
+  `guide`, `location` (espace), `groupNature`, `contactName`,
+  `contactPhone`, `contactEmail`, `notes` (from "REMARQUE")
 
 ### Absence
 A mediator's unavailability. Has: type (leave, mission, training, sick,
@@ -104,19 +161,39 @@ Planning state preventing modifications to slots. Mediator assignment
 remains allowed in locked mode (mediator-only modal). Locking is
 instant, unlocking requires a confirmation warning.
 
+### Free Visits Lane
+Slots of offers with `welcomeType: Accueil Libre` (e.g., free-entry visits) are displayed in a dedicated lane above the mediator rows, labeled "Réservations visites libres". These slots require no mediator assignment and are always shown as OK (green). They are excluded from the unassigned count badge (X/N) and from mediator assignment workflows.
+
+The lane uses **parallel lanes** (up to 2 slots per lane) when multiple free-visit slots exist for the same day. Each lane is a separate `.daily-unassigned-row` with its own track. The lane label shows the count of free-visit slots vs. total slots for the day (e.g., "Réservations visites libres 3/12").
+
+Free-visit slots are rendered side-by-side (parallel lanes) when their time ranges overlap, similar to mediator rows for overlapping assignments. The lane has a fixed height of 32px per lane; additional lanes are stacked vertically.
+
+In the daily view, the unassigned badge shows "X/N" where N = total slots for the day and X = number of unassigned imported slots (excluding free visits).
+
+---
+
 ### Day Planning View (Vue planning du jour)
 A calendar view focused on a single day. Layout:
-- Rows: mediators (with cycle week label as a pill/badge to the right of
-  their name, e.g. "S1", "S2") plus two types of non-mediator lanes:
-  - **Unassigned lane**: imported offers not yet allocated to a mediator,
+- Rows: three lanes at the top, then mediators:
+  - **Unassigned lane** (top): imported offers not yet allocated to a mediator,
     shown only for the selected day, positioned on their time slot
-  - **Standard offers lane**: catalog of all standard offers (no time
+  - **Free visits lane** (second): slots of offers with `welcomeType: Accueil Libre`
+    (no mediator required). Green blocks, label "Libre". Counted in the unassigned
+    badge as "assigned" (X/N where N = all day slots, X excludes free visits).
+  - **Mediator rows**: active mediators (with cycle week label as a pill/badge
+    to the right of their name, e.g. "S1", "S2")
+    **Competence highlighting**: When a slot is selected (click or drag),
+    mediators are highlighted by competence for the slot's offer:
+    - Blue background: confirmed competence
+    - Yellow background: learning competence
+    - Hatched background: no competence
+  - **Standard offers lane** (bottom): catalog of all standard offers (no time
     positioning — these are not reservations). Draggable onto a mediator
     row + time position to create a manual slot (virtual reservation)
     using the offer's default duration. The offer stays in the lane for
     reuse. Filters will be added later.
 - Columns: time axis with thin lines every 10 minutes, thick lines every
-  hour
+  hour. The day column header displays the ISO week number (e.g. "S 37").
 - Display: mediator availability/unavailability (from work cycle + absences)
   as background, assigned offers as blocks
 - Slot block: visually divided into setup / offer / teardown zones with
@@ -127,13 +204,21 @@ A calendar view focused on a single day. Layout:
   - Drag-and-drop offers from unassigned lane to a mediator row to assign
   - Drag standard offer onto a mediator row + time position to create a
     manual slot (origin: manual, duration: offer default)
-  - Drag a slot edge to modify start/end time (same day only, no day change)
   - Drag a slot body to move it within the same day (no day change)
   - Duplicate a slot onto one or more other mediators — adds mediator to
     the same slot (multi-mediator assignment), not an independent copy
+  - Slots (imported or manual) are always draggable for mediator assignment
 - Conflict on overlap: warning shown, user must confirm to proceed.
   Conflict is visually highlighted (red hatching and/or red overlay).
 - Navigation: day tabs with prev/next/today buttons
+- **Lock toggle** ("Mode modification"): same switch as Weekly View
+  - Locked (default): imported slots open in mediator-only mode (assign only);
+    manual slots remain fully editable; standard offers remain draggable
+    to create manual slots
+  - Unlocked: all slots (imported and manual) fully editable (offer, date,
+    time, deletion); imported slots marked "modified after import" on save
+- Mediator selector in slot modal: sorted by competence (confirmed → learning
+  → none), then alphabetical within each group
 
 ### Competence (Compétence)
 The set of offers a mediator is qualified to lead. Each mediator-offer

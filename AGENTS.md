@@ -6,8 +6,8 @@ This file provides context, conventions, and rules for any AI coding agent
 ## Project Overview
 
 MediaPlan is a web application for managing mediation schedules at the
-Museum of Toulouse. It is **frontend-only** (no backend), with data in
-`localStorage`. The UI is in **French**. All documentation is in **English**.
+museum. It is **frontend-only** (no backend), with data in `localStorage`.
+The UI is in **French**. All documentation is in **English**.
 
 ## Tech Stack
 
@@ -17,7 +17,8 @@ Museum of Toulouse. It is **frontend-only** (no backend), with data in
 - **Vitest** — test runner (replaces node --test)
 - HTML5 / CSS3 (global stylesheets: style.css, calendar.css)
 - SheetJS (planned, not yet integrated — build dependency, not committed)
-- Caddy for serving static files in production
+- Caddy for serving static files in production (deployment details are kept
+  private, outside this repository)
 
 ## Project Structure
 
@@ -43,7 +44,8 @@ mediaplan/
 │   └── presentation/        # React components (UI glue)
 │       ├── DataContext.tsx  # Global state (Context API + useReducer)
 │       ├── Header.tsx
-│       ├── CalendarView.tsx
+│       ├── DailyView.tsx    # Day planning: mediators as rows, drag & drop
+│       ├── WeeklyView.tsx   # Weekly calendar grid
 │       ├── MediatorsView.tsx
 │       ├── OffersView.tsx
 │       ├── AbsencesView.tsx
@@ -54,6 +56,9 @@ mediaplan/
 │       ├── SlotModal.tsx
 │       ├── SlotDetailModal.tsx
 │       ├── AbsenceModal.tsx
+│       ├── MultiSelect.tsx
+│       ├── OfferPill.tsx
+│       ├── useElementWidth.ts # Responsive grid scaling hooks
 │       ├── DemoData.ts
 │       └── types.ts
 ├── test/                   # Vitest tests (domain + infrastructure)
@@ -113,7 +118,12 @@ mediaplan/
 
 - **Mediator**: staff member, has a color, skills (offers), active status
 - **Mediation Offer**: activity (tour, workshop, etc.) with duration, capacity,
-  location, optional setup/teardown time
+  location, optional setup/teardown time, and a **welcomeType**
+  ("Type d'accueil": `Accueil Libre` | `Réservable encadrée par médiateur` |
+  `Animation par médiateur`). An `Accueil Libre` offer requires NO mediator:
+  `getSlotPlanningStatus()` returns `ok` for its slots even when unassigned.
+  Defaults to `Réservable encadrée par médiateur`; legacy localStorage data
+  is migrated with the default on load.
 - **Schedule**: planning period, has a `locked` boolean
 - **Slot (Reservation)**: assignment of one or more mediators to an offer at a
   date/time. Tracks `origin` (manual/imported), `importSource`, `importedAt`,
@@ -125,25 +135,38 @@ mediaplan/
 
 - A mediator **cannot** be assigned to two overlapping slots on the same date
   (`hasMediatorOverlap()` enforces this).
+- Each slot carries a **planning status** (weekly view): unassigned >
+  dispo issue > incompetent > learning > OK — mutually exclusive,
+  availability before competence (`getSlotPlanningStatus()`). EXCEPTION:
+  slots of `Accueil Libre` offers are always `ok` — no mediator required.
 - Absences are **non-interactive** on the calendar (visual only,
   `pointer-events: none`).
 - Mediator assignment is always allowed (even when planning is locked) —
   opens a mediator-only modal in locked mode.
 - Modifying an imported slot marks it `modifiedAfterImport: true`.
 - The planning is **locked by default**. Unlocking requires a confirmation
-  warning. Locking is instant.
+  warning. Locking is instant. The lock protects reservations, NOT the
+  offer catalog.
+- Per-slot setup/teardown durations are editable **regardless of lock
+  state**; stored slot hours always remain the real booking period.
 - Overlapping slots are displayed **side-by-side** in parallel lanes within
-  day columns.
+  day columns (emoji-only summary when lanes are narrow).
 
 ### Demo Data
 
-- Generated relative to the current date: from start of previous month to end
-  of next month (~3 months).
-- 20 mediators, 70 offers, ~7 slots per weekday (weekdays only).
-- Majority of slots are origin `imported` from "Secutix".
-- 20 absences spread across the timeline.
+- Generated relative to the current date: from start of previous month to
+  **one year ahead** (~15 months).
+- 20 mediators, 70 offers, ~14 slots per weekday (weekdays only), ~4600 slots.
+- Slot mediators are picked from the pool of mediators **confirmed on the
+  offer** (mostly OK status); a deterministic subset is unassigned,
+  learning, or hits absences (all statuses represented).
+- Offers carry `setupTime`/`teardownTime` within {0, 5, 10, 15} min; slots
+  copy their offer's values. Slot booking hours equal the offer duration.
+- Absence patterns repeat across the whole span (~95-day cycles).
 - Some slots are unassigned, some are modified after import.
 - Reset button (🔄) in the header clears localStorage and regenerates demo data.
+- A distribution regression test (`test/seed-distribution.test.tsx`) guards
+  the OK-dominant, one-year-span invariants.
 
 ## Known Issues & Pitfalls
 
@@ -153,12 +176,13 @@ mediaplan/
 - Excel import/export (`src/infrastructure/excel.ts`) is a stub — not implemented.
 - The old `js/` directory is kept as reference for the vanilla→React migration.
   Do NOT modify it. New code goes in `src/`.
-- Caddy config not yet updated to serve `dist/` (still references old setup).
 
 ## Environment
 
-- VPS: Linux (RHEL/Rocky), public IP `31.70.143.152`
-- Caddy installed (v2.6.4) — to serve `dist/` as static files
+Environment and deployment details (VPS host, IP, Caddy version, paths) are
+deliberately **not** stored in this repository — it is public. The maintainer
+keeps them locally.
+
 - GitHub: `lcoulet/mediaplan`, branch `main`, MIT license
 - Local dev: `npm run dev` (Vite dev server on http://localhost:5173)
 - Production build: `npm run build` → `dist/` served by Caddy

@@ -9,6 +9,7 @@ import {
 } from '../domain/models';
 import type { Slot } from '../domain/types';
 import Modal from './Modal';
+import OfferPill from './OfferPill';
 
 interface Props {
   slot: Slot;
@@ -22,7 +23,7 @@ export default function SlotDetailModal({ slot, onClose }: Props) {
   const offer = data.offers.find((o) => o.id === slot.offerId);
   const mediator = data.mediators.find((m) => m.id === slot.mediatorIds[0]);
   const available = mediator
-    ? isMediatorAvailable(slot.mediatorIds[0], slot.date, slot.startTime, slot.endTime, data.absences)
+    ? isMediatorAvailable(slot.mediatorIds[0], slot.date, slot.startTime, slot.endTime, data.absences, data.halfDayConfig)
     : true;
 
   const originBadge = slot.origin === 'imported' ? (
@@ -43,7 +44,9 @@ export default function SlotDetailModal({ slot, onClose }: Props) {
       <div className="detail-view">
         <div className="detail-row">
           <span className="detail-label">Offre</span>
-          <span className="detail-value">{offer ? offer.name : '—'}</span>
+          <span className="detail-value">
+            {offer ? <OfferPill offer={offer} /> : '—'}
+          </span>
         </div>
         {offer?.description && (
           <div className="detail-row">
@@ -75,7 +78,7 @@ export default function SlotDetailModal({ slot, onClose }: Props) {
           <span className="detail-value">
             {mediator ? (
               <>
-                <span className="slot-mediator-dot" style={{ background: mediator.color || '#ccc' }}></span>
+                <span className="slot-mediator-glyph" style={{ color: mediator.color || '#ccc' }}>●</span>{' '}
                 {mediator.firstName} {mediator.lastName}
               </>
             ) : (

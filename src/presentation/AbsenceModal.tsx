@@ -37,11 +37,16 @@ export default function AbsenceModal({ absence, onClose }: Props) {
     const a: Absence = {
       ...form,
       notes: form.notes.trim(),
+      // startTime and endTime are managed automatically from halfDay
+      // Remove them from user input to avoid conflicts
     };
+    // Ensure we don't submit startTime/endTime from the form (they're derived)
+    const { startTime, endTime, ...absenceData } = a;
+    
     if (isEdit) {
-      crud({ type: 'UPDATE_ABSENCE', absence: a });
+      crud({ type: 'UPDATE_ABSENCE', absence: absenceData });
     } else {
-      crud({ type: 'ADD_ABSENCE', absence: a });
+      crud({ type: 'ADD_ABSENCE', absence: absenceData });
     }
     onClose();
   }
