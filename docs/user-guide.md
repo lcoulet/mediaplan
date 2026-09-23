@@ -264,11 +264,16 @@ MediaPlan se pilote au clavier : les touches ci-dessous fonctionnent partout dan
 | `←` / `→` | Vue Jour : jour précédent / suivant — vue Hebdo : semaine précédente / suivante (même jour de la semaine) |
 | `T` | Revenir à aujourd'hui (vues Jour et Hebdo) |
 | `N` | Créer un nouvel élément dans la vue courante : médiateur (`4`), offre (`5`) ou absence (`6`) — sans effet dans les autres vues |
+| `H` | Ouvrir / fermer le panneau **Historique** (même effet que le bouton « Historique » de l'en-tête) |
 | `?` | Ouvrir la documentation dans un nouvel onglet |
 | `Ctrl+Z` | Annuler la dernière modification |
 | `Ctrl+Shift+Z` ou `Ctrl+Y` | Rétablir |
 
 Les raccourcis ne s'exécutent pas avec les touches de modification (Ctrl, Alt, ⌘) : ces combinaisons restent réservées au navigateur et à l'annulation/rétablissement.
+
+### Panneau Historique
+
+Le bouton « Historique » de l'en-tête (ou la touche `H`) ouvre un panneau latéral qui liste les derniers états du planning, du plus récent au plus ancien : heure de la modification, action effectuée (créé, modifié, supprimé, import…) et un résumé des changements (nombre d'éléments ajoutés, supprimés ou modifiés, avec le détail par créneau). Cliquez sur une entrée pour revenir à cet état — les états annulés apparaissent en grisé et restent rétablissables. L'historique est conservé en mémoire : il est perdu au rechargement de la page.
 
 ### Liens et URLs
 

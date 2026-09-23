@@ -235,6 +235,20 @@ competence statuses.
 Assigning multiple mediators to a single slot beyond the required
 number, for training purposes. Allowed by the system.
 
+### History Entry (Entrée d'historique)
+One snapshot in the undo/redo ring: a deep-cloned AppData state plus
+in-memory metadata (a French action label stamped at commit time and a
+timestamp). Metadata is never persisted in AppData/localStorage — entries
+vanish on page reload (accepted design). Max 50 entries, oldest dropped
+(ADR-0004).
+
+### History Panel (Panneau Historique)
+Side panel (Header button « Historique » or the H shortcut) listing the
+history entries newest-first: time, action label and a change summary
+derived at display time by diffing adjacent snapshots. Clicking an entry
+moves the undo/redo pointer to that state; entries on the redo side are
+dimmed. In-memory only — lost on reload.
+
 ## Naming Conventions
 
 - The project name is **MediaPlan** (not Mediaplan, not Mediplan)
