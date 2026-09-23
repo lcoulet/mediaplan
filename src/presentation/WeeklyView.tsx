@@ -219,7 +219,7 @@ export default function WeeklyView() {
           <button className="btn btn-secondary" id="btn-next-week" onClick={() => changeWeek(1)}>
             →
           </button>
-          <button className="btn btn-secondary" id="btn-today" onClick={goToToday}>
+          <button className="btn btn-secondary" id="btn-today" onClick={goToToday} title="Aujourd'hui (T)">
             Aujourd'hui
           </button>
           {/* Weekly stats badge */}

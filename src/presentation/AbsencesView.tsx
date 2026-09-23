@@ -148,7 +148,7 @@ export default function AbsencesView() {
           )}
         </div>
         <div className="toolbar-right">
-          <button className="btn btn-primary" id="btn-add-absence" onClick={openAdd}>
+          <button className="btn btn-primary" id="btn-add-absence" onClick={openAdd} title="Ajouter une absence (N)">
             + Ajouter une absence
           </button>
         </div>

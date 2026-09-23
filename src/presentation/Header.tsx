@@ -6,15 +6,15 @@ import type { ViewName } from './types';
 import { getDefaultHalfDayConfig, migrateAbsencesToConfig } from '../domain/models';
 import type { Absence } from '../domain/types';
 
-const NAV_ITEMS: { view: ViewName; label: string }[] = [
-  { view: 'weekly', label: 'Plan Hebdo' },
-  { view: 'daily', label: 'Plan Jour' },
-  { view: 'reservations', label: 'Plan Accueil' },
-  { view: 'mediators', label: 'Médiateurs' },
-  { view: 'offers', label: 'Offres' },
-  { view: 'absences', label: 'Absences' },
-  { view: 'stats', label: 'Statistiques' },
-  { view: 'import-export', label: 'Import / Export' },
+const NAV_ITEMS: { view: ViewName; label: string; shortcut: string }[] = [
+  { view: 'weekly', label: 'Plan Hebdo', shortcut: '2' },
+  { view: 'daily', label: 'Plan Jour', shortcut: '1' },
+  { view: 'reservations', label: 'Plan Accueil', shortcut: '3' },
+  { view: 'mediators', label: 'Médiateurs', shortcut: '4' },
+  { view: 'offers', label: 'Offres', shortcut: '5' },
+  { view: 'absences', label: 'Absences', shortcut: '6' },
+  { view: 'stats', label: 'Statistiques', shortcut: '7' },
+  { view: 'import-export', label: 'Import / Export', shortcut: '8' },
 ];
 
 // Time selector component for half-day config
@@ -111,6 +111,7 @@ export default function Header() {
           <button
             key={item.view}
             className={`nav-btn ${state.currentView === item.view ? 'active' : ''}`}
+            title={`${item.label} (${item.shortcut})`}
             onClick={() => dispatch({ type: 'SET_VIEW', view: item.view })}
           >
             {item.label}
@@ -137,7 +138,7 @@ export default function Header() {
         <a
           className="icon-btn"
           id="btn-user-guide"
-          title="Ouvrir la documentation utilisateur"
+          title="Documentation (?)"
           href="guide/index.html"
           target="_blank"
           rel="noreferrer"

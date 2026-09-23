@@ -455,7 +455,7 @@ export default function DailyView() {
       <div className="toolbar">
         <div className="toolbar-left">
           <button className="btn btn-secondary" onClick={() => goToDay(-1)}>←</button>
-          <button className="btn btn-secondary" onClick={goToToday}>Aujourd'hui</button>
+          <button className="btn btn-secondary" onClick={goToToday} title="Aujourd'hui (T)">Aujourd'hui</button>
           <button className="btn btn-secondary" onClick={() => goToDay(1)}>→</button>
           <h2>
             <label className="date-picker-label" title="Changer la date">

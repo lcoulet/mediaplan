@@ -111,7 +111,7 @@ export default function OffersView() {
           )}
         </div>
         <div className="toolbar-right">
-          <button className="btn btn-primary" id="btn-add-offer" onClick={openAdd}>
+          <button className="btn btn-primary" id="btn-add-offer" onClick={openAdd} title="Ajouter une offre (N)">
             + Ajouter une offre
           </button>
         </div>

@@ -126,7 +126,7 @@ export default function MediatorsView() {
           )}
         </div>
         <div className="toolbar-right">
-          <button className="btn btn-primary" id="btn-add-mediator" onClick={openAdd}>
+          <button className="btn btn-primary" id="btn-add-mediator" onClick={openAdd} title="Ajouter un médiateur (N)">
             + Ajouter un médiateur
           </button>
         </div>
