@@ -6,7 +6,7 @@
 // apply the plan in a single history entry → summary with one-click undo.
 
 import { useMemo, useState } from 'react';
-import { useData } from './DataContext';
+import { useData, COMMIT_LABELS } from './DataContext';
 import { readSecutixFile } from '../infrastructure/secutix-reader';
 import {
   normalizeSecutixRows,
@@ -158,7 +158,7 @@ export default function SecutixImportPanel() {
     const next = applySecutixImport(state.data, plan, createdOffers);
     // One history entry: a single undo reverts the whole import
     dispatch({ type: 'SET_DATA', data: next });
-    commit(next);
+    commit(next, COMMIT_LABELS.secutixImport);
     setResult({ plan, ignoredCount: resolution.ignoredCount });
   }
 

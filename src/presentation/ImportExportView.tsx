@@ -1,7 +1,8 @@
 // ImportExportView.tsx — Export buttons + import file picker
 
 import { useState, useRef } from 'react';
-import { useData } from './DataContext';
+import { useData, COMMIT_LABELS } from './DataContext';
+
 import { exportJSON, importJSON } from '../infrastructure/store';
 import { exportExcel, importExcel } from '../infrastructure/excel';
 import { clearPlanningData } from '../domain/clear-data';
@@ -37,7 +38,7 @@ export default function ImportExportView() {
       // Try JSON import first, fall back to Excel
       if (selectedFile.name.endsWith('.json') || selectedFile.name.endsWith('.gz')) {
         const data = await importJSON(selectedFile);
-        commit(data);
+        commit(data, COMMIT_LABELS.jsonImport);
       } else {
         await importExcel(selectedFile);
       }
@@ -74,7 +75,7 @@ export default function ImportExportView() {
         'Annuler = Non, je fais d\'abord ma sauvegarde'
     );
     if (!backup) return;
-    commit(clearPlanningData(state.data, { clearMediators, clearOffers }));
+    commit(clearPlanningData(state.data, { clearMediators, clearOffers }), COMMIT_LABELS.clearData);
   }
 
   return (

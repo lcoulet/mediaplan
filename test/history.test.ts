@@ -153,4 +153,78 @@ describe('createHistory', () => {
     expect(h.undo()).toEqual({ v: 0 });
     expect(h.undo()).toBe(null);
   });
+
+  it('should store label and timestamp metadata on push', () => {
+    const h = createHistory<{ v: number }>();
+    h.init({ v: 0 });
+    const at = Date.now();
+    h.push({ v: 1 }, { label: 'Créneau créé', at });
+    const entries = h.getEntries();
+    expect(entries).toHaveLength(2);
+    expect(entries[0]).toEqual({ data: { v: 0 }, label: 'Modification', at: expect.any(Number) });
+    expect(entries[1]).toEqual({ data: { v: 1 }, label: 'Créneau créé', at });
+  });
+
+  it('should default the label to Modification and timestamp to now', () => {
+    const h = createHistory<{ v: number }>();
+    const before = Date.now();
+    h.init({ v: 0 });
+    h.push({ v: 1 });
+    const after = Date.now();
+    const entries = h.getEntries();
+    expect(entries[1].label).toBe('Modification');
+    expect(entries[1].at).toBeGreaterThanOrEqual(before);
+    expect(entries[1].at).toBeLessThanOrEqual(after);
+  });
+
+  it('getEntries should return deep clones (mutating them does not corrupt history)', () => {
+    const h = createHistory<{ slots: unknown[] }>();
+    h.init({ slots: [1] });
+    h.push({ slots: [1, 2] });
+    const entries = h.getEntries();
+    entries[1].data.slots.push(3);
+    expect(h.getCurrent()).toEqual({ slots: [1, 2] });
+    expect(h.getEntries()[1].data).toEqual({ slots: [1, 2] });
+  });
+
+  it('getEntries should reflect undo/redo pointer position', () => {
+    const h = createHistory<{ v: number }>();
+    h.init({ v: 0 });
+    h.push({ v: 1 }, { label: 'a', at: 100 });
+    h.push({ v: 2 }, { label: 'b', at: 200 });
+    expect(h.getPointer()).toBe(2);
+    h.undo();
+    expect(h.getPointer()).toBe(1);
+    expect(h.getEntries()).toHaveLength(3);
+    h.undo();
+    expect(h.getPointer()).toBe(0);
+    h.redo();
+    expect(h.getPointer()).toBe(1);
+  });
+
+  it('getPointer should be -1 before init', () => {
+    const h = createHistory();
+    expect(h.getPointer()).toBe(-1);
+  });
+
+  it('getEntries should drop redo states after a push following undo', () => {
+    const h = createHistory<{ v: number }>();
+    h.init({ v: 0 });
+    h.push({ v: 1 }, { label: 'a', at: 100 });
+    h.push({ v: 2 }, { label: 'b', at: 200 });
+    h.undo(); // at v:1
+    h.push({ v: 99 }, { label: 'c', at: 300 });
+    const entries = h.getEntries();
+    expect(entries.map((e) => e.label)).toEqual(['Modification', 'a', 'c']);
+  });
+
+  it('should keep metadata when enforcing max size (oldest entries dropped)', () => {
+    const h = createHistory<{ v: number }>(2);
+    h.init({ v: 0 });
+    h.push({ v: 1 }, { label: 'a', at: 100 });
+    h.push({ v: 2 }, { label: 'b', at: 200 });
+    expect(h.getSize()).toBe(2);
+    expect(h.getEntries().map((e) => e.label)).toEqual(['a', 'b']);
+    expect(h.getPointer()).toBe(1);
+  });
 });

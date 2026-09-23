@@ -12,7 +12,7 @@ import {
 import type { AppData, Mediator } from '../domain/types';
 import type { ViewName } from './types';
 import { createMediator, normalizeCompetences, parseLocalDate, toLocalDateString } from '../domain/models';
-import { createHistory, DEFAULT_HISTORY_SIZE } from '../domain/history';
+import { createHistory, DEFAULT_HISTORY_SIZE, type HistoryEntry } from '../domain/history';
 import { load, save, STORAGE_KEY } from '../infrastructure/store';
 import type { AppState, Action } from './types';
 import { seedDemoData } from './DemoData';
@@ -102,6 +102,33 @@ function getInitialState(): AppState {
 }
 
 // ---- Reducer ----
+
+// French action labels for the history ring, keyed by action type — the ONE
+// place CRUD commits get their display label (kept centralized so no string
+// literal scatters across components). Actions that commit without an
+// obvious label fall back to the domain default ('Modification').
+export const ACTION_LABELS: Record<string, string> = {
+  ADD_MEDIATOR: 'Médiateur ajouté',
+  UPDATE_MEDIATOR: 'Médiateur modifié',
+  DELETE_MEDIATOR: 'Médiateur supprimé',
+  ADD_OFFER: 'Offre ajoutée',
+  UPDATE_OFFER: 'Offre modifiée',
+  DELETE_OFFER: 'Offre supprimée',
+  ADD_SLOT: 'Créneau créé',
+  UPDATE_SLOT: 'Créneau modifié',
+  DELETE_SLOT: 'Créneau supprimé',
+  ADD_ABSENCE: 'Absence ajoutée',
+  UPDATE_ABSENCE: 'Absence modifiée',
+  DELETE_ABSENCE: 'Absence supprimée',
+  SET_HALF_DAY_CONFIG: 'Configuration des demi-journées',
+};
+
+// Labels for direct (non-CRUD-action) commit call sites
+export const COMMIT_LABELS = {
+  secutixImport: 'Import Secutix',
+  jsonImport: 'Import JSON',
+  clearData: 'Nettoyage des données',
+} as const;
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -243,8 +270,15 @@ export interface DataContextValue {
   undo: () => void;
   redo: () => void;
   resetData: () => void;
-  // commit: saves to localStorage + pushes to history
-  commit: (data?: AppData) => void;
+  // commit: saves to localStorage + pushes to history. The optional label
+  // is the French action name stored in the history entry metadata.
+  commit: (data?: AppData, label?: string) => void;
+  // Full history ring, oldest first — for the history panel. The provider
+  // re-reads it whenever the undo/redo capability state updates.
+  getHistoryEntries: () => HistoryEntry<AppData>[];
+  // Jump the undo/redo pointer to the entry at `index` (reuses undo/redo
+  // semantics: dispatches + persists every crossed state's data)
+  jumpTo: (index: number) => void;
   // body edit-mode class
 }
 
@@ -296,12 +330,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // commit: save to localStorage + push to history
+  // commit: save to localStorage + push to history (with a French label)
   const commit = useCallback(
-    (data?: AppData) => {
+    (data?: AppData, label?: string) => {
       const d = data ?? state.data;
       save(d);
-      history.push(d);
+      history.push(d, label ? { label, at: Date.now() } : undefined);
       updateUndoRedo();
     },
     [state.data, history, updateUndoRedo]
@@ -324,6 +358,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'REDO', data: next });
     updateUndoRedo();
   }, [history, updateUndoRedo]);
+
+  // Jump to the entry at `index` in the history ring by repeatedly applying
+  // the undo/redo semantics (each crossed state is dispatched + persisted,
+  // exactly like Ctrl+Z / Ctrl+Shift+Z pressed repeatedly).
+  const jumpTo = useCallback(
+    (index: number) => {
+      // Step one entry at a time so every crossed state goes through the
+      // same pointer semantics as undo/redo.
+      while (history.getPointer() !== index) {
+        const step = index > history.getPointer() ? history.redo() : history.undo();
+        if (!step) break; // out of range: stop at the ring boundary
+      }
+      const current = history.getCurrent();
+      if (!current) return;
+      save(current);
+      dispatch({ type: 'SET_DATA', data: current });
+      updateUndoRedo();
+    },
+    [history, updateUndoRedo]
+  );
+
+  // History ring snapshot for the panel — re-read after every pointer move
+  const getHistoryEntries = useCallback(() => history.getEntries(), [history]);
 
   // Reset demo data
   const resetData = useCallback(() => {
@@ -372,6 +429,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     redo,
     resetData,
     commit,
+    getHistoryEntries,
+    jumpTo,
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
@@ -471,8 +530,9 @@ export function useCRUD() {
         default:
           return; // non-CRUD action
       }
-      // Dispatch the action AND commit the computed next state
-      commit(nextData);
+      // Dispatch the action AND commit the computed next state with the
+      // centralized French label for this action type
+      commit(nextData, ACTION_LABELS[action.type]);
     },
     [state.data, dispatch, commit]
   );
