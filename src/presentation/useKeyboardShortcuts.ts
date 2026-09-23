@@ -9,6 +9,7 @@
 //   ←/→        previous/next day in daily view, ±7 days in weekly view
 //   T          jump to today (daily and weekly views)
 //   N          open the current view's "new entity" modal (mediators/offers/absences)
+//   H          open/close the history panel (same as the Header button)
 //   ?          open the user guide in a new tab
 //
 // Ctrl/Meta/Alt+<key> combinations are left to the browser and to the existing
@@ -63,6 +64,14 @@ export default function useKeyboardShortcuts() {
       // ? opens the user guide in a new tab (same target as the Header link)
       if (e.key === '?') {
         window.open('guide/index.html', '_blank');
+        return;
+      }
+
+      // H opens the history panel, reusing the Header's own button (the
+      // panel is a side panel, not a modal — isModalOpen stays accurate)
+      if (e.key === 'h' || e.key === 'H') {
+        const button = document.getElementById('btn-history');
+        if (button instanceof HTMLElement) button.click();
         return;
       }
 

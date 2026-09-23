@@ -934,3 +934,103 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
   font-weight: 400;
   margin-left: 8px;
 }
+
+/* ===== History panel ===== */
+.history-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 380px;
+  max-width: 90vw;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  z-index: 150; /* below modals (200), above the app content */
+  display: flex;
+  flex-direction: column;
+}
+
+.history-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.history-panel-header h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.history-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.history-entry {
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.history-entry:hover {
+  background: var(--color-bg, rgba(0, 0, 0, 0.03));
+}
+
+.history-entry.current {
+  border-color: var(--color-border);
+  background: rgba(0, 123, 255, 0.06);
+  font-weight: 600;
+}
+
+.history-entry.redo-side {
+  opacity: 0.5;
+}
+
+.history-entry-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.history-entry-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text, inherit);
+  font-size: 13px;
+}
+
+.history-entry-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-entry-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary, #0069d9);
+}
+
+.history-entry-summary {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  font-size: 13px;
+  font-weight: 400;
+  list-style: disc;
+}
+
+.history-entry-summary li {
+  margin: 1px 0;
+}
+
+.history-panel-footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--color-border);
+  font-size: 12px;
+  color: var(--color-text, inherit);
+  opacity: 0.7;
+}

@@ -657,3 +657,12 @@ export function formatImportDate(isoString: string | null | undefined): string {
     return '';
   }
 }
+
+// Format an epoch-milliseconds timestamp as a French clock time (HHhMM),
+// e.g. used by the history panel entry times.
+export function formatTimeFr(at: number): string {
+  const d = new Date(at);
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return `${h}h${m}`;
+}

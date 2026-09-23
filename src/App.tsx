@@ -1,8 +1,10 @@
 // App.tsx — Root component: composes header + view router
 
+import { useState } from 'react';
 import { DataProvider, useData } from './presentation/DataContext';
 import useKeyboardShortcuts from './presentation/useKeyboardShortcuts';
 import Header from './presentation/Header';
+import HistoryPanel from './presentation/HistoryPanel';
 import WeeklyView from './presentation/WeeklyView';
 import DailyView from './presentation/DailyView';
 import ReservationView from './presentation/ReservationView';
@@ -41,12 +43,17 @@ function ViewRouter() {
 }
 
 function App() {
+  // History panel open state — the Header button and the H shortcut both
+  // toggle it (the shortcut clicks the button, like the N shortcut does).
+  const [historyOpen, setHistoryOpen] = useState(false);
+
   return (
     <DataProvider>
-      <Header />
+      <Header onToggleHistory={() => setHistoryOpen((open) => !open)} />
       <main className="app-main">
         <ViewRouter />
       </main>
+      {historyOpen && <HistoryPanel onClose={() => setHistoryOpen(false)} />}
       <StatusBar />
     </DataProvider>
   );

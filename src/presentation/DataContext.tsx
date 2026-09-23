@@ -276,6 +276,8 @@ export interface DataContextValue {
   // Full history ring, oldest first — for the history panel. The provider
   // re-reads it whenever the undo/redo capability state updates.
   getHistoryEntries: () => HistoryEntry<AppData>[];
+  // Current pointer index in the ring, for marking the current entry
+  getHistoryPointer: () => number;
   // Jump the undo/redo pointer to the entry at `index` (reuses undo/redo
   // semantics: dispatches + persists every crossed state's data)
   jumpTo: (index: number) => void;
@@ -381,6 +383,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // History ring snapshot for the panel — re-read after every pointer move
   const getHistoryEntries = useCallback(() => history.getEntries(), [history]);
+  // Current pointer index in the ring, for marking the current entry
+  const getHistoryPointer = useCallback(() => history.getPointer(), [history]);
 
   // Reset demo data
   const resetData = useCallback(() => {
@@ -430,6 +434,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     resetData,
     commit,
     getHistoryEntries,
+    getHistoryPointer,
     jumpTo,
   };
 

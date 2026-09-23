@@ -38,7 +38,7 @@ function TimeSelector({ value, onChange }: { value: string; onChange: (value: st
   );
 }
 
-export default function Header() {
+export default function Header({ onToggleHistory }: { onToggleHistory: () => void }) {
   const { state, dispatch, canUndo, canRedo, undo, redo } = useData();
   const crud = useCRUD();
   const [showConfig, setShowConfig] = useState(false);
@@ -145,6 +145,14 @@ export default function Header() {
         >
           ?
         </a>
+        <button
+          className="icon-btn"
+          id="btn-history"
+          title="Historique (H)"
+          onClick={onToggleHistory}
+        >
+          Historique
+        </button>
         <button
           className="icon-btn"
           id="btn-settings"
