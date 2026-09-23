@@ -7,8 +7,8 @@ import { getDefaultHalfDayConfig, migrateAbsencesToConfig } from '../domain/mode
 import type { Absence } from '../domain/types';
 
 const NAV_ITEMS: { view: ViewName; label: string; shortcut: string }[] = [
-  { view: 'weekly', label: 'Plan Hebdo', shortcut: '2' },
   { view: 'daily', label: 'Plan Jour', shortcut: '1' },
+  { view: 'weekly', label: 'Plan Hebdo', shortcut: '2' },
   { view: 'reservations', label: 'Plan Accueil', shortcut: '3' },
   { view: 'mediators', label: 'Médiateurs', shortcut: '4' },
   { view: 'offers', label: 'Offres', shortcut: '5' },
