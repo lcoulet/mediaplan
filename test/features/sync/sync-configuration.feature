@@ -103,11 +103,15 @@ Fonctionnalité: Configuration de la synchronisation OneDrive
       | -5     |
       | 366    |
 
-  Scénario: Délai d'inactivité du dialogue de conflit par défaut à 5 minutes
+  # NOTE (spec): accepted timeout range decided 2026-09-25 — 30 s to 60 min,
+  # default 20 min. Out-of-range is rejected with an error message and the
+  # value is unchanged (no silent clamping), mirroring the poll-frequency field.
+
+  Scénario: Délai d'inactivité du dialogue de conflit par défaut à 20 minutes
     Etant donné que la synchronisation est connectée
     Quand je consulte le champ délai d'inactivité du dialogue de conflit de la section « Synchronisation OneDrive »
-    Alors le champ contient « 5 » avec l'unité « minutes »
-    Et le délai d'inactivité du dialogue de conflit effectif est de 5 minutes
+    Alors le champ contient « 20 » avec l'unité « minutes »
+    Et le délai d'inactivité du dialogue de conflit effectif est de 20 minutes
 
   Plan du scénario: Délai d'inactivité du dialogue de conflit saisi en secondes ou en minutes
     Etant donné que la synchronisation est connectée
@@ -118,24 +122,19 @@ Fonctionnalité: Configuration de la synchronisation OneDrive
     Exemples:
       | valeur | unité     | secondes |
       | 30     | secondes  | 30       |
-      | 2      | minutes   | 120      |
-      | 10     | minutes   | 600      |
-
-  # NOTE (spec): the accepted timeout range is not fixed in
-  # OPEN-QUESTIONS.md; the scenario below asserts the rejection STYLE
-  # (error message, value unchanged — no silent clamping), mirroring the
-  # poll-frequency field. Step definitions encode the accepted range.
+      | 5      | minutes   | 300      |
+      | 60     | minutes   | 3600     |
 
   Plan du scénario: Délai d'inactivité du dialogue de conflit hors bornes rejeté
     Etant donné que la synchronisation est connectée
-    Et que le délai d'inactivité du dialogue de conflit actuel est de 5 minutes
+    Et que le délai d'inactivité du dialogue de conflit actuel est de 20 minutes
     Quand je saisis « <valeur>» dans le champ délai d'inactivité du dialogue de conflit avec l'unité « <unité> »
-    Alors la valeur est refusée avec un message d'erreur indiquant la plage autorisée
-    Et le délai d'inactivité du dialogue de conflit reste à 5 minutes
+    Alors la valeur est refusée avec un message d'erreur indiquant la plage 30 secondes à 60 minutes
+    Et le délai d'inactivité du dialogue de conflit reste à 20 minutes
 
     Exemples:
       | valeur | unité   |
-      | 0      | minutes |
+      | 29     | secondes|
       | -30    | secondes|
       | 61     | minutes |
 

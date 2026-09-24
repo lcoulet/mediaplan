@@ -25,7 +25,7 @@ Fonctionnalité: Résolution des conflits de versions entières
     Et l'état local identique à l'état de base
     Et current.json sur le drive identique à l'état de base
     Et l'horloge fixée à 10:00:00
-    Et le délai d'inactivité du dialogue configuré à 5 minutes
+    Et le délai d'inactivité du dialogue configuré à 20 minutes
     Et le transport Graph simulé par les définitions d'étapes
 
   Scénario: Pas de conflit quand seul l'état local a changé
@@ -115,15 +115,15 @@ Fonctionnalité: Résolution des conflits de versions entières
     Alors la version perdante de Bob reste disponible dans les fichiers d'historique du dossier history/ du drive
     Et un coordinateur peut la retrouver dans history/ dans les 30 jours
 
-  Scénario: Délai d'inactivité configuré à 5 minutes par défaut
+  Scénario: Délai d'inactivité configuré à 20 minutes par défaut
     Etant donné que le dialogue de conflit s'ouvre à 10:00:00
-    Quand Alice ne répond pas pendant 4 minutes 59 secondes
+    Quand Alice ne répond pas pendant 19 minutes 59 secondes
     Alors le dialogue est toujours ouvert
     Et aucune version n'a été choisie automatiquement
 
   Scénario: Expiration du délai — synchronisation en pause et notification
     Etant donné que le dialogue de conflit s'ouvre à 10:00:00
-    Quand Alice ne répond pas pendant 5 minutes
+    Quand Alice ne répond pas pendant 20 minutes
     Alors le dialogue se ferme
     Et la synchronisation passe à l'état « En pause »
     Et une notification « Synchro en pause — divergence non résolue » est affichée
@@ -147,7 +147,7 @@ Fonctionnalité: Résolution des conflits de versions entières
     Alors le dialogue reste ouvert sans réinitialiser le chrono
     Et le temps restant est calculé depuis 10:00:00
     Quand l'horloge atteint 10:05:00
-    Alors le délai de 5 minutes est expiré
+    Alors le délai de 20 minutes est expiré
     Et la synchronisation passe à l'état « En pause » avec notification « Synchro en pause — divergence non résolue »
 
   Scénario: L'interrogation continue pendant le dialogue ouvert
