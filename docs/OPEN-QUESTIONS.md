@@ -144,7 +144,22 @@ Users: the coordinator team (Loic does not need access himself).
       registrations, fallback is registering a multi-tenant app from a
       personal Microsoft account — to confirm with the tenant admin (procedure
       sent to Loic 2026-09-24)
-- [ ] Which Microsoft account hosts the `/MediaPlan/` folder and how the team
-      members get access (shared folder vs same-tenant accounts)
 - [ ] Does M365 Business require admin consent for `Files.ReadWrite`
       delegated scope on this tenant?
+
+**Resolved (2026-09-24):**
+- [x] Folder hosting: the coordinator's M365 work account hosts `/MediaPlan/`;
+      the app creates the folder and an edit share link ("specific people")
+      that team members paste into their config. The app resolves the link
+      once via the Graph `shares` API, stores driveId/itemId, then addresses
+      the shared folder directly. Team members connect their own accounts
+      from the same M365 tenant
+- [x] Author attribution: each history file is stamped with the display name
+      from the signed-in user's token
+- [x] Read-only sharing for mediators (phase 2): a SEPARATE published folder
+      (distinct from the collaboration folder) with different content —
+      mediators must NOT see other people's absences (HR-sensitive data),
+      nor necessarily the whole planning/stats. Publication = filtered
+      extract (own assignments + public planning), shared read-only. Details
+      (exact content, granularity, per-mediator files vs one file) to be
+      defined in phase 2
