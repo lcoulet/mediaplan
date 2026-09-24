@@ -4,7 +4,10 @@
 # References: ADR-0015 (whole-version conflict, manual choice, bidirectional
 #            undo, dialog behavior: timeout, live update, connection drop),
 #            ADR-0004 (undo/redo full snapshots, 50 entries),
-#            docs/OPEN-QUESTIONS.md — "OneDrive Synchronization".
+#            docs/OPEN-QUESTIONS.md — "OneDrive Synchronization"
+#            (incl. "Resolved 2026-09-25": "Save now" disabled while the
+#            dialog is open; "Garder la version partagée" writes no new
+#            drive history file).
 #
 # NOTE (implementation): the transport (Microsoft Graph API) is MOCKED in
 # step definitions. The base/local/remote triple is a pure domain input:
@@ -62,11 +65,31 @@ Fonctionnalité: Résolution des conflits de versions entières
     Et un fichier d'historique est écrit sur le drive pour cet envoi
     Et le dialogue se ferme
 
+  # Resolved 2026-09-25 (docs/OPEN-QUESTIONS.md): "Save now" is DISABLED
+  # while the conflict dialog is open — no queue, no dialog trigger.
+  # French UI label: « Sauvegarder maintenant ».
+
+  Scénario: Le bouton « Save now » désactivé pendant le dialogue de conflit ouvert
+    Etant donné que le dialogue de conflit est ouvert
+    Quand Alice consulte le bouton « Save now » (« Sauvegarder maintenant »)
+    Alors le bouton est désactivé tant que le dialogue est ouvert
+    Et le clic sur le bouton n'a aucun effet — ni envoi immédiat, ni mise en file d'attente
+    Quand Alice clique sur « Garder ma version »
+    Alors le dialogue se ferme
+    Et le bouton « Save now » est à nouveau activé
+
+  # Resolved 2026-09-25 (docs/OPEN-QUESTIONS.md): choosing the shared
+  # version writes NO new drive history file (the drive already holds
+  # that version); the losing local version stays in the local undo
+  # stack (50 entries).
+
   Scénario: Choix « Garder la version partagée »
     Etant donné que le dialogue de conflit est ouvert avec la version partagée de Bob
     Quand Alice clique sur « Garder la version partagée »
     Alors l'état local complet est remplacé par la version de Bob
     Et aucun envoi n'est nécessaire car le drive contient déjà cette version
+    Et aucun nouveau fichier d'historique n'est écrit dans le dossier history/ du drive
+    Et la version locale perdante d'Alice reste disponible dans la pile d'annulation locale (50 entrées)
     Et le dialogue se ferme
     Et l'état de base synchronisé devient la version de Bob
 

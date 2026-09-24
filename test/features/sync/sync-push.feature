@@ -2,8 +2,11 @@
 # Capability: OneDrive sync — push (local -> drive)
 # Phase 1: coordinator collaboration.
 # References: ADR-0014 (push: debounced 5 s after last local mutation +
-#            manual "save now"; history/ file per effective push, 30-day
-#            purge), docs/OPEN-QUESTIONS.md — "OneDrive Synchronization".
+#            manual "save now"; history/ file per effective push,
+#            purge with configurable retention), docs/OPEN-QUESTIONS.md
+#            — "OneDrive Synchronization" (incl. "Resolved 2026-09-25":
+#            ISO 8601 UTC filename with ':' replaced by '-';
+#            configurable retention, default 30 days, bounds 1-365).
 #
 # NOTE (implementation): the transport (Microsoft Graph API) is MOCKED in
 # step definitions. Writes to current.json and history/ are simulated in
@@ -49,10 +52,12 @@ Fonctionnalité: Envoi des modifications locales vers OneDrive
   Scénario: Nom du fichier d'historique selon le motif horodatage-auteur
     Quand Alice clique sur le bouton « Save now » à 10:00:00 le 24 sept. 2026
     Alors un fichier d'historique est écrit dans le dossier history/ du drive
-    Et le nom du fichier suit le motif <horodatage-ISO>_<utilisateur>.json
-    Et le nom du fichier commence par l'horodatage ISO 2026-09-24T10:00:00
+    Et le nom du fichier suit le motif <horodatage-ISO-UTC>_<utilisateur>.json
+    Et l'horodatage est encodé en ISO 8601 UTC avec « : » remplacé par « - »
+    Et le nom du fichier commence par l'horodatage 2026-09-24T10-00-00Z
     Et le nom du fichier contient le nom d'auteur « Alice » issu du jeton connecté
     Et le nom du fichier se termine par .json
+    Et le tri alphabétique des fichiers d'historique correspond au tri chronologique
 
   Scénario: Un fichier d'historique par envoi effectif
     Quand Alice modifie un créneau et l'envoi différé aboutit
@@ -60,12 +65,22 @@ Fonctionnalité: Envoi des modifications locales vers OneDrive
     Alors le dossier history/ du drive contient exactement 2 fichiers d'historique
     Et chaque fichier correspond à un envoi effectif distinct
 
-  Scénario: Purge des fichiers d'historique de plus de 30 jours
-    Etant donné que le dossier history/ du drive contient un fichier d'historique écrit il y a 31 jours
+  Scénario: Purge des fichiers d'historique selon la rétention configurable
+    Etant donné que la rétention de l'historique est configurée à 30 jours
+    Et que le dossier history/ du drive contient un fichier d'historique écrit il y a 31 jours
     Et un fichier d'historique écrit il y a 15 jours
     Quand un nouvel envoi effectif a lieu
     Alors le fichier de plus de 30 jours est supprimé du dossier history/
     Et le fichier de moins de 30 jours est conservé
+
+  Scénario: Purge déclenchée à chaque envoi effectif et paramétrée par le champ de rétention
+    Etant donné que la rétention de l'historique est configurée à 10 jours
+    Et que le champ rétention de l'historique existe dans la section « Synchronisation OneDrive » de la vue Configuration
+    Et que le dossier history/ du drive contient un fichier d'historique écrit il y a 11 jours
+    Et un fichier d'historique écrit il y a 9 jours
+    Quand un nouvel envoi effectif a lieu
+    Alors le fichier de plus de 10 jours est supprimé du dossier history/
+    Et le fichier de moins de 10 jours est conservé
 
   Scénario: Aucun envoi quand la synchronisation est désactivée
     Etant donné que l'interrupteur de synchronisation est désactivé

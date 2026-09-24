@@ -65,6 +65,80 @@ Fonctionnalité: Configuration de la synchronisation OneDrive
       | 20     | minutes   |
       | 0      | secondes  |
 
+  # Resolved 2026-09-25 (docs/OPEN-QUESTIONS.md): configurable history
+  # retention (default 30 days, bounds 1-365, out-of-range rejected with
+  # an error, value unchanged) and configurable conflict no-response
+  # timeout (default 5 min, same validation style). Both fields live in
+  # the Sync section of the Configuration view, next to the poll
+  # frequency.
+
+  Scénario: Rétention de l'historique par défaut à 30 jours
+    Etant donné que la synchronisation est connectée
+    Quand je consulte le champ rétention de l'historique de la section « Synchronisation OneDrive »
+    Alors le champ contient « 30 » avec l'unité « jours »
+    Et la rétention de l'historique effective est de 30 jours
+
+  Plan du scénario: Rétention de l'historique dans les bornes acceptée
+    Etant donné que la synchronisation est connectée
+    Quand je saisis « <valeur>» dans le champ rétention de l'historique avec l'unité « jours »
+    Alors la rétention de l'historique effective est de « <jours> » jours
+    Et la nouvelle valeur est conservée après rechargement de la page
+
+    Exemples:
+      | valeur | jours |
+      | 1      | 1     |
+      | 90     | 90    |
+      | 365    | 365   |
+
+  Plan du scénario: Rétention de l'historique hors bornes rejetée
+    Etant donné que la synchronisation est connectée
+    Et que la rétention de l'historique actuelle est de 30 jours
+    Quand je saisis « <valeur>» dans le champ rétention de l'historique avec l'unité « jours »
+    Alors la valeur est refusée avec un message d'erreur indiquant la plage 1 à 365 jours
+    Et la rétention de l'historique reste à 30 jours
+
+    Exemples:
+      | valeur |
+      | 0      |
+      | -5     |
+      | 366    |
+
+  Scénario: Délai d'inactivité du dialogue de conflit par défaut à 5 minutes
+    Etant donné que la synchronisation est connectée
+    Quand je consulte le champ délai d'inactivité du dialogue de conflit de la section « Synchronisation OneDrive »
+    Alors le champ contient « 5 » avec l'unité « minutes »
+    Et le délai d'inactivité du dialogue de conflit effectif est de 5 minutes
+
+  Plan du scénario: Délai d'inactivité du dialogue de conflit saisi en secondes ou en minutes
+    Etant donné que la synchronisation est connectée
+    Quand je saisis « <valeur>» dans le champ délai d'inactivité du dialogue de conflit avec l'unité « <unité> »
+    Alors le délai d'inactivité effectif est de « <secondes> » secondes
+    Et la nouvelle valeur est conservée après rechargement de la page
+
+    Exemples:
+      | valeur | unité     | secondes |
+      | 30     | secondes  | 30       |
+      | 2      | minutes   | 120      |
+      | 10     | minutes   | 600      |
+
+  # NOTE (spec): the accepted timeout range is not fixed in
+  # OPEN-QUESTIONS.md; the scenario below asserts the rejection STYLE
+  # (error message, value unchanged — no silent clamping), mirroring the
+  # poll-frequency field. Step definitions encode the accepted range.
+
+  Plan du scénario: Délai d'inactivité du dialogue de conflit hors bornes rejeté
+    Etant donné que la synchronisation est connectée
+    Et que le délai d'inactivité du dialogue de conflit actuel est de 5 minutes
+    Quand je saisis « <valeur>» dans le champ délai d'inactivité du dialogue de conflit avec l'unité « <unité> »
+    Alors la valeur est refusée avec un message d'erreur indiquant la plage autorisée
+    Et le délai d'inactivité du dialogue de conflit reste à 5 minutes
+
+    Exemples:
+      | valeur | unité   |
+      | 0      | minutes |
+      | -30    | secondes|
+      | 61     | minutes |
+
   Scénario: Identifiant client requis avant connexion
     Etant donné que le champ identifiant client est vide
     Quand je saisis « 0000-aaaa-bbbb-1111 » dans le champ identifiant client
