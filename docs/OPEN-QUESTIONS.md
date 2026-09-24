@@ -181,6 +181,8 @@ Users: the coordinator team (Loic does not need access himself).
       version stays in the local undo stack (50 entries)
 - [x] Conflict timeout setting location: Sync section of the Configuration
       view, next to the poll frequency
+- [x] Conflict timeout accepted range: 30 s – 60 min, default 20 min,
+      configurable; out-of-range rejected with error, value unchanged
 - [x] History purge: configurable retention (default 30 days, bounds
       1–365 days, field in the Configuration view), triggered on each
       effective push
