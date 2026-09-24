@@ -169,15 +169,20 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
     <h1 class="app-title">MediaPlan</h1>
     <span class="app-subtitle">Gestion des plannings de médiation — Museum</span>
   </div>
-  <nav class="header-nav">
-    <button class="nav-btn" type="button">Plan Hebdo</button>
+  <nav class="header-nav" aria-label="Navigation principale">
+    <button class="nav-btn" type="button">Plan Jour</button>
+    <button class="nav-btn active" aria-current="page" type="button">Plan Hebdo</button>
+    <button class="nav-btn" type="button">Plan Accueil</button>
     <button class="nav-btn" type="button">Médiateurs</button>
     <button class="nav-btn" type="button">Offres</button>
     <button class="nav-btn" type="button">Absences</button>
-    <button class="nav-btn active" type="button">Configuration</button>
+    <button class="nav-btn" type="button">Statistiques</button>
     <button class="icon-btn" type="button" title="Annuler (Ctrl+Z)" aria-label="Annuler">↶</button>
     <button class="icon-btn" type="button" title="Rétablir (Ctrl+Shift+Z)" aria-label="Rétablir">↷</button>
     <button class="icon-btn" type="button" title="Historique (H)" aria-label="Historique">Historique</button>
+    <button class="icon-btn" type="button" title="Importer un fichier Secutix" aria-label="Import Secutix"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm8.5 2.5a.5.5 0 0 0-1 0v1.793l-.646-.647a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l1.5-1.5a.5.5 0 1 0-.708-.708l-.646.647V4.5z"/><path d="M3.5 11a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-9z"/></svg></button>
+    <button class="icon-btn" type="button" title="Configuration" aria-label="Configuration"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zm0 5.054a1.808 1.808 0 1 1 0-3.616 1.808 1.808 0 0 1 0 3.616z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.892 3.434-.901 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.892-1.64-.901-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.292-.159a1.873 1.873 0 0 0-2.692 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.693-1.115l-.291.16c-.764.415-1.6-.42-1.184-1.185l.159-.292a1.873 1.873 0 0 0-1.116-2.692l-.318-.094c-.835-.246-.835-1.428 0-1.674l.319-.094a1.873 1.873 0 0 0 1.115-2.693l-.16-.291c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.116l.094-.318z"/></svg></button>
+    <a class="icon-btn" href="#" title="Documentation" aria-label="Documentation">?</a>
   </nav>
 </header>
 
