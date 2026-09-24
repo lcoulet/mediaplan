@@ -89,3 +89,62 @@ weeks 39–51, analyzed locally, never committed):**
       section "Work Cycles") — how do they interact with the existing
       Absence entity for display?
 - [ ] Should the count columns (per-day presence totals) be reproduced?
+
+## OneDrive Synchronization (synchro cloud collaborative)
+
+Frontend-only collaboration via Microsoft Graph API (PKCE OAuth, no backend).
+Users: the coordinator team (Loic does not need access himself).
+
+**Established so far (decided 2026-09-24):**
+- [x] Storage: a `/MediaPlan/` folder at the OneDrive root, created by the app
+      on first setup: `current.json` (reference state) + `history/` with one
+      timestamped file per effective push (`<ISO-timestamp>_<user>.json`),
+      purged automatically after 30 days
+- [x] OneDrive native versioning is NOT relied upon (retention/config is
+      tenant-dependent and uncontrollable) — the app writes its own history
+      files instead
+- [x] Push: automatic, debounced (5 s after the last local mutation) + manual
+      "Save now" button
+- [x] Pull: polling `current.json` (ETag/If-None-Match), frequency configurable
+      10 s – 15 min, default 30 s, entered in seconds or minutes
+- [x] Conflict model: whole-version comparison (no per-entity merge).
+      Divergence = local state and remote state both changed since the last
+      synced common state
+- [x] Conflict dialog shows both versions with their last-modified
+      date/time and author: "Garder ma version" vs "Garder la version
+      partagée". Either choice is undoable in both directions (the history
+      files keep both versions, undo/redo navigates between them)
+- [x] Conflict dialog behavior:
+  - Configurable no-response timeout (e.g. 5 min). Timer does NOT reset
+    when the remote changes
+  - Polling CONTINUES while the dialog is open: if new remote versions
+    arrive, the dialog updates live ("N nouvelles versions sur le drive",
+    details of the latest proposed version) — same UX as reconnecting after
+    offline changes
+  - On timeout: sync pauses with a notification ("Synchro en pause —
+    divergence non résolue"), re-prompted only when the user re-enables
+  - If the connection drops while the dialog is open, the dialog CLOSES
+    cleanly and sync pauses
+- [x] Reconnection: silent token refresh from the refresh token (localStorage);
+      on repeated 401 a yellow banner "Session cloud expirée" with a
+      reconnect button (local editing never blocked); full OAuth popup only
+      on first setup or manual reconnect; NO automatic retry loops
+- [x] Offline: localStorage stays the source of truth; sync pauses on network
+      loss and auto-resumes with backoff on reconnect; local editing is
+      never blocked
+- [x] UI: the Import/Export view becomes a **Configuration** view with
+      sub-sections: Secutix import, OneDrive sync (connect/disconnect, poll
+      frequency, status, last sync time), half-day configuration (moved from
+      its current location). The header gets a sync toggle + status button,
+      disabled when sync is not configured or in error
+- [x] Accounts: support both OneDrive Personal and M365 Business (work/school)
+
+**Open questions:**
+- [ ] App registration location: if the museum M365 tenant blocks user app
+      registrations, fallback is registering a multi-tenant app from a
+      personal Microsoft account — to confirm with the tenant admin (procedure
+      sent to Loic 2026-09-24)
+- [ ] Which Microsoft account hosts the `/MediaPlan/` folder and how the team
+      members get access (shared folder vs same-tenant accounts)
+- [ ] Does M365 Business require admin consent for `Files.ReadWrite`
+      delegated scope on this tenant?

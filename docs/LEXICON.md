@@ -150,6 +150,13 @@ the daily briefing with mediators via Excel export or paper printout.
 The museum's reservation/ticketing system. Exports planning data as
 Excel files that MediaPlan imports to create reserved slots.
 
+### OneDrive (Microsoft Graph)
+Cloud storage used for collaborative multi-user synchronization.
+Accessed frontend-only via OAuth 2.0 PKCE (no backend). Each client pushes
+its state to `current.json` in a shared `/MediaPlan/` folder and polls
+for remote changes; conflicts are surfaced to the user (whole-version
+choice, undoable both ways).
+
 ## Concepts
 
 ### Overlap (Chevauchement)
