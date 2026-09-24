@@ -1,6 +1,46 @@
 # TODO — MediaPlan
 
-## Mediator Annual Planning View (next)
+## OneDrive Sync (current — phase 1: coordinator collaboration)
+
+Specs done (ADR-0014/0015, 86 Gherkin scenarios in test/features/sync/,
+mockups in docs/mockups/sync/ reviewed GO-WITH-FIXES and fixed).
+
+- [ ] Implementation slice 1 — sync domain foundations (TDD, pure logic):
+  - [ ] Types: SyncConfig, SyncState, version metadata (base/local/remote)
+  - [ ] Config store (localStorage) with bounds validation:
+        poll 10 s–15 min (default 30 s), conflict timeout 30 s–60 min
+        (default 20 min), retention 1–365 days (default 30)
+  - [ ] Conflict detection: divergence = local AND remote both changed
+        since last synced base (whole-version comparison, no merge)
+  - [ ] History filename: ISO 8601 UTC, `:` → `-`
+        (e.g. `2026-09-24T14-30-05Z_loic.json`)
+- [ ] Implementation slice 2 — auth + transport (infrastructure):
+  - [ ] PKCE OAuth module (authorize, code exchange, silent refresh
+        60 s before expiry, 2 consecutive 401 → sync disabled)
+  - [ ] Share-link resolution via Graph `shares` API (driveId/itemId)
+  - [ ] Diagnostics: sync journal, token status, raw Graph errors
+- [ ] Implementation slice 3 — push/pull engine:
+  - [ ] Debounced push (5 s) + "Sauvegarder maintenant" (disabled while
+        conflict dialog open)
+  - [ ] Poll with ETag/If-None-Match at configured frequency
+  - [ ] History file per effective push + 30-day purge on each push
+  - [ ] Offline: pause + backoff resume; local editing never blocked
+- [ ] Implementation slice 4 — UI:
+  - [ ] Configuration view (ex-Import/Export): Secutix, OneDrive sync
+        section (all fields), Données (JSON.gz + delete), demi-journées
+  - [ ] Header restructure: 7 view buttons, gear = Configuration,
+        Secutix import icon, help (?) last, sync pill bar below header
+  - [ ] Conflict dialog (both versions + authors/dates, live
+        "N nouvelles versions" banner, non-resetting 20-min countdown,
+        ✕ = explicit pause-without-choosing)
+  - [ ] History Panel: "Historique partagé" group (on-demand load,
+        50 cap, restore = undoable + push)
+- [ ] De-risk remaining: museum M365 tenant checklist (app registration,
+      admin consent) — with the coordinator
+- [ ] De-risk optional: shared-folder link resolution test (extend
+      public/sync-test.html with a 6th test resolving an edit share link)
+
+## Mediator Annual Planning View
 
 - [ ] New view "Planning médiateurs": annual grid (year switchable)
   - Rows: days of the year (with standard ISO week numbers, e.g. "S38")
@@ -12,18 +52,6 @@
   target layout
 - [ ] TDD: week numbering (ISO 8601), cycle rotation, half-day cell state
   computation (cycle + absence overlay)
-
-## Reservation Planning View (day list)
-
-- [x] New view "Plan Accueil": same day-based navigation as the
-  daily view, but a chronological LIST of the day's reservations instead of
-  a time grid (`src/presentation/ReservationView.tsx`)
-  - Rows: slots sorted by ascending block start (setup start, not booking
-    start) — `sortSlotsByBlockStart()` in `src/domain/models.ts`
-  - Left lane: assigned mediators (names/colors) of each slot
-  - Right: slot booking summary (Secutix-style, `formatSlotBookingSummary`)
-  - No time axis (no px/hour positioning, no drag & drop)
-  - [x] TDD: setup-aware sort key computation
 
 ## Competence Visibility (next)
 
@@ -47,10 +75,9 @@
 
 ## Export Format (V1 sharing)
 
-- [ ] Update exportJSON to produce `.json.gz` (compressed)
-- [ ] Include last-modified timestamp in filename (e.g. `mediaplan_2026-09-17_1430.json.gz`)
-- [ ] Include last-modified timestamp in file metadata
-- [ ] Import: compare timestamps (filename + local data) to warn if importing older data
+- [x] Update exportJSON to produce `.json.gz` (compressed)
+- [x] Include last-modified timestamp in filename (e.g. `mediaplan_2026-09-17_1430.json.gz`)
+- [x] Import: compare timestamps (filename + local data) to warn if importing older data
 
 ## Excel Import/Export
 
@@ -60,19 +87,6 @@
 - [x] Implement Secutix import using SheetJS (`src/infrastructure/secutix-reader.ts`
   + `src/domain/secutix-import.ts` + Secutix panel in the Import/Export view)
 - [ ] Implement Excel import for coordination files (configurable column mapping)
-- [x] Secutix synchronization logic:
-  - Skip rows with theme "G/ Droit d'accès" (entry fees — not mediation)
-  - Deduplicate with the composite key (contract + offer + date + time +
-    group name) — the dossier d'achat alone covers several slots
-  - Booking times from the file take priority over the offer's default
-    duration
-  - Update modified reservations (headcount, time)
-  - Remove cancelled reservations (not in the Secutix file): the slot is
-    deleted from the planning, recoverable via the import's undo
-  - Preserve mediator assignments where possible
-  - Offer reconciliation UX: an imported THÈME matching no offer blocks
-    the import; the user maps the label to an existing offer or creates
-    the offer from the label
 - [x] Obtain sample files (Secutix done — analyzed locally; coordination
   format still to be provided) to define column mappings
 
@@ -92,22 +106,27 @@
 - [ ] Allow learning mediator as sole assignment (exception, with warning)
 - [ ] Slot resize by dragging block edges (daily view)
 
+## User Documentation (user-docs skill)
+
+- [ ] Generate the user guide with screenshots (headless browser captures)
+- [ ] Wire the in-app help (?) to the generated guide
+
 ## Testing
 
 - [ ] Set up CI to run tests on push (GitHub Actions)
 
-## V2 — Server & Sync (future)
+## V2 — Server & Sync (future — superseded by OneDrive sync for V1.x)
 
 - [ ] Design server API for encrypted blob storage
 - [ ] Implement client-side encryption (envelope encryption — proposed)
 - [ ] Implement coordinator key pair generation (WebCrypto API)
 - [ ] Implement versioning + conflict detection (metadata in clear)
-- [ ] Implement conflict alert UI (timestamps + manual choice)
 - [ ] V3: visual diff comparison for conflicts
 
 ## Features (Future)
 
 - [ ] Schedule entity management (create/edit/delete schedules as distinct objects)
-- [ ] Statistics and dashboards
-- [ ] Read-only mediator view
+- [x] Statistics and dashboards
+- [ ] Read-only mediator view (phase 2 of OneDrive sync: separate published
+      folder with filtered content — no other people's absences)
 - [ ] Authentication
