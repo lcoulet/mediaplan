@@ -139,13 +139,7 @@ Users: the coordinator team (Loic does not need access himself).
       disabled when sync is not configured or in error
 - [x] Accounts: support both OneDrive Personal and M365 Business (work/school)
 
-**Open questions:**
-- [ ] App registration location: if the museum M365 tenant blocks user app
-      registrations, fallback is registering a multi-tenant app from a
-      personal Microsoft account — to confirm with the tenant admin (procedure
-      sent to Loic 2026-09-24)
-- [ ] Does M365 Business require admin consent for `Files.ReadWrite`
-      delegated scope on this tenant?
+**Resolved (2026-09-25 — spec-level ambiguities):**
 
 **Resolved (2026-09-24):**
 - [x] Folder hosting: the coordinator's M365 work account hosts `/MediaPlan/`;
@@ -207,3 +201,13 @@ Users: the coordinator team (Loic does not need access himself).
       left-aligned; the help (?) link is the last header element. The
       half-day settings move out of the gear popup into the Configuration
       view
+- [x] PKCE connection DE-RISKED (2026-09-25): the frontend-only flow
+      validated end-to-end with a personal Microsoft account on the test
+      page (public/sync-test.html, served at
+      https://test-mediaplan.coulet.me/sync-test.html): authorize →
+      code exchange (browser-direct POST, CORS OK) → token → 5 Graph
+      tests passed (profile /me, drive root, read children, write test
+      file, delete test file). ADR-0014 is proven feasible as specced.
+      Remaining risk: the museum M365 tenant policies (app registration
+      restrictions, admin consent) — checklist with the coordinator
+      pending
