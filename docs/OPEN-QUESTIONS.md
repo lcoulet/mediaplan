@@ -163,3 +163,32 @@ Users: the coordinator team (Loic does not need access himself).
       extract (own assignments + public planning), shared read-only. Details
       (exact content, granularity, per-mediator files vs one file) to be
       defined in phase 2
+
+**Resolved (2026-09-25 — spec-level ambiguities):**
+- [x] History filename timestamp encoding: ISO 8601 UTC with `:` replaced
+      by `-` (e.g. `2026-09-24T14-30-05Z_loic.json`) — sorts
+      alphabetically = chronologically, no timezone ambiguity (users never
+      pick the file by hand)
+- [x] "Save now" during a pending conflict: the button is DISABLED while
+      the conflict dialog is open (no queue, no dialog trigger)
+- [x] Out-of-range poll frequency: rejected with an error message, value
+      unchanged (no silent clamping)
+- [x] Repeated-401 threshold: 2 consecutive 401s disable sync (the first
+      may be a mid-refresh expiry)
+- [x] Proactive token refresh margin: 60 s before expiry
+- [x] Choosing "Garder la version partagée" does NOT write a new drive
+      history file (the drive already holds that version); the losing local
+      version stays in the local undo stack (50 entries)
+- [x] Conflict timeout setting location: Sync section of the Configuration
+      view, next to the poll frequency
+- [x] History purge: configurable retention (default 30 days, bounds
+      1–365 days, field in the Configuration view), triggered on each
+      effective push
+- [x] Drive versions in the History Panel: the panel gains a second group
+      "Historique partagé" listing drive history/ files (date/time +
+      author), loaded on demand when the panel opens (one Graph call, no
+      extra polling). Restoring a drive version = load file, apply as
+      local state (undoable entry), then a normal push (append-only
+      history, never in-place modification). Display capped at the N most
+      recent files (50). Extends ADR-0004 (panel stays in-memory for the
+      local group; undo/redo behavior unchanged)
