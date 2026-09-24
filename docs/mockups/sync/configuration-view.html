@@ -156,11 +156,15 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 }
 .form-hint { margin-top: 4px; font-size: 12px; color: var(--color-text-muted); }
 .form-hint.error-text { color: var(--color-danger); font-weight: 600; }
-.form-row { display: flex; gap: 12px; }
+.form-row { display: flex; gap: 12px; flex-wrap: wrap; }
 .form-row .form-group { flex: 1; }
+@media (max-width: 700px) { .form-row { flex-direction: column; } }
 .unit-row { display: flex; gap: 8px; }
 .unit-row input { flex: 1; min-width: 0; }
 .unit-row select { width: 110px; flex-shrink: 0; }
+.form-group input:disabled, .form-group select:disabled {
+  background: #f0f0f0; color: var(--color-text-muted); cursor: not-allowed;
+}
 
 /* ===== Section Synchronisation OneDrive ===== */
 .sync-status {
@@ -179,7 +183,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   margin-top: 8px; padding: 8px 12px; border-radius: var(--radius);
   font-size: 13px; display: flex; align-items: center; gap: 8px;
 }
-.link-feedback.success { background: var(--color-success-bg); color: var(--color-success); font-weight: 600; }
+.link-feedback.success { background: var(--color-success-bg); color: #1e5536; font-weight: 600; }
 .link-feedback.error { background: var(--color-danger-bg); color: var(--color-danger); font-weight: 600; }
 .link-feedback .fb-detail { font-weight: 400; font-size: 12px; }
 .state-switch { display: flex; gap: 6px; margin-top: 10px; }
@@ -251,7 +255,7 @@ pre.raw-error {
   border-top: 1px solid var(--color-border);
 }
 .moved-note {
-  font-size: 12px; color: var(--color-warning); background: var(--color-warning-bg);
+  font-size: 12px; color: #7a4a1f; background: var(--color-warning-bg);
   padding: 6px 10px; border-radius: var(--radius); margin-bottom: 12px;
 }
 </style>
@@ -306,11 +310,23 @@ pre.raw-error {
         <h2 id="sync-title">Synchronisation OneDrive</h2>
         <p>Partagez le planning avec l'équipe de coordination via un dossier OneDrive commun. L'édition locale reste possible même hors connexion.</p>
 
-        <div class="sync-status">
-          <span class="badge badge-active">Connecté</span>
-          <span class="sync-user">Alice Dupont</span>
-          <span class="sync-last">Dernière synchro il y a 12 s</span>
-          <button class="btn btn-danger" type="button">Déconnecter</button>
+        <div class="state-switch" aria-label="États de maquette pour la connexion OneDrive">
+          <button type="button" data-conn="connected" class="active" aria-pressed="true">État : connecté</button>
+          <button type="button" data-conn="disconnected" aria-pressed="false">État : non connecté</button>
+        </div>
+
+        <div class="sync-status" id="st-connected">
+          <!-- État connecté -->
+          <span id="st-connected-badge" class="badge badge-active">Connecté</span>
+          <span class="sync-user" id="st-user">Alice Dupont</span>
+          <span class="sync-last" id="st-last">Dernière synchro le 24 sept. 2026 à 10:15</span>
+          <button class="btn btn-danger" type="button" id="st-disconnect">Déconnecter</button>
+        </div>
+        <div class="sync-status" id="st-disconnected" hidden>
+          <!-- État déconnecté (bascule de maquette « Non connecté ») -->
+          <span class="badge badge-inactive">Non connecté</span>
+          <span class="sync-last">Saisissez l'identifiant client puis connectez-vous.</span>
+          <button class="btn btn-primary" type="button" id="btn-connect" disabled title="Renseignez l'identifiant client pour activer la connexion">Connecter OneDrive</button>
         </div>
 
         <div class="form-row">
@@ -318,6 +334,7 @@ pre.raw-error {
             <label for="client-id">Identifiant client (application Azure)</label>
             <input id="client-id" type="text" value="0000-aaaa-bbbb-1111" spellcheck="false">
             <p class="form-hint">Requis pour la connexion OAuth (PKCE). Fourni par l'administrateur du tenant.</p>
+            <p class="form-hint error-text" id="client-id-hint" hidden>Le bouton « Connecter OneDrive » est désactivé tant que l'identifiant client est vide.</p>
           </div>
         </div>
 
@@ -424,6 +441,7 @@ pre.raw-error {
           met à jour les modifiées, supprime celles qui ont disparu du fichier (annulées
           côté Secutix). Les affectations de médiateurs sont conservées.
         </p>
+        <p class="io-hint">Le bouton icône « Import Secutix » de l'en-tête ouvre le même sélecteur de fichier depuis n'importe quelle vue.</p>
         <div class="io-actions">
           <input type="file" id="secutix-file" accept=".xlsx,.xls" aria-label="Fichier d'export Secutix">
           <span class="import-filename">sem39sem51.xlsx</span>
@@ -457,6 +475,7 @@ pre.raw-error {
 <section class="io-card">
   <h2>Données</h2>
   <p class="section-hint">Sauvegarde locale des données de l'application (navigateur).</p>
+  <p class="io-hint">Vue abrégée de la maquette — l'implémentation conserve les boutons existants : export Excel du planning, export Excel des médiateurs, sauvegarde JSON complète, import (JSON/Excel), données de démonstration et suppression.</p>
   <div class="sync-status">
     <button class="btn btn-secondary" type="button">⬇️ Exporter (JSON.gz)</button>
     <button class="btn btn-secondary" type="button">⬆️ Importer (JSON.gz)</button>
@@ -472,9 +491,9 @@ pre.raw-error {
 
 <script>
 // Interaction de maquette uniquement : bascule entre les états du champ lien de partage.
-document.querySelectorAll('.state-switch button').forEach(function (btn) {
+document.querySelectorAll('.state-switch button[data-state]').forEach(function (btn) {
   btn.addEventListener('click', function () {
-    document.querySelectorAll('.state-switch button').forEach(function (b) {
+    document.querySelectorAll('.state-switch button[data-state]').forEach(function (b) {
       b.classList.remove('active');
       b.setAttribute('aria-pressed', 'false');
     });
@@ -483,6 +502,49 @@ document.querySelectorAll('.state-switch button').forEach(function (btn) {
     var state = btn.dataset.state;
     document.getElementById('fb-success').hidden = state !== 'success';
     document.getElementById('fb-error').hidden = state !== 'error';
+  });
+});
+
+// Interaction de maquette uniquement : bascule connecté / non connecté.
+// En état « non connecté » : carte de statut déconnectée, identifiant client vide,
+// bouton « Connecter OneDrive » désactivé + indice, champ lien de partage désactivé,
+// champs numériques (fréquence, délai, rétention) désactivés.
+document.querySelectorAll('.state-switch button[data-conn]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.state-switch button[data-conn]').forEach(function (b) {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
+    var disconnected = btn.dataset.conn === 'disconnected';
+
+    // Cartes de statut
+    document.getElementById('st-connected').hidden = disconnected;
+    document.getElementById('st-disconnected').hidden = !disconnected;
+
+    // Identifiant client : vide en mode déconnecté, bouton de connexion désactivé + indice
+    var clientId = document.getElementById('client-id');
+    var connectBtn = document.getElementById('btn-connect');
+    clientId.value = disconnected ? '' : '0000-aaaa-bbbb-1111';
+    connectBtn.disabled = disconnected; // identifiant client vide → désactivé
+    document.getElementById('client-id-hint').hidden = !disconnected;
+
+    // Lien de partage désactivé hors connexion
+    document.getElementById('share-link').disabled = disconnected;
+    document.getElementById('btn-resolve').disabled = disconnected;
+
+    // Champs numériques désactivés hors connexion
+    ['poll-freq', 'conflict-timeout', 'history-retention'].forEach(function (id) {
+      document.getElementById(id).disabled = disconnected;
+    });
+
+    // Interrupteur et diagnostics hors d'usage hors connexion
+    document.getElementById('sync-enabled').disabled = disconnected;
+    document.getElementById('diagnostics').hidden = disconnected;
+
+    // Barre d'état de l'en-tête : pastille masquée en mode non connecté
+    document.querySelector('.sync-bar').style.visibility = disconnected ? 'hidden' : 'visible';
   });
 });
 </script>

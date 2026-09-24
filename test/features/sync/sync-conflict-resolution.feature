@@ -168,6 +168,31 @@ Fonctionnalité: Résolution des conflits de versions entières
     Quand Alice clique sur « Garder la version partagée »
     Alors la dernière version distante est appliquée localement
 
+  # Resolved 2026-09-24 / design review (docs/OPEN-QUESTIONS.md): the
+  # dialog close (✕) button has an explicit behavior — it sets sync to
+  # PAUSED without choosing (same outcome as the no-response timeout),
+  # with the label « Mettre la synchro en pause sans choisir ».
+  # Re-prompted only on manual re-enable, like the timeout path.
+
+  Scénario: Fermeture du dialogue via le bouton « Mettre la synchro en pause sans choisir »
+    Etant donné que le dialogue de conflit est ouvert
+    Quand Alice clique sur le bouton de fermeture « ✕ » (« Mettre la synchro en pause sans choisir »)
+    Alors le dialogue se ferme
+    Et la synchronisation passe à l'état « En pause »
+    Et aucun choix automatique de version n'a lieu
+    Et une notification « Synchro en pause — divergence non résolue » est affichée
+    Et l'état local reste intact
+
+  Scénario: Fermeture via ✕ — aucune nouvelle invite avant réactivation manuelle
+    Etant donné que la synchronisation est en pause après fermeture du dialogue via le bouton « ✕ »
+    Et que Bob modifie current.json à nouveau
+    Quand l'horloge avance de 10 minutes
+    Alors aucun dialogue de conflit ne s'ouvre automatiquement
+    Et aucune interrogation n'a lieu
+    Quand Alice réactive la synchronisation via l'interrupteur de l'en-tête
+    Alors l'interrogation reprend
+    Et le dialogue de conflit s'ouvre à nouveau avec les versions à jour
+
   Scénario: Coupure de connexion pendant le dialogue — fermeture propre
     Etant donné que le dialogue de conflit est ouvert
     Quand le réseau devient indisponible

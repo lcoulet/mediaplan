@@ -194,3 +194,16 @@ Users: the coordinator team (Loic does not need access himself).
       history, never in-place modification). Display capped at the N most
       recent files (50). Extends ADR-0004 (panel stays in-memory for the
       local group; undo/redo behavior unchanged)
+- [x] Conflict dialog close (✕) button: explicit behavior — sets sync to
+      PAUSED without choosing (same outcome as the no-response timeout),
+      with a tooltip/label making it explicit ("Mettre la synchro en
+      pause sans choisir"). Re-prompted only on manual re-enable, like
+      the timeout path (decided 2026-09-24, design review)
+- [x] Header restructure (design review decisions): the gear icon button
+      navigates to the Configuration view (replacing the "Import / Export"
+      nav item — the nav keeps 7 view entries); an "Import Secutix" icon
+      button lives in the header and opens the Secutix import; the sync
+      pill (toggle + status) sits on its own bar below the header,
+      left-aligned; the help (?) link is the last header element. The
+      half-day settings move out of the gear popup into the Configuration
+      view

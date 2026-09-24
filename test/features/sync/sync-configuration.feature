@@ -199,3 +199,35 @@ Fonctionnalité: Configuration de la synchronisation OneDrive
     Quand le Graph simulé renvoie l'erreur 403 « accessDenied » sur une interrogation
     Alors l'entrée correspondante apparaît dans le journal de synchronisation
     Et l'erreur brute du Graph « 403 accessDenied » est affichée dans le panneau de diagnostic
+
+  # Header restructure (design review, docs/OPEN-QUESTIONS.md): the
+  # "Import / Export" nav item is replaced by a gear icon button that
+  # navigates to the Configuration view; an "Import Secutix" icon
+  # button opens the Secutix import file picker from any view.
+
+  Scénario: Le bouton icône « Import Secutix » de l'en-tête ouvre le sélecteur de fichier depuis n'importe quelle vue
+    Etant donné qu'Alice consulte la vue « Plan Hebdo »
+    Quand Alice clique sur le bouton icône « Import Secutix » de l'en-tête
+    Alors le sélecteur de fichier d'import Secutix (acceptant .xlsx et .xls) s'ouvre
+    Et la vue courante reste inchangée
+
+  Scénario: Le bouton icône engrenage de l'en-tête navigue vers la vue Configuration
+    Etant donné qu'Alice consulte la vue « Plan Hebdo »
+    Quand Alice clique sur le bouton icône engrenage de l'en-tête
+    Alors la vue Configuration est affichée
+    Et l'entrée de navigation « Configuration » est active
+
+  Scénario: Les réglages de demi-journée déplacés dans la vue Configuration avec la même validation
+    Etant donné que la synchronisation est connectée pour « Alice »
+    Quand je consulte la section « Demi-journées » de la vue Configuration
+    Alors le réglage « Fin matin » est affiché avec la valeur par défaut « 13:00 »
+    Et le réglage « Début après-midi » est affiché avec la valeur par défaut « 13:00 »
+    Et les horaires des absences non terminées sont mis à jour si je modifie ces paramètres
+    Et la validation est identique à celle du bouton de réglages de l'ancien en-tête
+
+  Scénario: Heure de dernière synchronisation au format français absolu dans la section Configuration
+    Etant donné que la synchronisation est connectée pour « Alice »
+    Et que la dernière synchronisation a eu lieu le 24 sept. 2026 à 10:15
+    Quand je consulte la section « Synchronisation OneDrive »
+    Alors l'heure de dernière synchronisation est affichée au format absolu français « 24 sept. 2026 à 10:15 »
+    Et la pastille de l'en-tête continue d'afficher un format relatif comme « il y a 12 s »

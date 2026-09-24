@@ -101,6 +101,33 @@ Fonctionnalité: Réception des modifications distantes depuis OneDrive
     Et la dernière version distante est appliquée localement
     Et un résumé « 3 nouvelles versions » est affiché à l'utilisateur
 
+  # Design review: the reconnect summary is shown in the sync bar below
+  # the header (same location as the status pill), with proper French
+  # singular/plural, only when remote changes were applied after
+  # reconnection WITHOUT conflict.
+
+  Plan du scénario: Résumé de reconnexion affiché dans la barre de synchronisation
+    Etant donné que le réseau est indisponible depuis 10:00:00
+    Et qu'Alice n'a aucune modification locale en attente
+    Et que Bob a envoyé « <versions> » nouvelle(s) version(s) de current.json pendant la coupure
+    Quand le réseau redevient disponible
+    Alors la dernière version distante est appliquée localement sans conflit
+    Et la barre de synchronisation sous l'en-tête affiche le résumé « <attendu> »
+    Et le résumé reste affiché jusqu'à la prochaine action de synchronisation
+
+    Exemples:
+      | versions | attendu                |
+      | 1        | 1 nouvelle version     |
+      | 3        | 3 nouvelles versions   |
+
+  Scénario: Aucun résumé de reconnexion quand des modifications locales sont en attente
+    Etant donné que le réseau est indisponible depuis 10:00:00
+    Et qu'Alice a créé un créneau localement pendant la coupure
+    Et que Bob a modifié current.json pendant la coupure
+    Quand le réseau redevient disponible
+    Alors le dialogue de conflit s'ouvre
+    Et aucun résumé « N nouvelles versions » n'est affiché dans la barre de synchronisation
+
   Scénario: Résumé au singulier pour une seule nouvelle version
     Etant donné que le réseau est indisponible depuis 10:00:00
     Et qu'Alice n'a aucune modification locale en attente

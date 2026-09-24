@@ -131,6 +131,11 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
   display: flex; align-items: center; gap: 10px;
   padding: 12px 10px; font-size: 13px; color: var(--color-text-muted);
 }
+.shared-empty {
+  padding: 14px 10px; font-size: 13px; color: var(--color-text-muted);
+}
+.shared-empty .empty-title { font-weight: 600; color: var(--color-text); }
+.shared-empty .empty-sub { font-size: 12px; margin-top: 2px; }
 .spinner {
   width: 14px; height: 14px; border: 2px solid var(--color-border);
   border-top-color: var(--color-primary); border-radius: 50%;
@@ -287,6 +292,14 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
         </p>
       </div>
 
+      <!-- État vide : le dossier history/ du drive ne contient aucun fichier -->
+      <div class="state-box shared-empty" id="shared-empty" hidden>
+        <p class="empty-title" style="margin:0;">Aucun fichier d'historique partagé</p>
+        <p class="empty-sub" style="margin:0;">
+          Le dossier history/ du drive est vide — aucun envoi n'a encore eu lieu ou la rétention a purgé les fichiers.
+        </p>
+      </div>
+
       <!-- État chargement -->
       <div class="state-box shared-loading" id="shared-loading" role="status" hidden>
         <span class="spinner" aria-hidden="true"></span>
@@ -313,6 +326,7 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
 <div class="mockup-switch" role="group" aria-label="États de maquette du groupe Historique partagé">
   <span>Groupe partagé :</span>
   <button type="button" data-state="ok" class="active" aria-pressed="true">Chargé</button>
+  <button type="button" data-state="empty" aria-pressed="false">Vide</button>
   <button type="button" data-state="loading" aria-pressed="false">Chargement</button>
   <button type="button" data-state="error" aria-pressed="false">Hors ligne</button>
 </div>
@@ -320,6 +334,7 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
 <script>
 // Interaction de maquette uniquement : bascule les états du groupe « Historique partagé ».
 var boxes = { ok: document.getElementById('shared-ok'),
+             empty: document.getElementById('shared-empty'),
              loading: document.getElementById('shared-loading'),
              error: document.getElementById('shared-error') };
 document.querySelectorAll('.mockup-switch button').forEach(function (btn) {

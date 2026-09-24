@@ -132,7 +132,7 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
 /* Bannière en direct : « N nouvelles versions sur le drive » */
 .live-banner {
   display: flex; align-items: center; gap: 10px;
-  background: var(--color-warning-bg); color: var(--color-warning);
+  background: var(--color-warning-bg); color: #7a4a1f;
   border: 1px solid rgba(214,140,69,0.4); border-radius: var(--radius);
   padding: 10px 12px; font-size: 13px; font-weight: 600; margin-bottom: 16px;
 }
@@ -284,7 +284,7 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="conflict-title" aria-describedby="conflict-intro">
     <div class="modal-header">
       <h3 id="conflict-title">⚠️ Divergence détectée</h3>
-      <button class="modal-close" type="button" aria-label="Fermer">✕</button>
+      <button class="modal-close" type="button" aria-label="Mettre la synchro en pause sans choisir" title="Mettre la synchro en pause sans choisir">✕</button>
     </div>
     <div class="modal-body">
       <p id="conflict-intro" class="conflict-intro">
@@ -302,7 +302,7 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
       <div class="versions">
         <div class="version-card mine">
           <h4>Ma version</h4>
-          <p class="version-meta">Modifiée par vous — 24 sept. 14:32</p>
+          <p class="version-meta">Modifiée par Alice — 24 sept. 14:32</p>
           <ul class="version-summary">
             <li>3 médiateurs</li>
             <li>46 créneaux</li>
@@ -333,6 +333,10 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
       <p class="undo-note">
         L'un ou l'autre choix est réversible : annulez avec <kbd>Ctrl+Z</kbd>, rétablissez avec <kbd>Ctrl+Y</kbd>.
         Les deux versions restent dans l'historique (local 50 entrées · dossier history/ du drive 30 jours).
+      </p>
+      <p class="undo-note pause-hint">
+        Fermer le dialogue (✕) met la synchro en pause sans choisir — vous ne serez pas relancé
+        tant que vous ne réactivez pas la synchronisation manuellement.
       </p>
     </div>
   </div>
