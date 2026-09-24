@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediaPlan — Panneau Historique (maquette : local + partagé)</title>
+<style>
+/* ===== Base (jetons copiés de src/style.css) ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --color-primary: #2c6e49;
+  --color-primary-dark: #1e5536;
+  --color-primary-light: #4c956c;
+  --color-accent: #d68c45;
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-text: #2b2b2b;
+  --color-text-muted: #6b6b6b;
+  --color-border: #d9d9d9;
+  --color-border-light: #eaeaea;
+  --color-danger: #c0392b;
+  --color-danger-bg: #fdecea;
+  --color-warning: #d68c45;
+  --color-warning-bg: #fef5e7;
+  --color-success: #27ae60;
+  --color-success-bg: #eafaf1;
+  --radius: 6px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --header-h: 56px;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+}
+button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* ===== En-tête de fond ===== */
+.app-header {
+  min-height: var(--header-h);
+  background: var(--color-primary);
+  color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; row-gap: 4px;
+  padding: 8px 20px; box-shadow: var(--shadow-sm);
+}
+.header-left { display: flex; align-items: baseline; gap: 12px; }
+.app-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.app-subtitle { font-size: 12px; opacity: 0.8; }
+.header-nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.nav-btn {
+  background: transparent; border: none; color: rgba(255,255,255,0.8);
+  padding: 8px 12px; border-radius: var(--radius); font-size: 14px; cursor: pointer;
+}
+.nav-btn.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
+.icon-btn { background: transparent; border: none; color: #fff; font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: var(--radius); opacity: 0.8; }
+
+/* ===== Panneau Historique (jetons de style.css) ===== */
+.history-panel {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: 380px; max-width: 90vw;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  z-index: 150;
+  display: flex; flex-direction: column;
+}
+.history-panel-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 16px; border-bottom: 1px solid var(--color-border);
+}
+.history-panel-header h3 { font-size: 17px; font-weight: 600; margin: 0; }
+.modal-close {
+  background: transparent; border: none; font-size: 18px; cursor: pointer;
+  color: var(--color-text-muted); padding: 4px;
+}
+.history-panel-body { flex: 1; overflow-y: auto; padding: 8px; }
+.history-panel-footer {
+  padding: 10px 16px; border-top: 1px solid var(--color-border);
+  font-size: 12px; color: var(--color-text); opacity: 0.7;
+}
+
+/* ===== Groupes ===== */
+.history-group { margin-bottom: 4px; }
+.history-group-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--color-text-muted); padding: 10px 10px 4px;
+  display: flex; align-items: center; gap: 8px;
+}
+.history-group-title .count-pill {
+  background: #f0f0f0; color: var(--color-text-muted);
+  border-radius: 10px; padding: 0 8px; font-size: 11px; font-weight: 600;
+}
+
+/* ===== Entrées ===== */
+.history-entry {
+  padding: 8px 10px; border-radius: var(--radius); cursor: pointer;
+  border: 1px solid transparent; position: relative;
+}
+.history-entry:hover { background: var(--color-bg); }
+.history-entry.current { border-color: var(--color-border); background: rgba(44,110,73,0.06); font-weight: 600; }
+.history-entry.redo-side { opacity: 0.5; }
+.history-entry-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.history-entry-time { font-variant-numeric: tabular-nums; font-size: 13px; }
+.history-entry-label { flex: 1; min-width: 0; font-size: 13px; }
+.history-entry-badge { font-size: 12px; font-weight: 600; color: var(--color-primary); }
+.history-entry-summary { margin: 4px 0 0; padding-left: 16px; font-size: 13px; font-weight: 400; list-style: disc; }
+.history-entry-summary li { margin: 1px 0; }
+
+/* ===== Entrées partagées (drive) ===== */
+.shared-entry {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: var(--radius); cursor: pointer;
+  border: 1px solid transparent;
+}
+.shared-entry:hover { background: var(--color-bg); }
+.shared-entry .shared-when { font-variant-numeric: tabular-nums; font-size: 13px; white-space: nowrap; }
+.shared-entry .shared-author { flex: 1; min-width: 0; font-size: 13px; }
+.restore-btn {
+  display: none; font-size: 11px; font-weight: 600; padding: 3px 10px;
+  border-radius: 12px; border: 1px solid var(--color-border);
+  background: var(--color-surface); color: var(--color-primary); cursor: pointer;
+}
+.shared-entry:hover .restore-btn,
+.shared-entry:focus-within .restore-btn { display: inline-block; }
+
+/* ===== États du groupe partagé ===== */
+.shared-loading {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 10px; font-size: 13px; color: var(--color-text-muted);
+}
+.spinner {
+  width: 14px; height: 14px; border: 2px solid var(--color-border);
+  border-top-color: var(--color-primary); border-radius: 50%;
+  animation: spin 0.8s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+.shared-error {
+  margin: 8px 10px; padding: 10px 12px;
+  background: var(--color-danger-bg); color: var(--color-danger);
+  border-radius: var(--radius); font-size: 13px;
+}
+.shared-error .err-sub { color: var(--color-text-muted); font-weight: 400; font-size: 12px; margin-top: 2px; }
+
+/* Barre de bascule de maquette (états du groupe partagé) */
+.mockup-switch {
+  position: fixed; bottom: 12px; left: 12px; z-index: 300;
+  display: flex; gap: 6px; background: var(--color-surface);
+  border: 1px solid var(--color-border); border-radius: 16px;
+  padding: 4px 6px; box-shadow: var(--shadow-md);
+}
+.mockup-switch span { font-size: 11px; color: var(--color-text-muted); align-self: center; padding: 0 4px; }
+.mockup-switch button {
+  font-size: 11px; padding: 3px 10px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted);
+}
+.mockup-switch button.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.state-box[hidden] { display: none; }
+</style>
+</head>
+<body>
+
+<!-- Fond assombri implicitement par le panneau (pas d'overlay : le panneau flotte à droite) -->
+<header class="app-header">
+  <div class="header-left">
+    <h1 class="app-title">MediaPlan</h1>
+    <span class="app-subtitle">Gestion des plannings de médiation — Museum</span>
+  </div>
+  <nav class="header-nav">
+    <button class="nav-btn" type="button">Plan Hebdo</button>
+    <button class="nav-btn" type="button">Médiateurs</button>
+    <button class="nav-btn" type="button">Offres</button>
+    <button class="nav-btn" type="button">Absences</button>
+    <button class="nav-btn active" type="button">Configuration</button>
+    <button class="icon-btn" type="button" title="Annuler (Ctrl+Z)" aria-label="Annuler">↶</button>
+    <button class="icon-btn" type="button" title="Rétablir (Ctrl+Shift+Z)" aria-label="Rétablir">↷</button>
+    <button class="icon-btn" type="button" title="Historique (H)" aria-label="Historique">Historique</button>
+  </nav>
+</header>
+
+<aside class="history-panel" aria-label="Historique">
+  <div class="history-panel-header">
+    <h3>Historique</h3>
+    <button class="modal-close" type="button" title="Fermer" aria-label="Fermer le panneau historique">✕</button>
+  </div>
+  <div class="history-panel-body">
+
+    <!-- ============ Groupe 1 : Historique local (en mémoire) ============ -->
+    <div class="history-group" aria-labelledby="local-title">
+      <p class="history-group-title" id="local-title">Historique local <span class="count-pill">5 entrées</span></p>
+
+      <div class="history-entry current" role="button" tabindex="0" aria-label="14:32 Créneau créé — actuel">
+        <div class="history-entry-head">
+          <span class="history-entry-time">14:32</span>
+          <span class="history-entry-label">Créneau créé</span>
+          <span class="history-entry-badge">— actuel</span>
+        </div>
+        <ul class="history-entry-summary">
+          <li>+ Visite guidée · jeu. 24 sept. 10:00 · Alice Dupont</li>
+        </ul>
+      </div>
+
+      <div class="history-entry" role="button" tabindex="0" aria-label="14:24 Médiateur modifié">
+        <div class="history-entry-head">
+          <span class="history-entry-time">14:24</span>
+          <span class="history-entry-label">Médiateur modifié</span>
+        </div>
+        <ul class="history-entry-summary">
+          <li>Marie Lambert — compétence « Visite guidée » : appris → confirmé</li>
+        </ul>
+      </div>
+
+      <div class="history-entry" role="button" tabindex="0" aria-label="14:10 Créneau modifié">
+        <div class="history-entry-head">
+          <span class="history-entry-time">14:10</span>
+          <span class="history-entry-label">Créneau modifié</span>
+        </div>
+        <ul class="history-entry-summary">
+          <li>Pause repas · mer. 23 sept. — horaire 12:00 → 12:30</li>
+        </ul>
+      </div>
+
+      <div class="history-entry" role="button" tabindex="0" aria-label="13:58 Créneau supprimé">
+        <div class="history-entry-head">
+          <span class="history-entry-time">13:58</span>
+          <span class="history-entry-label">Créneau supprimé</span>
+        </div>
+        <ul class="history-entry-summary">
+          <li>− Anniversaire · sam. 26 sept. 15:00</li>
+        </ul>
+      </div>
+
+      <div class="history-entry redo-side" role="button" tabindex="0" aria-label="13:40 Absence créée">
+        <div class="history-entry-head">
+          <span class="history-entry-time">13:40</span>
+          <span class="history-entry-label">Absence créée</span>
+        </div>
+        <ul class="history-entry-summary">
+          <li>Karim Benali · formation · 5–6 oct. 2026</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ============ Groupe 2 : Historique partagé (drive) ============ -->
+    <div class="history-group" aria-labelledby="shared-title">
+      <p class="history-group-title" id="shared-title">
+        Historique partagé <span class="count-pill">50 max</span>
+      </p>
+
+      <!-- État normal : fichiers du drive, plus récents d'abord -->
+      <div class="state-box" id="shared-ok">
+        <div class="shared-entry" role="button" tabindex="0" aria-label="24 sept. 14:31, Alice — Restaurer">
+          <span class="shared-when">24 sept. 14:31</span>
+          <span class="shared-author">— Alice</span>
+          <button class="restore-btn" type="button">Restaurer</button>
+        </div>
+        <div class="shared-entry" role="button" tabindex="0" aria-label="24 sept. 14:05, Marie — Restaurer">
+          <span class="shared-when">24 sept. 14:05</span>
+          <span class="shared-author">— Marie</span>
+          <button class="restore-btn" type="button">Restaurer</button>
+        </div>
+        <div class="shared-entry" role="button" tabindex="0" aria-label="24 sept. 11:12, Bob — Restaurer">
+          <span class="shared-when">24 sept. 11:12</span>
+          <span class="shared-author">— Bob</span>
+          <button class="restore-btn" type="button">Restaurer</button>
+        </div>
+        <div class="shared-entry" role="button" tabindex="0" aria-label="23 sept. 16:48, Claire — Restaurer">
+          <span class="shared-when">23 sept. 16:48</span>
+          <span class="shared-author">— Claire</span>
+          <button class="restore-btn" type="button">Restaurer</button>
+        </div>
+        <div class="shared-entry" role="button" tabindex="0" aria-label="23 sept. 09:00, Bob — Restaurer">
+          <span class="shared-when">23 sept. 09:00</span>
+          <span class="shared-author">— Bob</span>
+          <button class="restore-btn" type="button">Restaurer</button>
+        </div>
+        <p class="history-entry-summary" style="padding: 4px 10px; margin: 0;">
+          Fichiers history/ du dossier OneDrive /MediaPlan/ — chargés à l'ouverture du panneau (1 appel Graph, sans interrogation périodique).
+        </p>
+      </div>
+
+      <!-- État chargement -->
+      <div class="state-box shared-loading" id="shared-loading" role="status" hidden>
+        <span class="spinner" aria-hidden="true"></span>
+        Chargement de l'historique partagé…
+      </div>
+
+      <!-- État erreur / hors ligne : le groupe local reste utilisable -->
+      <div class="state-box" id="shared-error" hidden>
+        <div class="shared-error" role="alert">
+          Historique partagé indisponible
+          <div class="err-sub">Hors ligne — impossible de lister le dossier history/ du drive. L'historique local reste disponible ; la restauration locale fonctionne.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="history-panel-footer">
+    Historique local : 50 entrées maximum en mémoire, perdu au rechargement de la page.
+    Historique partagé : 50 fichiers les plus récents affichés, purgés du drive après la rétention configurée (30 jours par défaut).
+  </div>
+</aside>
+
+<!-- Bascule de maquette : états du groupe partagé -->
+<div class="mockup-switch" role="group" aria-label="États de maquette du groupe Historique partagé">
+  <span>Groupe partagé :</span>
+  <button type="button" data-state="ok" class="active" aria-pressed="true">Chargé</button>
+  <button type="button" data-state="loading" aria-pressed="false">Chargement</button>
+  <button type="button" data-state="error" aria-pressed="false">Hors ligne</button>
+</div>
+
+<script>
+// Interaction de maquette uniquement : bascule les états du groupe « Historique partagé ».
+var boxes = { ok: document.getElementById('shared-ok'),
+             loading: document.getElementById('shared-loading'),
+             error: document.getElementById('shared-error') };
+document.querySelectorAll('.mockup-switch button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.mockup-switch button').forEach(function (b) {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
+    Object.keys(boxes).forEach(function (k) { boxes[k].hidden = k !== btn.dataset.state; });
+  });
+});
+</script>
+</body>
+</html>

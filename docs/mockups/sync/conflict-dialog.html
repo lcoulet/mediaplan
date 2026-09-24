@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediaPlan — Divergence détectée (maquette)</title>
+<style>
+/* ===== Base (jetons copiés de src/style.css) ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --color-primary: #2c6e49;
+  --color-primary-dark: #1e5536;
+  --color-primary-light: #4c956c;
+  --color-accent: #d68c45;
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-text: #2b2b2b;
+  --color-text-muted: #6b6b6b;
+  --color-border: #d9d9d9;
+  --color-border-light: #eaeaea;
+  --color-danger: #c0392b;
+  --color-danger-bg: #fdecea;
+  --color-warning: #d68c45;
+  --color-warning-bg: #fef5e7;
+  --color-success: #27ae60;
+  --color-success-bg: #eafaf1;
+  --radius: 6px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --header-h: 56px;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+}
+button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* ===== En-tête (fond, assombri par l'overlay) ===== */
+.app-header {
+  min-height: var(--header-h);
+  background: var(--color-primary);
+  color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; row-gap: 4px;
+  padding: 8px 20px; box-shadow: var(--shadow-sm);
+}
+.header-left { display: flex; align-items: baseline; gap: 12px; }
+.app-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.app-subtitle { font-size: 12px; opacity: 0.8; }
+.header-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+.nav-btn {
+  background: transparent; border: none; color: rgba(255,255,255,0.8);
+  padding: 8px 14px; border-radius: var(--radius); font-size: 14px; cursor: pointer;
+}
+.nav-btn.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
+.icon-btn { background: transparent; border: none; color: #fff; font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: var(--radius); opacity: 0.8; }
+
+/* ===== Planning hebdo en fond (extrait réaliste, semaine 39) ===== */
+.app-main { max-width: 1400px; margin: 0 auto; padding: 16px; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; }
+.toolbar h2 { font-size: 18px; font-weight: 600; }
+.week-stats {
+  display: inline-flex; align-items: center; gap: 10px; margin-left: 12px; padding: 4px 10px;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 14px; font-size: 12px;
+}
+.calendar-wrapper { background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: auto; }
+.calendar-grid { display: grid; grid-template-columns: 48px repeat(7, 1fr); min-width: 800px; }
+.cal-header > div {
+  padding: 10px 8px; text-align: center; font-weight: 600; font-size: 13px;
+  border-bottom: 2px solid var(--color-border); background: #fafafa;
+}
+.cal-day-name { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.cal-day-num { font-size: 18px; font-weight: 700; color: var(--color-primary); }
+.cal-time-label {
+  padding: 4px 6px; font-size: 11px; color: var(--color-text-muted);
+  text-align: right; border-bottom: 1px solid #f0f0f0;
+}
+.cal-day-col { border-right: 1px solid var(--color-border); position: relative; height: 340px; background: var(--color-surface); }
+.cal-day-col:last-child { border-right: none; }
+.cal-time-col { border-right: 1px solid var(--color-border); }
+.cal-slot {
+  position: absolute; left: 2px; right: 2px; padding: 4px 8px; border-radius: 4px;
+  font-size: 12px; overflow: hidden; border-left: 3px solid;
+}
+.cal-slot .slot-time { font-weight: 600; font-size: 11px; opacity: 0.8; display: block; }
+.cal-slot .slot-title { font-weight: 600; font-size: 12px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-slot .slot-mediator { font-size: 11px; opacity: 0.8; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-slot.status-confirmed { background: var(--color-success-bg); border-color: var(--color-success); }
+.cal-slot.status-planned { background: var(--color-warning-bg); border-color: var(--color-warning); }
+.cal-slot.status-cancelled { background: var(--color-danger-bg); border-color: var(--color-danger); text-decoration: line-through; opacity: 0.6; }
+.cal-slot.slot-conflict { outline: 2px dashed var(--color-danger); outline-offset: -2px; }
+
+/* ===== Overlay modal (jeton de style.css) ===== */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4); z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal {
+  background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-md);
+  width: 640px; max-width: 96vw; max-height: 90vh; overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 10px 16px; border-bottom: 1px solid var(--color-border);
+}
+.modal-header h3 { font-size: 17px; font-weight: 600; }
+.modal-close { background: transparent; border: none; font-size: 18px; cursor: pointer; color: var(--color-text-muted); padding: 4px; }
+.modal-body { padding: 20px; }
+
+/* ===== Dialogue de divergence ===== */
+.conflict-intro { color: var(--color-text-muted); margin-bottom: 16px; }
+.versions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+@media (max-width: 560px) { .versions { grid-template-columns: 1fr; } }
+.version-card {
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+  padding: 14px; background: #fafafa;
+}
+.version-card.mine { border-left: 4px solid var(--color-primary); }
+.version-card.shared { border-left: 4px solid var(--color-accent); }
+.version-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.version-meta { font-size: 12px; color: var(--color-text-muted); margin-bottom: 10px; }
+.version-summary { font-size: 13px; margin: 0; padding-left: 18px; }
+.version-summary li { margin: 1px 0; }
+
+/* Bannière en direct : « N nouvelles versions sur le drive » */
+.live-banner {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--color-warning-bg); color: var(--color-warning);
+  border: 1px solid rgba(214,140,69,0.4); border-radius: var(--radius);
+  padding: 10px 12px; font-size: 13px; font-weight: 600; margin-bottom: 16px;
+}
+.live-banner .banner-detail { font-weight: 400; color: var(--color-text-muted); font-size: 12px; margin-left: auto; }
+
+/* Chrono */
+.timer-row {
+  display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px;
+  padding: 10px 12px; background: #fafafa; border: 1px solid var(--color-border-light);
+  border-radius: var(--radius); font-size: 13px; color: var(--color-text-muted);
+}
+.timer-row strong { font-variant-numeric: tabular-nums; font-size: 16px; color: var(--color-text); }
+.timer-note { font-size: 12px; }
+
+/* Actions */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: 1px solid transparent; border-radius: var(--radius);
+  font-size: 14px; cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap; font-family: inherit;
+}
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover { background: var(--color-primary-dark); }
+.btn-secondary { background: var(--color-surface); color: var(--color-text); border-color: var(--color-border); }
+.btn-secondary:hover { background: #f0f0f0; }
+.conflict-actions { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.undo-note { font-size: 12px; color: var(--color-text-muted); text-align: right; }
+.undo-note kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px; border: 1px solid var(--color-border); border-radius: 4px;
+  padding: 0 5px; background: #fafafa;
+}
+
+/* Barre d'état de maquette pour basculer les deux états */
+.mockup-switch {
+  position: fixed; bottom: 12px; left: 12px; z-index: 300;
+  display: flex; gap: 6px; background: var(--color-surface);
+  border: 1px solid var(--color-border); border-radius: 16px;
+  padding: 4px 6px; box-shadow: var(--shadow-md);
+}
+.mockup-switch span { font-size: 11px; color: var(--color-text-muted); align-self: center; padding: 0 4px; }
+.mockup-switch button {
+  font-size: 11px; padding: 3px 10px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted);
+}
+.mockup-switch button.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- Fond : application assombrie par l'overlay -->
+<header class="app-header">
+  <div class="header-left">
+    <h1 class="app-title">MediaPlan</h1>
+    <span class="app-subtitle">Gestion des plannings de médiation — Museum</span>
+  </div>
+  <nav class="header-nav">
+    <button class="nav-btn" type="button">Plan Hebdo</button>
+    <button class="nav-btn active" type="button">Médiateurs</button>
+    <button class="nav-btn" type="button">Offres</button>
+    <button class="nav-btn" type="button">Absences</button>
+    <button class="nav-btn" type="button">Configuration</button>
+  </nav>
+</header>
+
+<main class="app-main">
+  <div class="toolbar">
+    <div style="display:flex;align-items:center;">
+      <h2>Planning hebdomadaire</h2>
+      <span class="week-stats">Semaine 39 · 21–27 sept. 2026</span>
+    </div>
+  </div>
+  <div class="calendar-wrapper">
+    <div class="calendar-grid">
+      <div class="cal-header" style="display:contents;">
+        <div></div>
+        <div><span class="cal-day-name">lun.<span class="cal-day-num">21</span></span></div>
+        <div><span class="cal-day-name">mar.<span class="cal-day-num">22</span></span></div>
+        <div><span class="cal-day-name">mer.<span class="cal-day-num">23</span></span></div>
+        <div><span class="cal-day-name">jeu.<span class="cal-day-num">24</span></span></div>
+        <div><span class="cal-day-name">ven.<span class="cal-day-num">25</span></span></div>
+        <div><span class="cal-day-name">sam.<span class="cal-day-num">26</span></span></div>
+        <div><span class="cal-day-name">dim.<span class="cal-day-num">27</span></span></div>
+      </div>
+      <div class="cal-time-col">
+        <div class="cal-time-label">9:00</div><div class="cal-time-label">10:00</div>
+        <div class="cal-time-label">11:00</div><div class="cal-time-label">14:00</div>
+        <div class="cal-time-label">15:00</div><div class="cal-time-label">16:00</div>
+      </div>
+      <div class="cal-day-col">
+        <div class="cal-slot status-confirmed" style="top:24px;height:52px;">
+          <span class="slot-time">9:30</span><span class="slot-title">Visite guidée</span>
+          <span class="slot-mediator">● Marie Lambert</span>
+        </div>
+        <div class="cal-slot status-planned" style="top:124px;height:52px;">
+          <span class="slot-time">11:00</span><span class="slot-title">Atelier Stop Motion</span>
+          <span class="slot-mediator">● Alice Dupont</span>
+        </div>
+      </div>
+      <div class="cal-day-col">
+        <div class="cal-slot status-confirmed" style="top:36px;height:40px;">
+          <span class="slot-time">9:45</span><span class="slot-title">Visite libre</span>
+        </div>
+        <div class="cal-slot status-planned" style="top:146px;height:52px;">
+          <span class="slot-time">14:15</span><span class="slot-title">Labo sciences</span>
+          <span class="slot-mediator">● Karim Benali</span>
+        </div>
+      </div>
+      <div class="cal-day-col">
+        <div class="cal-slot status-confirmed" style="top:24px;height:52px;">
+          <span class="slot-time">9:30</span><span class="slot-title">Visite guidée</span>
+          <span class="slot-mediator">● Marie Lambert</span>
+        </div>
+        <div class="cal-slot status-cancelled" style="top:110px;height:40px;">
+          <span class="slot-time">11:15</span><span class="slot-title">Anniversaire</span>
+        </div>
+      </div>
+      <div class="cal-day-col">
+        <div class="cal-slot status-confirmed slot-conflict" style="top:30px;height:52px;">
+          <span class="slot-time">10:00</span><span class="slot-title">Visite guidée</span>
+          <span class="slot-mediator">● Alice Dupont</span>
+        </div>
+        <div class="cal-slot status-planned" style="top:134px;height:52px;">
+          <span class="slot-time">14:30</span><span class="slot-title">Pause repas</span>
+        </div>
+      </div>
+      <div class="cal-day-col">
+        <div class="cal-slot status-confirmed" style="top:24px;height:52px;">
+          <span class="slot-time">9:30</span><span class="slot-title">Visite HLM</span>
+          <span class="slot-mediator">● Karim Benali</span>
+        </div>
+      </div>
+      <div class="cal-day-col"></div>
+      <div class="cal-day-col"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Overlay + dialogue de conflit -->
+<div class="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="conflict-title" aria-describedby="conflict-intro">
+    <div class="modal-header">
+      <h3 id="conflict-title">⚠️ Divergence détectée</h3>
+      <button class="modal-close" type="button" aria-label="Fermer">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="conflict-intro" class="conflict-intro">
+        Votre version locale et la version partagée ont toutes deux été modifiées depuis la dernière
+        synchronisation commune. Choisissez la version à conserver — l'autre reste récupérable.
+      </p>
+
+      <!-- Zone de bannière en direct (état 2) -->
+      <div class="live-banner" id="live-banner" role="status" hidden>
+        <span aria-hidden="true">⟳</span>
+        2 nouvelles versions sur le drive
+        <span class="banner-detail">Dernière proposée : 24 sept. 14:33 — Marie</span>
+      </div>
+
+      <div class="versions">
+        <div class="version-card mine">
+          <h4>Ma version</h4>
+          <p class="version-meta">Modifiée par vous — 24 sept. 14:32</p>
+          <ul class="version-summary">
+            <li>3 médiateurs</li>
+            <li>46 créneaux</li>
+            <li>1 créneau ajouté : Visite guidée, jeu. 24 sept. 10:00</li>
+          </ul>
+        </div>
+        <div class="version-card shared">
+          <h4>Version partagée</h4>
+          <p class="version-meta" id="shared-meta">Modifiée par Marie — 24 sept. 14:29</p>
+          <ul class="version-summary" id="shared-summary">
+            <li>3 médiateurs</li>
+            <li>45 créneaux</li>
+            <li>2 créneaux modifiés : Pause repas déplacée, Anniversaire annulé</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="timer-row">
+        <span>Sans choix de votre part, la synchronisation se mettra en pause après</span>
+        <strong id="countdown" aria-live="polite">19:37</strong>
+        <span class="timer-note">(le chrono n'est pas réinitialisé par les nouveaux changements distants)</span>
+      </div>
+
+      <div class="conflict-actions">
+        <button class="btn btn-primary" type="button">Garder ma version</button>
+        <button class="btn btn-secondary" type="button">Garder la version partagée</button>
+      </div>
+      <p class="undo-note">
+        L'un ou l'autre choix est réversible : annulez avec <kbd>Ctrl+Z</kbd>, rétablissez avec <kbd>Ctrl+Y</kbd>.
+        Les deux versions restent dans l'historique (local 50 entrées · dossier history/ du drive 30 jours).
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Bascule de maquette : montrer les deux états du dialogue -->
+<div class="mockup-switch" role="group" aria-label="États de maquette du dialogue">
+  <span>Maquette :</span>
+  <button type="button" data-state="normal" class="active" aria-pressed="true">État normal</button>
+  <button type="button" data-state="live" aria-pressed="false">Avec bannière en direct</button>
+</div>
+
+<script>
+// Interaction de maquette uniquement : bascule normal / bannière « N nouvelles versions ».
+document.querySelectorAll('.mockup-switch button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.mockup-switch button').forEach(function (b) {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
+    var live = btn.dataset.state === 'live';
+    document.getElementById('live-banner').hidden = !live;
+    if (live) {
+      // La bannière annonce la dernière version proposée : la carte « Version partagée » se met à jour.
+      document.getElementById('shared-meta').textContent = 'Modifiée par Marie — 24 sept. 14:33';
+      document.getElementById('shared-summary').innerHTML =
+        '<li>3 médiateurs</li><li>47 créneaux</li><li>Dernière version proposée : 2 créneaux ajoutés par Marie</li>';
+    } else {
+      document.getElementById('shared-meta').textContent = 'Modifiée par Marie — 24 sept. 14:29';
+      document.getElementById('shared-summary').innerHTML =
+        '<li>3 médiateurs</li><li>45 créneaux</li><li>2 créneaux modifiés : Pause repas déplacée, Anniversaire annulé</li>';
+    }
+  });
+});
+</script>
+</body>
+</html>

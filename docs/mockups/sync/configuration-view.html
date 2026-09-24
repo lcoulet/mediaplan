@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediaPlan — Configuration (maquette synchro OneDrive)</title>
+<style>
+/* ===== Base (jetons copiés de src/style.css) ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --color-primary: #2c6e49;
+  --color-primary-dark: #1e5536;
+  --color-primary-light: #4c956c;
+  --color-accent: #d68c45;
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-text: #2b2b2b;
+  --color-text-muted: #6b6b6b;
+  --color-border: #d9d9d9;
+  --color-border-light: #eaeaea;
+  --color-danger: #c0392b;
+  --color-danger-bg: #fdecea;
+  --color-warning: #d68c45;
+  --color-warning-bg: #fef5e7;
+  --color-success: #27ae60;
+  --color-success-bg: #eafaf1;
+  --radius: 6px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --header-h: 56px;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+}
+button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ===== En-tête ===== */
+.app-header {
+  min-height: var(--header-h);
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  row-gap: 4px;
+  padding: 8px 20px;
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 12px;
+}
+.header-left { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; }
+.app-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.app-subtitle { font-size: 12px; opacity: 0.8; }
+.header-nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.nav-btn {
+  background: transparent; border: none; color: rgba(255,255,255,0.8);
+  padding: 8px 14px; border-radius: var(--radius); cursor: pointer; font-size: 14px;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.nav-btn.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
+.icon-btn {
+  background: transparent; border: none; color: #fff; font-size: 18px; cursor: pointer;
+  padding: 4px 8px; border-radius: var(--radius); opacity: 0.8;
+}
+.icon-btn:hover { opacity: 1; background: rgba(255,255,255,0.12); }
+.header-sync {
+  display: flex; flex-wrap: wrap; row-gap: 6px; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.12); border-radius: 16px; padding: 4px 12px;
+}
+.header-sync .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #7de0a3; }
+.header-sync .sync-text { font-size: 12px; white-space: nowrap; }
+.header-toggle { display: flex; align-items: center; cursor: pointer; }
+.header-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.header-slider {
+  width: 32px; height: 18px; border-radius: 9px; background: rgba(255,255,255,0.35);
+  position: relative; transition: background 0.2s;
+}
+.header-slider::after {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px;
+  border-radius: 50%; background: #fff; transition: transform 0.2s;
+}
+.header-toggle input:checked + .header-slider { background: #fff; }
+.header-toggle input:checked + .header-slider::after { transform: translateX(14px); background: var(--color-primary); }
+.header-toggle input:focus-visible + .header-slider { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* ===== Contenu ===== */
+.app-main { max-width: 1400px; margin: 0 auto; padding: 16px; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
+.toolbar h2 { font-size: 18px; font-weight: 600; }
+.toolbar .toolbar-note { font-size: 13px; color: var(--color-text-muted); }
+
+.config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+.config-grid .span-all { grid-column: 1 / -1; }
+@media (max-width: 900px) { .config-grid { grid-template-columns: 1fr; } }
+
+/* ===== Cartes (style io-card) ===== */
+.io-card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+}
+.io-card h2 { font-size: 18px; margin-bottom: 8px; }
+.io-card > p { color: var(--color-text-muted); margin-bottom: 16px; }
+.io-actions { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.io-hint { font-size: 12px; color: var(--color-text-muted); margin-top: 8px; }
+.import-filename { font-size: 13px; color: var(--color-text-muted); }
+
+/* ===== Boutons ===== */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: 1px solid transparent; border-radius: var(--radius);
+  font-size: 14px; cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap; font-family: inherit;
+}
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover { background: var(--color-primary-dark); }
+.btn-secondary { background: var(--color-surface); color: var(--color-text); border-color: var(--color-border); }
+.btn-secondary:hover { background: #f0f0f0; }
+.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-danger { background: transparent; color: var(--color-danger); border-color: var(--color-danger); }
+.btn-danger:hover { background: var(--color-danger); color: #fff; }
+
+/* ===== Badges ===== */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.badge-active { background: var(--color-success-bg); color: var(--color-success); }
+.badge-inactive { background: #f0f0f0; color: var(--color-text-muted); }
+
+/* ===== Formulaires ===== */
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.form-group input, .form-group select {
+  width: 100%; padding: 8px 12px; border: 1px solid var(--color-border);
+  border-radius: var(--radius); font-size: 14px; font-family: inherit;
+  background: var(--color-surface); color: var(--color-text);
+}
+.form-group input:focus, .form-group select:focus {
+  outline: none; border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(44,110,73,0.15);
+}
+.form-hint { margin-top: 4px; font-size: 12px; color: var(--color-text-muted); }
+.form-hint.error-text { color: var(--color-danger); font-weight: 600; }
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+.unit-row { display: flex; gap: 8px; }
+.unit-row input { flex: 1; min-width: 0; }
+.unit-row select { width: 110px; flex-shrink: 0; }
+
+/* ===== Section Synchronisation OneDrive ===== */
+.sync-status {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 12px 14px; margin-bottom: 20px;
+  background: #fafafa; border: 1px solid var(--color-border-light); border-radius: var(--radius);
+}
+.sync-user { font-weight: 600; }
+.sync-last { color: var(--color-text-muted); font-size: 13px; }
+.sync-status .btn { margin-left: auto; }
+
+.link-row { display: flex; gap: 8px; }
+.link-row input { flex: 1; min-width: 0; }
+.link-row .btn { flex-shrink: 0; }
+.link-feedback {
+  margin-top: 8px; padding: 8px 12px; border-radius: var(--radius);
+  font-size: 13px; display: flex; align-items: center; gap: 8px;
+}
+.link-feedback.success { background: var(--color-success-bg); color: var(--color-success); font-weight: 600; }
+.link-feedback.error { background: var(--color-danger-bg); color: var(--color-danger); font-weight: 600; }
+.link-feedback .fb-detail { font-weight: 400; font-size: 12px; }
+.state-switch { display: flex; gap: 6px; margin-top: 10px; }
+.state-switch button {
+  font-size: 11px; padding: 3px 10px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted);
+}
+.state-switch button.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+
+.sync-toggle-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding: 14px; margin-top: 4px;
+  background: #fafafa; border: 1px solid var(--color-border-light); border-radius: var(--radius);
+}
+.sync-toggle-row .toggle-hint { font-size: 12px; color: var(--color-text-muted); }
+
+/* ===== Interrupteur ===== */
+.toggle-switch { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.toggle-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.toggle-slider {
+  width: 36px; height: 20px; border-radius: 10px; background: #ccc;
+  position: relative; transition: background 0.2s; flex-shrink: 0;
+}
+.toggle-slider::after {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+  border-radius: 50%; background: #fff; transition: transform 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--color-primary); }
+.toggle-switch input:checked + .toggle-slider::after { transform: translateX(16px); }
+.toggle-switch input:focus-visible + .toggle-slider { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.toggle-label { font-size: 13px; font-weight: 600; }
+
+/* ===== Panneau de diagnostic ===== */
+details.diagnostics {
+  margin-top: 16px; border: 1px solid var(--color-border);
+  border-radius: var(--radius); background: #fafafa;
+}
+details.diagnostics summary {
+  padding: 10px 14px; cursor: pointer; font-size: 13px; font-weight: 600;
+  color: var(--color-text-muted); list-style: revert;
+}
+details.diagnostics summary:hover { color: var(--color-text); }
+.diag-body { padding: 4px 14px 14px; }
+.diag-section { margin-bottom: 14px; }
+.diag-section:last-child { margin-bottom: 0; }
+.diag-section h4 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--color-text-muted); margin-bottom: 6px; font-weight: 600;
+}
+.log-list { list-style: none; font-size: 12px; display: flex; flex-direction: column; gap: 3px; }
+.log-list time { font-variant-numeric: tabular-nums; color: var(--color-text-muted); margin-right: 8px; }
+.log-list .log-error { color: var(--color-danger); font-weight: 600; }
+.token-line { font-size: 13px; }
+.token-line .badge { margin-left: 6px; }
+pre.raw-error {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px; line-height: 1.5; padding: 10px 12px;
+  background: #f4f6f6; border: 1px solid var(--color-border-light);
+  border-radius: var(--radius); color: var(--color-text);
+  overflow-x: auto; white-space: pre;
+}
+
+/* ===== Demi-journées ===== */
+.config-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 12px; }
+.config-row span { font-size: 13px; color: var(--color-text-muted); }
+.time-select { width: 80px; padding: 4px 8px; font-size: 13px; }
+.config-actions {
+  display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+.moved-note {
+  font-size: 12px; color: var(--color-warning); background: var(--color-warning-bg);
+  padding: 6px 10px; border-radius: var(--radius); margin-bottom: 12px;
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-left">
+    <h1 class="app-title">MediaPlan</h1>
+    <span class="app-subtitle">Gestion des plannings de médiation — Museum</span>
+  </div>
+  <nav class="header-nav" aria-label="Navigation principale">
+    <button class="nav-btn" type="button">Plan Jour</button>
+    <button class="nav-btn" type="button">Plan Hebdo</button>
+    <button class="nav-btn" type="button">Plan Accueil</button>
+    <button class="nav-btn" type="button">Médiateurs</button>
+    <button class="nav-btn" type="button">Offres</button>
+    <button class="nav-btn" type="button">Absences</button>
+    <button class="nav-btn" type="button">Statistiques</button>
+    <button class="nav-btn active" type="button" aria-current="page">Configuration</button>
+    <button class="icon-btn" type="button" title="Annuler (Ctrl+Z)" aria-label="Annuler">↶</button>
+    <button class="icon-btn" type="button" title="Rétablir (Ctrl+Shift+Z)" aria-label="Rétablir">↷</button>
+    <button class="icon-btn" type="button" title="Historique (H)" aria-label="Historique">Historique</button>
+    <span class="header-sync">
+      <label class="header-toggle">
+        <input type="checkbox" checked aria-label="Activer la synchronisation OneDrive">
+        <span class="header-slider" aria-hidden="true"></span>
+      </label>
+      <span class="sync-dot" aria-hidden="true"></span>
+      <span class="sync-text">Synchronisé · il y a 12 s</span>
+    </span>
+  </nav>
+</header>
+
+<main class="app-main">
+  <div class="view">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <h2>Configuration</h2>
+      </div>
+      <span class="toolbar-note">L'ancienne vue « Import / Export » devient la vue Configuration.</span>
+    </div>
+
+    <div class="config-grid">
+
+      <!-- (b) Synchronisation OneDrive -->
+      <section class="io-card span-all" aria-labelledby="sync-title">
+        <h2 id="sync-title">Synchronisation OneDrive</h2>
+        <p>Partagez le planning avec l'équipe de coordination via un dossier OneDrive commun. L'édition locale reste possible même hors connexion.</p>
+
+        <div class="sync-status">
+          <span class="badge badge-active">Connecté</span>
+          <span class="sync-user">Alice Dupont</span>
+          <span class="sync-last">Dernière synchro il y a 12 s</span>
+          <button class="btn btn-danger" type="button">Déconnecter</button>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="client-id">Identifiant client (application Azure)</label>
+            <input id="client-id" type="text" value="0000-aaaa-bbbb-1111" spellcheck="false">
+            <p class="form-hint">Requis pour la connexion OAuth (PKCE). Fourni par l'administrateur du tenant.</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="share-link">Lien de partage du dossier</label>
+          <div class="link-row">
+            <input id="share-link" type="url" value="https://museum-my.sharepoint.com/:f:/g/abc123" spellcheck="false" placeholder="Collez ici le lien de partage du dossier /MediaPlan/">
+            <button class="btn btn-secondary" type="button" id="btn-resolve">Résoudre le lien</button>
+          </div>
+          <!-- Trois états illustrés (bascule de maquette) -->
+          <div class="link-feedback success" id="fb-success" role="status">
+            <span aria-hidden="true">✓</span> Dossier partagé résolu
+            <span class="fb-detail">— driveId b!Xk3…, itemId 01YF… stockés localement. Le lien n'est résolu qu'une seule fois.</span>
+          </div>
+          <div class="link-feedback error" id="fb-error" role="alert" hidden>
+            <span aria-hidden="true">⚠️</span> Lien de partage invalide — l'erreur brute du Graph est affichée dans le panneau de diagnostic.
+            <span class="fb-detail">Aucun driveId ni itemId n'a été stocké.</span>
+          </div>
+          <div class="state-switch" aria-label="États de maquette pour le champ lien de partage">
+            <button type="button" data-state="success" class="active" aria-pressed="true">État : résolu</button>
+            <button type="button" data-state="error" aria-pressed="false">État : erreur</button>
+          </div>
+        </div>
+
+        <div class="form-row form-row-3">
+          <div class="form-group">
+            <label for="poll-freq">Fréquence d'interrogation</label>
+            <div class="unit-row">
+              <input id="poll-freq" type="number" value="30" min="10">
+              <select aria-label="Unité de la fréquence d'interrogation">
+                <option selected>secondes</option>
+                <option>minutes</option>
+              </select>
+            </div>
+            <p class="form-hint">Plage acceptée : 10 s – 15 min. Hors bornes : valeur refusée, non ajustée.</p>
+          </div>
+          <div class="form-group">
+            <label for="conflict-timeout">Délai du dialogue de conflit</label>
+            <div class="unit-row">
+              <input id="conflict-timeout" type="number" value="20" min="0.5">
+              <select aria-label="Unité du délai du dialogue de conflit">
+                <option>secondes</option>
+                <option selected>minutes</option>
+              </select>
+            </div>
+            <p class="form-hint">Sans réponse après ce délai, la synchro se met en pause. Plage acceptée : 30 s – 60 min.</p>
+          </div>
+          <div class="form-group">
+            <label for="history-retention">Rétention de l'historique</label>
+            <div class="unit-row">
+              <input id="history-retention" type="number" value="30" min="1">
+              <select aria-label="Unité de la rétention de l'historique">
+                <option selected>jours</option>
+              </select>
+            </div>
+            <p class="form-hint">Purge des fichiers history/ du drive à chaque envoi. Plage acceptée : 1 – 365 jours.</p>
+          </div>
+        </div>
+
+        <div class="sync-toggle-row">
+          <label class="toggle-switch" for="sync-enabled">
+            <input type="checkbox" id="sync-enabled" checked>
+            <span class="toggle-slider" aria-hidden="true"></span>
+            <span class="toggle-label">Synchronisation active</span>
+          </label>
+          <span class="toggle-hint">En cas d'erreur ou de perte réseau, la synchro se met en pause et peut être réactivée ici ou depuis l'en-tête.</span>
+        </div>
+
+        <details class="diagnostics" id="diagnostics">
+          <summary>Diagnostics (journal, jeton, erreurs Graph)</summary>
+          <div class="diag-body">
+            <div class="diag-section">
+              <h4>Journal de synchronisation</h4>
+              <ul class="log-list">
+                <li><time>14:32:05</time>Interrogation réussie — 304 Non modifié</li>
+                <li><time>14:31:35</time>Envoi différé effectué — history/2026-09-24T14-31-35Z_alice.json</li>
+                <li><time>14:31:30</time>Interrogation réussie — 200, nouvelle version distante appliquée (Marie)</li>
+                <li class="log-error"><time>14:30:02</time>Erreur Graph 403 accessDenied sur l'écriture — nouvelle tentative à la prochaine échéance</li>
+              </ul>
+            </div>
+            <div class="diag-section">
+              <h4>Statut du jeton</h4>
+              <p class="token-line">Jeton d'accès<span class="badge badge-active">valide</span> expire à 15:04:02 — rafraîchissement silencieux 60 s avant l'expiration.</p>
+            </div>
+            <div class="diag-section">
+              <h4>Dernière erreur brute du Graph</h4>
+              <pre class="raw-error">{
+  "error": {
+    "code": "accessDenied",
+    "message": "Access Denied. The caller does not have permission to write to the item.",
+    "innererror": { "date": "2026-09-24T14:30:02", "request-id": "4f9a-…-b21e" }
+  }
+}</pre>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- (a) Import Secutix -->
+      <section class="io-card" aria-labelledby="secutix-title">
+        <h2 id="secutix-title">Import Secutix (synchronisation)</h2>
+        <p>
+          Synchronise le planning avec un export Secutix : ajoute les nouvelles réservations,
+          met à jour les modifiées, supprime celles qui ont disparu du fichier (annulées
+          côté Secutix). Les affectations de médiateurs sont conservées.
+        </p>
+        <div class="io-actions">
+          <input type="file" id="secutix-file" accept=".xlsx,.xls" aria-label="Fichier d'export Secutix">
+          <span class="import-filename">sem39sem51.xlsx</span>
+          <button class="btn btn-primary" type="button">Importer l'export Secutix</button>
+        </div>
+        <div class="io-hint">Semaine 39 incluse dans le dernier import (21–27 sept. 2026).</div>
+      </section>
+
+      <!-- (c) Demi-journées -->
+      <section class="io-card" aria-labelledby="halfday-title">
+        <h2 id="halfday-title">Demi-journées</h2>
+        <div class="moved-note">ⓘ Réglage déplacé depuis le bouton de réglages de l'en-tête — contenu inchangé.</div>
+        <div class="config-row">
+          <span>Fin matin :</span>
+          <select class="time-select" aria-label="Fin de matinée">
+            <option selected>12:30</option>
+          </select>
+        </div>
+        <div class="config-row">
+          <span>Début après-midi :</span>
+          <select class="time-select" aria-label="Début d'après-midi">
+            <option selected>13:30</option>
+          </select>
+        </div>
+        <p class="io-hint">Les horaires des absences non terminées sont mis à jour si vous modifiez ces paramètres.</p>
+        <div class="config-actions">
+          <button class="btn btn-secondary" type="button">Réinitialiser</button>
+          <button class="btn btn-primary" type="button">Fermer</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<script>
+// Interaction de maquette uniquement : bascule entre les états du champ lien de partage.
+document.querySelectorAll('.state-switch button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.state-switch button').forEach(function (b) {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
+    var state = btn.dataset.state;
+    document.getElementById('fb-success').hidden = state !== 'success';
+    document.getElementById('fb-error').hidden = state !== 'error';
+  });
+});
+</script>
+</body>
+</html>
