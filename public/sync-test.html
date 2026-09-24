@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test connexion OneDrive — MediaPlan</title>
+<style>
+  :root { --color-primary: #2c6e49; --radius: 6px; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px; color: #2b2b2b; background: #f5f6f4;
+    max-width: 720px; margin: 40px auto; padding: 0 20px; line-height: 1.5;
+  }
+  h1 { font-size: 20px; color: var(--color-primary); }
+  h2 { font-size: 15px; margin-top: 28px; }
+  .card {
+    background: #fff; border-radius: var(--radius); padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 16px;
+  }
+  label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 13px; }
+  input[type="text"] {
+    width: 100%; padding: 8px 10px; border: 1px solid #ccc;
+    border-radius: 4px; font: inherit; margin-bottom: 12px;
+  }
+  .hint { font-size: 12px; color: #666; margin-top: -8px; margin-bottom: 12px; }
+  button {
+    background: var(--color-primary); color: #fff; border: none;
+    padding: 10px 18px; border-radius: var(--radius); font: inherit;
+    font-weight: 600; cursor: pointer;
+  }
+  button:hover { background: #1e5536; }
+  button:disabled { background: #ccc; cursor: not-allowed; }
+  button.secondary { background: #fff; color: var(--color-primary); border: 1px solid var(--color-primary); }
+  pre {
+    background: #f4f4f4; padding: 10px; border-radius: 4px;
+    font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all;
+    max-height: 240px; overflow-y: auto;
+  }
+  .status-ok { color: #1e5536; font-weight: 600; }
+  .status-err { color: #a93226; font-weight: 600; }
+  .step { font-size: 12px; color: #666; margin-bottom: 8px; }
+  .result-item {
+    display: flex; justify-content: space-between; padding: 6px 0;
+    border-bottom: 1px solid #eee; font-size: 13px;
+  }
+  .result-item span:first-child { font-weight: 600; }
+  #log { display: none; }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 700;
+  }
+  .badge.ok { background: #eafaf1; color: #1e5536; }
+  .badge.err { background: #fdeaea; color: #a93226; }
+</style>
+</head>
+<body>
+<h1>Test connexion OneDrive (PKCE, frontend-only)</h1>
+<p class="step">Cette page dérisque le flux OAuth complet sans backend : login Microsoft →
+token → appel Microsoft Graph. Aucune donnée n'est stockée.</p>
+
+<div class="card">
+  <h2>1. Configuration</h2>
+  <label for="client-id">Client ID (Application ID de l'app registration Azure)</label>
+  <input type="text" id="client-id" placeholder="00000000-0000-0000-0000-000000000000">
+  <p class="hint">L'app doit être de type « SPA » avec ce redirect URI :
+    <code id="redirect-hint"></code></p>
+  <label for="tenant">Type de compte</label>
+  <select id="tenant" style="padding:8px;margin-bottom:12px;font:inherit;">
+    <option value="common" selected>Personnel + organisation (common)</option>
+    <option value="consumers">Personnel uniquement (consumers)</option>
+    <option value="organizations">Organisation uniquement (organizations)</option>
+  </select>
+</div>
+
+<div class="card">
+  <h2>2. Connexion</h2>
+  <button id="btn-login">Se connecter avec Microsoft</button>
+  <p class="hint" id="login-hint" style="display:none;margin-top:12px;"></p>
+</div>
+
+<div class="card" id="results" style="display:none;">
+  <h2>3. Résultats <span id="result-badge" class="badge"></span></h2>
+  <div id="result-list"></div>
+</div>
+
+<div class="card" id="log">
+  <h2>Journal</h2>
+  <pre id="log-content"></pre>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var SCOPES = 'Files.ReadWrite User.Read offline_access';
+  var logEl = document.getElementById('log');
+  var logContent = document.getElementById('log-content');
+
+  document.getElementById('redirect-hint').textContent =
+    window.location.origin + window.location.pathname;
+
+  function log(msg, obj) {
+    logEl.style.display = 'block';
+    var line = '[' + new Date().toLocaleTimeString('fr-FR') + '] ' + msg;
+    if (obj !== undefined) {
+      try { line += '\n' + JSON.stringify(obj, null, 2); }
+      catch (e) { line += ' (objet non sérialisable)'; }
+    }
+    logContent.textContent += line + '\n\n';
+    console.log(msg, obj);
+  }
+
+  function setResult(ok, items) {
+    var results = document.getElementById('results');
+    var badge = document.getElementById('result-badge');
+    var list = document.getElementById('result-list');
+    results.style.display = 'block';
+    badge.textContent = ok ? 'SUCCÈS' : 'ÉCHEC';
+    badge.className = 'badge ' + (ok ? 'ok' : 'err');
+    list.innerHTML = '';
+    items.forEach(function (it) {
+      var row = document.createElement('div');
+      row.className = 'result-item';
+      var name = document.createElement('span');
+      name.textContent = it.name;
+      var val = document.createElement('span');
+      val.textContent = it.value;
+      val.className = it.ok === false ? 'status-err' : (it.ok ? 'status-ok' : '');
+      row.appendChild(name); row.appendChild(val);
+      list.appendChild(row);
+    });
+  }
+
+  // --- PKCE helpers (S256) ---
+  function randomVerifier() {
+    var bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    return base64UrlEncode(bytes);
+  }
+  function base64UrlEncode(bytes) {
+    var str = '';
+    for (var i = 0; i < bytes.length; i++) str += String.fromCharCode(bytes[i]);
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function base64UrlEncodeStr(str) {
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  async function challengeFromVerifier(verifier) {
+    var data = new TextEncoder().encode(verifier);
+    var digest = await crypto.subtle.digest('SHA-256', data);
+    return base64UrlEncode(new Uint8Array(digest));
+  }
+
+  // --- Flow ---
+  var state = {
+    verifier: sessionStorage.getItem('pkce_verifier'),
+    clientId: sessionStorage.getItem('pkce_client_id'),
+    tenant: sessionStorage.getItem('pkce_tenant')
+  };
+
+  async function startLogin() {
+    var clientId = document.getElementById('client-id').value.trim();
+    var tenant = document.getElementById('tenant').value;
+    if (!clientId) {
+      alert('Renseigne le client ID.');
+      return;
+    }
+    var verifier = randomVerifier();
+    var challenge = await challengeFromVerifier(verifier);
+    var stateParam = base64UrlEncode(randomVerifier32());
+
+    sessionStorage.setItem('pkce_verifier', verifier);
+    sessionStorage.setItem('pkce_client_id', clientId);
+    sessionStorage.setItem('pkce_tenant', tenant);
+    sessionStorage.setItem('pkce_state', stateParam);
+
+    var authUrl = 'https://login.microsoftonline.com/' + tenant +
+      '/oauth2/v2.0/authorize' +
+      '?response_type=code' +
+      '&client_id=' + encodeURIComponent(clientId) +
+      '&redirect_uri=' + encodeURIComponent(window.location.origin + window.location.pathname) +
+      '&scope=' + encodeURIComponent(SCOPES) +
+      '&code_challenge=' + encodeURIComponent(challenge) +
+      '&code_challenge_method=S256' +
+      '&state=' + encodeURIComponent(stateParam) +
+      '&response_mode=query';
+
+    log('Redirection vers Microsoft (authorize)...');
+    window.location.href = authUrl;
+  }
+
+  function randomVerifier32() {
+    var bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return bytes;
+  }
+
+  async function exchangeCode(authCode) {
+    var body = new URLSearchParams({
+      client_id: state.clientId,
+      grant_type: 'authorization_code',
+      code: authCode,
+      redirect_uri: window.location.origin + window.location.pathname,
+      code_verifier: state.verifier,
+      scope: SCOPES
+    });
+    log('Échange du code contre un token (POST /token)...');
+    var res = await fetch('https://login.microsoftonline.com/' + state.tenant + '/oauth2/v2.0/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString()
+    });
+    var json = await res.json();
+    if (!res.ok) {
+      log('Échec de l\'échange token', json);
+      throw new Error('token exchange failed: ' + (json.error_description || json.error));
+    }
+    log('Token reçu ✓ (expire dans ' + json.expires_in + ' s, refresh_token: ' + (json.refresh_token ? 'oui' : 'NON') + ')');
+    return json;
+  }
+
+  async function runTests(accessToken) {
+    var items = [];
+    var ok = true;
+
+    // Test 1: /me (profil)
+    try {
+      var me = await callGraph(accessToken, 'https://graph.microsoft.com/v1.0/me');
+      items.push({ name: 'Profil (/me)', value: (me.displayName || '?') + ' (' + (me.userPrincipalName || '?') + ')', ok: true });
+    } catch (e) {
+      ok = false;
+      items.push({ name: 'Profil (/me)', value: String(e.message), ok: false });
+    }
+
+    // Test 2: drive root
+    var driveId = null;
+    try {
+      var drive = await callGraph(accessToken, 'https://graph.microsoft.com/v1.0/me/drive');
+      driveId = drive.id;
+      items.push({ name: 'Drive racine', value: drive.driveType + ' — ' + (drive.quota ? Math.round(drive.quota.total / 1e9) + ' Go' : '?'), ok: true });
+    } catch (e) {
+      ok = false;
+      items.push({ name: 'Drive racine', value: String(e.message), ok: false });
+    }
+
+    // Test 3: list root children (lecture)
+    try {
+      var children = await callGraph(accessToken, 'https://graph.microsoft.com/v1.0/me/drive/root/children?$top=5&select=name,folder,file');
+      var names = children.value.map(function (c) { return c.name; }).join(', ') || '(vide)';
+      items.push({ name: 'Dossiers racine (lecture)', value: names, ok: true });
+    } catch (e) {
+      ok = false;
+      items.push({ name: 'Dossiers racine (lecture)', value: String(e.message), ok: false });
+    }
+
+    // Test 4: write a test file (écriture)
+    try {
+      var testContent = JSON.stringify({ test: 'mediaplan-sync-test', at: new Date().toISOString() });
+      var put = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/mediaplan-sync-test.json:/content', {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+        body: testContent
+      });
+      if (!put.ok) throw new Error('HTTP ' + put.status);
+      var putJson = await put.json();
+      items.push({ name: 'Écriture fichier test', value: 'mediaplan-sync-test.json créé (id: ' + putJson.id.slice(0, 8) + '…)', ok: true });
+
+      // Test 5: delete it (nettoyage)
+      var del = await fetch('https://graph.microsoft.com/v1.0/me/drive/items/' + putJson.id, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + accessToken }
+      });
+      items.push({ name: 'Suppression fichier test', value: del.ok ? 'nettoyé ✓' : 'HTTP ' + del.status + ' (à supprimer manuellement)', ok: del.ok });
+    } catch (e) {
+      ok = false;
+      items.push({ name: 'Écriture fichier test', value: String(e.message), ok: false });
+    }
+
+    setResult(ok, items);
+  }
+
+  async function callGraph(token, url) {
+    var res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+    var json = await res.json();
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' — ' + (json.error ? json.error.message : ''));
+    return json;
+  }
+
+  // --- On load: check for ?code= in URL (return from Microsoft) ---
+  var params = new URLSearchParams(window.location.search);
+  var authCode = params.get('code');
+  var authError = params.get('error');
+  var authState = params.get('state');
+
+  if (authError) {
+    log('Erreur retournée par Microsoft : ' + authError + ' — ' + params.get('error_description'));
+    setResult(false, [
+      { name: 'Erreur OAuth', value: authError, ok: false },
+      { name: 'Détail', value: params.get('error_description') || '', ok: false }
+    ]);
+    sessionStorage.removeItem('pkce_verifier');
+  } else if (authCode) {
+    if (authState !== sessionStorage.getItem('pkce_state')) {
+      log('State mismatch — possible CSRF, abandon.', { expected: sessionStorage.getItem('pkce_state'), got: authState });
+      setResult(false, [{ name: 'Sécurité (state)', value: 'mismatch — abandon', ok: false }]);
+    } else if (!state.verifier) {
+      log('Code d\'autorisation reçu mais pas de verifier en session (session perdue ?).');
+      setResult(false, [{ name: 'Session', value: 'verifier perdu — relance la connexion depuis cette page', ok: false }]);
+    } else {
+      exchangeCode(authCode)
+        .then(function (tokens) {
+          history.replaceState({}, '', window.location.pathname);
+          return runTests(tokens.access_token);
+        })
+        .catch(function (e) {
+          setResult(false, [{ name: 'Échange token', value: String(e.message), ok: false }]);
+        });
+    }
+  }
+
+  document.getElementById('btn-login').addEventListener('click', startLogin);
+
+  // Pre-fill client ID from sessionStorage or query param
+  var saved = sessionStorage.getItem('pkce_client_id');
+  var fromUrl = params.get('client_id');
+  if (saved) document.getElementById('client-id').value = saved;
+  if (fromUrl) {
+    document.getElementById('client-id').value = fromUrl;
+    sessionStorage.setItem('pkce_client_id', fromUrl);
+  }
+})();
+</script>
+</body>
+</html>
