@@ -113,10 +113,17 @@ Absences are non-interactive on the calendar (display only).
 A mediator's recurring weekly schedule pattern. A mediator has one
 active cycle at a time; a cycle consists of 1 to N named weeks
 (e.g. S1, S2, S3), each specifying WORKED DAYS (Monday to Sunday —
-weekends can be worked) and a WORKING HOUR RANGE (amplitude horaire).
+weekends can be worked) and a PER-DAY WORKING HOUR RANGE (amplitude
+horaire, e.g. S1 = Mon 9:30-18:00, Tue 10:00-18:30).
 Cycles rotate in sequence (S1 → S2 → S3 → S1, ...) — one cycle week per
-ISO week. New mediators default to a single cycle week:
+ISO week. By default the rotation starts at S1, but it can be re-anchored
+to restart at an arbitrary week, and specific ISO weeks can be FORCED
+manually to a given cycle week (override) for maximum flexibility.
+New mediators default to a single cycle week:
 Monday–Friday, 09:30–18:00.
+
+Assigning a slot outside a mediator's working amplitude is ALLOWED and
+triggers a light warning.
 
 Cycle definitions can be COPIED as JSON (clipboard) and PASTED into
 another mediator (or the same one), to reuse cycle patterns across

@@ -75,16 +75,25 @@ weeks 39–51, analyzed locally, never committed):**
   labels (commit 45a3475)
 - [x] Unassigned count is shown in the daily view lane label (commit 5c7ac6d)
 
-**Work cycles (decided 2026-09-25):**
+**Work cycles (decided 2026-09-25, refined 2026-09-26):**
 - [x] A mediator = ONE TO SEVERAL cycle weeks (S1, S2... rotating)
 - [x] Cycle copy/paste: a button copies a cycle definition as JSON to the
       clipboard; a paste button imports it into another mediator (or the
       same one) — reuse of cycle definitions across mediators
 - [x] Each cycle week defines WORKED DAYS (or not) + a WORKING HOUR RANGE
       (amplitude horaire)
+- [x] The working hour range is PER DAY (e.g. S1 = Mon 9:30-18:00,
+      Tue 10:00-18:30) — not one range for the whole week
 - [x] Weekends can be worked (Saturday/Sunday are possible worked days)
 - [x] DEFAULT for a new mediator: a single cycle week, Monday–Friday,
       09:30–18:00
+- [x] A slot assigned outside the working amplitude triggers a LIGHT
+      WARNING (allowed, not forbidden)
+- [x] Cycle anchoring: by default the rotation starts at week 1 (S1) —
+      but it must be adjustable: restart the rotation at an arbitrary
+      week, and FORCE specific weeks manually per ISO week, for maximum
+      flexibility (e.g. override "this ISO week shows S3 although the
+      rotation would give S1")
 - [x] Daily view display: the mediator's lane shows the working hour
       range, with HATCHING outside working hours; a pill (or column)
       displays the current cycle week (S1/S2/...) next to the mediator name
@@ -103,17 +112,9 @@ weeks 39–51, analyzed locally, never committed):**
 - [ ] Which absence/mission types should the app model natively vs. free
       text? (current AbsenceType: leave, mission, training, sick, other,
       leave_request)
-- [ ] Does each cycle week carry ONE working hour range for all its
-      worked days, or a per-day range (e.g. S1 = Mon 9:30-18:00,
-      Tue 10:00-18:30)?
-- [ ] Does the working hour range interact with setup/teardown and slot
-      assignment (can a slot extend outside the amplitude with a
-      warning, or is it forbidden)?
-- [ ] Where does the cycle start (which ISO week is "week 1" for a given
-      mediator — a start date per mediator?)
-- [ ] Predefined contract-type list beyond temps plein / mi-temps /
-      stagiaire — free text covers the rest, but the selector needs
-      initial values
+- [ ] Predefined contract-type list: TBD — the selector starts with
+      temps plein / mi-temps / stagiaire + free text; more predefined
+      values may be added later once the real list is known
 - [ ] Should the count columns (per-day presence totals) be reproduced?
 
 ## OneDrive Synchronization (synchro cloud collaborative)
