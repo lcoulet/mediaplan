@@ -111,15 +111,28 @@ Absences are non-interactive on the calendar (display only).
 
 ### Work Cycle (Cycle de travail)
 A mediator's recurring weekly schedule pattern. A mediator has one
-active cycle at a time. A cycle consists of 1 to N named weeks
-(e.g. S1, S2, S3), each specifying precise working days and hours
-(e.g. S1 = Monday 9:00-18:00, Tuesday 9:00-18:00, Wednesday off).
-Cycles rotate in sequence (S1 → S2 → S3 → S1 → ...) but can be
-manually overridden for specific weeks to accommodate planning changes.
+active cycle at a time; a cycle consists of 1 to N named weeks
+(e.g. S1, S2, S3), each specifying WORKED DAYS (Monday to Sunday —
+weekends can be worked) and a WORKING HOUR RANGE (amplitude horaire).
+Cycles rotate in sequence (S1 → S2 → S3 → S1, ...) — one cycle week per
+ISO week. New mediators default to a single cycle week:
+Monday–Friday, 09:30–18:00.
 
-Cycle management (creation, editing) is done in the mediator's own
-settings/view. A cycle week defines the mediator's base availability.
+Cycle definitions can be COPIED as JSON (clipboard) and PASTED into
+another mediator (or the same one), to reuse cycle patterns across
+mediators. The cycle chain is edited in a modal from the Mediators view.
+
+In the daily view, the mediator's lane shows the working hour range with
+HATCHING outside working hours, and the current cycle week (S1, S2...)
+appears as a pill next to the mediator name.
+
 Absences further reduce availability on top of the cycle.
+
+### Contract Type (Type de contrat)
+The mediator's employment type: temps plein (full time), mi-temps
+(part time), stagiaire (intern), etc. Displayed as a pill or icon next
+to the mediator. Selector offers predefined values with free-text
+entry for anything else.
 
 ### Schedule (Planning)
 A planning period containing all slots and absences. Has a `locked`

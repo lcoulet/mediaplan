@@ -90,15 +90,31 @@ mockups in docs/mockups/sync/ reviewed GO-WITH-FIXES and fixed).
 - [x] Obtain sample files (Secutix done — analyzed locally; coordination
   format still to be provided) to define column mappings
 
-## Work Cycles
+## Work Cycles (decided 2026-09-25 — see OPEN-QUESTIONS + LEXICON)
 
-- [ ] Add WorkCycle and CycleWeek entities to models.ts (TDD)
-- [ ] Add cycle rotation logic (S1 → S2 → S3 → S1)
-- [ ] Add per-week override mechanism
-- [ ] Add Cycle Override entity
-- [ ] Create Cycles view: grid (mediator per row, weeks as columns)
+- [ ] WorkCycle / CycleWeek entities (TDD):
+  - CycleWeek: id, name (S1, S2...), worked days (Mon-Sun), working hour
+    range (amplitude horaire)
+  - WorkCycle: ordered list of CycleWeeks, rotates one per ISO week
+  - Default for new mediator: 1 week, Mon-Fri, 09:30-18:00
+- [ ] Cycle rotation logic (S1 → S2 → S3 → S1) + start anchor
+  (which ISO week is week 1 — open question)
+- [ ] Cycle copy/paste: copy cycle definition as JSON to clipboard,
+  paste into another mediator (or same)
+- [ ] Cycle chain modal in the Mediators view (define the sequence
+  of cycle weeks)
+- [ ] Daily view: mediator lane shows working hour range + hatching
+  outside working hours; cycle-week pill next to mediator name
 - [ ] Integrate cycle availability into assignment suggestions
-- [ ] Cycle management UI in mediator view/settings
+  (interaction with slot assignment outside amplitude — open question)
+
+## Contract Type
+
+- [ ] Add contractType to Mediator (TDD): temps plein, mi-temps,
+  stagiaire... selector with predefined values + free text
+- [ ] Display as pill or icon next to the mediator (Mediators view,
+  daily view lane label)
+- [ ] Migrate legacy localStorage data (default: temps plein?)
 
 ## Assignment UX
 
