@@ -468,6 +468,14 @@ body.edit-mode .cal-day-col:hover {
   overflow: hidden;
 }
 
+.daily-mediator-idbox {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
 .daily-mediator-name {
   margin-left: 8px;
   white-space: nowrap;
@@ -477,6 +485,26 @@ body.edit-mode .cal-day-col:hover {
   min-width: 0;
   font-size: 13px;
   font-weight: 600;
+}
+
+/* Mediator phone under the name in the daily view lane label */
+.daily-mediator-phone {
+  display: block;
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mediator phone under the name in the reservations list (Plan Accueil) */
+.res-mediator-phone {
+  display: block;
+  margin-left: 14px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 /* Unassigned counter in the unassigned lane label ("3/10") */

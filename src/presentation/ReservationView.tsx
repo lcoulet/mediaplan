@@ -148,6 +148,7 @@ export default function ReservationView() {
                   <span key={m.id} className="res-mediator">
                     <span className="slot-mediator-glyph" style={{ color: m.color || '#ccc' }}>●</span>
                     {' '}{m.lastName} {m.firstName}
+                    {m.phone && <span className="res-mediator-phone">{m.phone}</span>}
                   </span>
                 ))
               )

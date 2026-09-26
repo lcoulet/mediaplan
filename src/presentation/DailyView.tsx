@@ -651,7 +651,10 @@ export default function DailyView() {
               >
                 <div className="daily-mediator-label">
                   <span className="slot-mediator-glyph daily-mediator-color" style={{ color: mediator.color || '#ccc' }}>●</span>
-                  <span className="daily-mediator-name">{mediator.lastName} {mediator.firstName}</span>
+                  <span className="daily-mediator-idbox">
+                    <span className="daily-mediator-name">{mediator.lastName} {mediator.firstName}</span>
+                    {mediator.phone && <span className="daily-mediator-phone">{mediator.phone}</span>}
+                  </span>
                 </div>
                 <div
                   className="daily-mediator-track"
