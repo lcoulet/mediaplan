@@ -27,7 +27,6 @@
   --radius: 6px;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.25);
   --header-h: 56px;
 }
 body {
@@ -95,7 +94,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 .modal {
   background: var(--color-surface); border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   width: 560px; max-width: 100%;
   display: flex; flex-direction: column;
   max-height: calc(100vh - 48px);
@@ -196,7 +195,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .time-inputs input { width: 90px; font-variant-numeric: tabular-nums; }
 .time-inputs span { color: var(--color-text-muted); }
 .light-warning {
-  margin-top: 6px; font-size: 12px; color: #b06a1e; font-weight: 600;
+  margin-top: 6px; font-size: 12px; color: #8f5410; font-weight: 600;
 }
 .light-warning .warn-detail { font-weight: 400; color: var(--color-text-muted); }
 .no-warning { margin-top: 6px; font-size: 12px; color: var(--color-text-muted); }
@@ -258,6 +257,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     </div>
     <div class="mediator-row">
       <span class="mediator-name">Karim Benali</span>
+      <span class="pill pill-contract" title="Type de contrat">mi-temps (temps partiel)</span>
       <span class="mediator-email">karim.benali@museum.fr</span>
       <button class="btn btn-secondary" type="button">✎ Modifier</button>
     </div>
@@ -321,8 +321,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
             <span class="pill pill-week" title="Semaine de cycle active">S1</span>
           </p>
           <p class="preview-hint">Exemple pilule seule : Marie Lambert <span class="pill pill-contract" style="margin-left: 4px;">stagiaire</span></p>
-          <p class="preview-hint">Exemple texte libre long : <span class="pill pill-contract truncated" title="vacataire longue durée renouvelable 24 mois">vacataire longue durée renouvelable 2…</span> <span class="preview-hint" style="display: inline;">(title au survol = texte complet)</span></p>
-          <p class="preview-hint">Sans type de contrat : Karim Benali <span class="pill-preview-none">— aucune pilule affichée</span></p>
+          <p class="preview-hint">Exemple texte libre long : <span class="pill pill-contract truncated" title="vacataire longue durée renouvelable 24 mois">vacataire longue durée renouvelable 2…</span> <span class="preview-hint">(title au survol = texte complet)</span></p>
+          <p class="preview-hint">Sans type de contrat : Claire Fontaine <span class="pill-preview-none">— aucune pilule affichée</span></p>
         </div>
       </div>
 

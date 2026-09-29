@@ -27,7 +27,6 @@
   --radius: 6px;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.25);
   --header-h: 56px;
 }
 body {
@@ -100,7 +99,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 }
 .modal {
   background: var(--color-surface); border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   width: 720px; max-width: 100%;
   display: flex; flex-direction: column;
   max-height: calc(100vh - 48px);
@@ -277,7 +276,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 }
 .confirm-dialog {
   background: var(--color-surface); border-radius: var(--radius);
-  box-shadow: var(--shadow-lg); padding: 20px; width: 420px; max-width: 100%;
+  box-shadow: var(--shadow-md); padding: 20px; width: 420px; max-width: 100%;
 }
 .confirm-dialog h4 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
 .confirm-dialog p { font-size: 13px; color: var(--color-text-muted); margin-bottom: 16px; }
@@ -326,7 +325,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
     </div>
     <div class="mediator-row">
       <span class="mediator-name">Karim Benali</span>
-      <span class="pill pill-contract">stagiaire</span>
+      <span class="pill pill-contract" title="Type de contrat">mi-temps (temps partiel)</span>
       <span class="mediator-email">karim.benali@museum.fr</span>
       <div class="row-btns">
         <button class="btn btn-secondary icon-only" type="button" title="Modifier la fiche">✎</button>
@@ -369,14 +368,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
           <div class="week-item expanded">
             <div class="week-head">
               <span class="drag-handle" title="Glisser pour réordonner" aria-hidden="true">⋮⋮</span>
-              <span class="order-btns" aria-hidden="true" title="Monter / descendre dans la rotation">
-                <button type="button" tabindex="-1">▲</button><button type="button" tabindex="-1">▼</button>
+              <span class="order-btns" title="Monter / descendre dans la rotation">
+                <button type="button" aria-label="Monter S1 dans la rotation">▲</button><button type="button" aria-label="Descendre S1 dans la rotation">▼</button>
               </span>
-              <label class="sr-only" for="week-name-s1" hidden>Nom de la semaine de cycle</label>
               <input class="week-name-input" id="week-name-s1" type="text" value="S1" aria-label="Nom de la semaine de cycle">
               <span class="week-summary"><strong>3 semaines</strong> · rotation S1 → S2 → S3</span>
               <span class="week-actions">
-                <button class="expand-btn" type="button" title="Replier la semaine">▾</button>
+                <button class="expand-btn" type="button" title="Replier la semaine" aria-label="Réduire la semaine S1">▾</button>
                 <button class="btn btn-danger icon-only" type="button" title="Supprimer la semaine S1" aria-label="Supprimer la semaine S1">🗑</button>
               </span>
             </div>
@@ -388,31 +386,31 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
                 <span class="grid-head">Fin</span>
 
                 <span class="day-name">Lundi</span>
-                <label class="day-toggle"><input type="checkbox" checked><span class="toggle-state">oui</span></label>
+                <label class="day-toggle"><input type="checkbox" checked aria-label="Lundi travaillé"><span class="toggle-state">oui</span></label>
                 <span class="time-pair"><input type="time" value="09:30" aria-label="Début lundi"> – <input type="time" value="18:00" aria-label="Fin lundi"></span>
 
                 <span class="day-name">Mardi</span>
-                <label class="day-toggle"><input type="checkbox" checked><span class="toggle-state">oui</span></label>
+                <label class="day-toggle"><input type="checkbox" checked aria-label="Mardi travaillé"><span class="toggle-state">oui</span></label>
                 <span class="time-pair"><input type="time" value="10:00" aria-label="Début mardi"> – <input type="time" value="18:30" aria-label="Fin mardi"></span>
 
                 <span class="day-name">Mercredi</span>
-                <label class="day-toggle"><input type="checkbox"><span class="toggle-state">non</span></label>
+                <label class="day-toggle"><input type="checkbox" aria-label="Mercredi travaillé"><span class="toggle-state">non</span></label>
                 <span class="time-pair"><input type="time" disabled placeholder="—" aria-label="Début mercredi (jour non travaillé)"> – <input type="time" disabled placeholder="—" aria-label="Fin mercredi (jour non travaillé)"></span>
 
                 <span class="day-name">Jeudi</span>
-                <label class="day-toggle"><input type="checkbox" checked><span class="toggle-state">oui</span></label>
+                <label class="day-toggle"><input type="checkbox" checked aria-label="Jeudi travaillé"><span class="toggle-state">oui</span></label>
                 <span class="time-pair"><input type="time" value="09:30" aria-label="Début jeudi"> – <input type="time" value="18:00" aria-label="Fin jeudi"></span>
 
                 <span class="day-name">Vendredi</span>
-                <label class="day-toggle"><input type="checkbox" checked><span class="toggle-state">oui</span></label>
+                <label class="day-toggle"><input type="checkbox" checked aria-label="Vendredi travaillé"><span class="toggle-state">oui</span></label>
                 <span class="time-pair"><input type="time" value="09:30" aria-label="Début vendredi"> – <input type="time" value="18:00" aria-label="Fin vendredi"></span>
 
                 <span class="day-name">Samedi</span>
-                <label class="day-toggle"><input type="checkbox"><span class="toggle-state">non</span></label>
+                <label class="day-toggle"><input type="checkbox" aria-label="Samedi travaillé"><span class="toggle-state">non</span></label>
                 <span class="time-pair"><input type="time" disabled placeholder="—" aria-label="Début samedi (jour non travaillé)"> – <input type="time" disabled placeholder="—" aria-label="Fin samedi (jour non travaillé)"></span>
 
                 <span class="day-name">Dimanche</span>
-                <label class="day-toggle"><input type="checkbox"><span class="toggle-state">non</span></label>
+                <label class="day-toggle"><input type="checkbox" aria-label="Dimanche travaillé"><span class="toggle-state">non</span></label>
                 <span class="time-pair"><input type="time" disabled placeholder="—" aria-label="Début dimanche (jour non travaillé)"> – <input type="time" disabled placeholder="—" aria-label="Fin dimanche (jour non travaillé)"></span>
               </div>
               <p class="section-hint" style="margin-top: 8px;">Exemple d'erreur de saisie rejetée (état illustré, non actif) :</p>
@@ -424,13 +422,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
           <div class="week-item collapsed">
             <div class="week-head">
               <span class="drag-handle" title="Glisser pour réordonner" aria-hidden="true">⋮⋮</span>
-              <span class="order-btns" aria-hidden="true" title="Monter / descendre dans la rotation">
-                <button type="button" tabindex="-1">▲</button><button type="button" tabindex="-1">▼</button>
+              <span class="order-btns" title="Monter / descendre dans la rotation">
+                <button type="button" aria-label="Monter S2 dans la rotation">▲</button><button type="button" aria-label="Descendre S2 dans la rotation">▼</button>
               </span>
               <span class="week-name" style="font-weight: 600; width: 130px;">S2</span>
               <span class="week-summary"><strong>lun-ven 09:30-18:00</strong></span>
               <span class="week-actions">
-                <button class="expand-btn" type="button" title="Déplier la semaine">▸</button>
+                <button class="expand-btn" type="button" title="Déplier la semaine" aria-label="Développer la semaine S2">▸</button>
                 <button class="btn btn-danger icon-only" type="button" title="Supprimer la semaine S2" aria-label="Supprimer la semaine S2">🗑</button>
               </span>
             </div>
@@ -440,13 +438,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
           <div class="week-item collapsed">
             <div class="week-head">
               <span class="drag-handle" title="Glisser pour réordonner" aria-hidden="true">⋮⋮</span>
-              <span class="order-btns" aria-hidden="true" title="Monter / descendre dans la rotation">
-                <button type="button" tabindex="-1">▲</button><button type="button" tabindex="-1">▼</button>
+              <span class="order-btns" title="Monter / descendre dans la rotation">
+                <button type="button" aria-label="Monter S3 dans la rotation">▲</button><button type="button" aria-label="Descendre S3 dans la rotation">▼</button>
               </span>
               <span class="week-name" style="font-weight: 600; width: 130px;">S3</span>
               <span class="week-summary"><strong>lun 09:30-18:00 · sam 10:00-17:00</strong></span>
               <span class="week-actions">
-                <button class="expand-btn" type="button" title="Déplier la semaine">▸</button>
+                <button class="expand-btn" type="button" title="Déplier la semaine" aria-label="Développer la semaine S3">▸</button>
                 <button class="btn btn-danger icon-only" type="button" title="Supprimer la semaine S3" aria-label="Supprimer la semaine S3">🗑</button>
               </span>
             </div>
@@ -535,18 +533,44 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   </div>
 </div>
 
+<!-- ===== State 4: pasted 0-week cycle rejected (mockup switch) ===== -->
+<div class="confirm-overlay state-box" id="state-empty-cycle-error" hidden role="dialog" aria-modal="true" aria-labelledby="empty-cycle-error-title">
+  <div class="confirm-dialog">
+    <h4 id="empty-cycle-error-title">Remplacer le cycle d'Alice ?</h4>
+    <div class="paste-error" role="alert">⚠ Le cycle doit comporter au moins une semaine</div>
+    <p>Le cycle collé ne contient aucune semaine de cycle. Le cycle de travail d'Alice reste inchangé.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" type="button">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== State 5: pasted JSON missing required fields (mockup switch) ===== -->
+<div class="confirm-overlay state-box" id="state-missing-fields-error" hidden role="dialog" aria-modal="true" aria-labelledby="missing-fields-error-title">
+  <div class="confirm-dialog">
+    <h4 id="missing-fields-error-title">Remplacer le cycle d'Alice ?</h4>
+    <div class="paste-error" role="alert">⚠ Champs manquants : semaines</div>
+    <p>Le contenu du presse-papiers est un JSON valide mais il manque des champs obligatoires. Le cycle de travail d'Alice reste inchangé.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" type="button">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <!-- Mockup state switch (same convention as the sync mockups) -->
 <div class="mockup-switch" role="group" aria-label="États de maquette de la modale de cycle">
   <span>États :</span>
   <button type="button" data-state="modal" class="active" aria-pressed="true">Modale</button>
   <button type="button" data-state="confirm" aria-pressed="false">Confirmation « Coller le cycle »</button>
   <button type="button" data-state="json-error" aria-pressed="false">Erreur JSON</button>
+  <button type="button" data-state="empty-cycle-error" aria-pressed="false">Cycle vide</button>
+  <button type="button" data-state="missing-fields-error" aria-pressed="false">Champs manquants</button>
 </div>
 
 <script>
 // Mockup-only interaction: switch between the modal states (paste confirmation,
-// invalid pasted JSON) and the plain modal view.
-var boxes = { modal: null, confirm: document.getElementById('state-confirm'), 'json-error': document.getElementById('state-json-error') };
+// invalid pasted JSON, empty cycle, missing required fields) and the plain modal view.
+var boxes = { modal: null, confirm: document.getElementById('state-confirm'), 'json-error': document.getElementById('state-json-error'), 'empty-cycle-error': document.getElementById('state-empty-cycle-error'), 'missing-fields-error': document.getElementById('state-missing-fields-error') };
 document.querySelectorAll('.mockup-switch button').forEach(function (btn) {
   btn.addEventListener('click', function () {
     document.querySelectorAll('.mockup-switch button').forEach(function (b) {
