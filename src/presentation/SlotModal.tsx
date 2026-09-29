@@ -12,6 +12,9 @@ import {
   mediatorConfirmedForOffer,
   mediatorLearningOffer,
 } from '../domain/models';
+import { canAssignSlotOnDate } from '../domain/hours';
+import { slotCycleWarning } from '../domain/cycle-display';
+import { parseLocalDate } from '../domain/models';
 import type { Slot } from '../domain/types';
 import Modal from './Modal';
 import MultiSelect from './MultiSelect';
@@ -70,7 +73,24 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
     }
   }, [activeTab]);
 
-  // Mediator warning: overlap or absence for the first selected mediator
+  // Mediator warning: overlap, absence or cycle mismatch for the first
+  // selected mediator. The cycle mismatch is a LIGHT, non-blocking warning
+  // (spec: the slot can still be created); overlap/absence keep their
+  // existing semantics.
+  const cycleWarning = useMemo(() => {
+    const firstMed = selectedMediators[0];
+    if (!firstMed) return '';
+    const mediator = state.data.mediators.find((m) => m.id === firstMed);
+    if (!mediator) return '';
+    return slotCycleWarning(
+      mediator,
+      state.data.cycles,
+      parseLocalDate(form.date),
+      form.startTime,
+      form.endTime
+    );
+  }, [selectedMediators, form.date, form.startTime, form.endTime, state.data.mediators, state.data.cycles]);
+
   const warning = useMemo(() => {
     const firstMed = selectedMediators[0];
     if (!firstMed) return '';
@@ -143,6 +163,14 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
     onClose();
   }
 
+  // Museum-closed refusal: on a closure day (25/12, 01/01, 01/05) NO work is
+  // possible — every mediator option is refused with the domain reason.
+  const museumClosed = useMemo(() => {
+    if (!form.date) return null;
+    const result = canAssignSlotOnDate(parseLocalDate(form.date));
+    return result.ok ? null : result.reason;
+  }, [form.date]);
+
   // Build mediator options with overlap/absence/competence indicators
   // Sort: confirmed first, then learning, then none — alphabetical within each group
   const mediatorOptions = useMemo(() => {
@@ -163,7 +191,8 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
         label += ' ⚠️ Incompétent';
       }
 
-      if (overlap) label += ' — Conflit horaire';
+      if (museumClosed) label += ` — 🚫 ${museumClosed}`;
+      else if (overlap) label += ' — Conflit horaire';
       else if (absent) label += ' — Absent';
 
       const competenceRank = confirmed ? 0 : learning ? 1 : 2;
@@ -172,7 +201,8 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
         value: m.id,
         label,
         color: m.color,
-        isDisabled: overlap,
+        // Museum-closed days refuse ANY assignment on that date
+        isDisabled: overlap || !!museumClosed,
         competenceStatus: confirmed ? 'confirmed' : learning ? 'learning' : null,
         competenceRank,
         sortName: `${m.lastName} ${m.firstName}`.toLowerCase(),
@@ -181,7 +211,7 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
       if (a.competenceRank !== b.competenceRank) return a.competenceRank - b.competenceRank;
       return a.sortName.localeCompare(b.sortName);
     });
-  }, [state.data.mediators, state.data.slots, state.data.absences, form.date, form.startTime, form.endTime, form.id, form.offerId]);
+  }, [state.data.mediators, state.data.slots, state.data.absences, form.date, form.startTime, form.endTime, form.id, form.offerId, museumClosed]);
 
   const offer = state.data.offers.find((o) => o.id === form.offerId);
 
@@ -272,7 +302,16 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
               />
               <div className="form-hint">
                 {warning ? (
-                  <span className="warning-text">{warning}</span>
+                  <span className="warning-text" role="status">{warning}</span>
+                ) : cycleWarning ? (
+                  <span className="light-warning" role="status">
+                    ⚠ {cycleWarning}
+                    <span className="warn-detail"> — le créneau peut néanmoins être enregistré.</span>
+                  </span>
+                ) : museumClosed ? (
+                  <span className="museum-closed-warning" role="alert">
+                    🚫 {museumClosed} — aucune affectation possible ce jour-là.
+                  </span>
                 ) : (
                   'Cliquez pour ajouter, × pour retirer'
                 )}

@@ -632,6 +632,26 @@ body {
 .form-hint { margin-top: 4px; }
 .warning-text { color: var(--color-danger); font-size: 12px; font-weight: 600; }
 
+/* Light (non-blocking) cycle warning in the slot modal — amber, from the
+   contract-type/cycles mockups: the slot can still be saved */
+.light-warning {
+  color: #8f5410;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.light-warning .warn-detail {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+/* Museum-closed refusal in the slot modal — blocking (options disabled) */
+.museum-closed-warning {
+  color: var(--color-danger);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 /* ===== Empty state ===== */
 .empty-state {
     text-align: center;
