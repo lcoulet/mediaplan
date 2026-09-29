@@ -99,6 +99,13 @@ weeks 39–51, analyzed locally, never committed):**
       displays the current cycle week (S1/S2/...) next to the mediator name
 - [x] Mediators view: a modal to define the sequence of cycle weeks
       (the cycle chain of the mediator)
+- [ ] CYCLE ARCHETYPES (noted 2026-09-29, to spec): cycles should have
+      ARCHETYPES — reusable predefined cycle templates (e.g. full-time
+      Mon-Fri, part-time patterns, weekend rotations) that a mediator's
+      cycle can be created from, instead of always starting from the
+      default or a blank. Details TBD: where archetypes are managed,
+      whether the copy/paste JSON mechanism is the basis, built-in vs
+      user-defined archetypes
 
 **Contract type (decided 2026-09-25):**
 - [x] Mediators have a CONTRACT TYPE: temps plein, mi-temps, stagiaire...
