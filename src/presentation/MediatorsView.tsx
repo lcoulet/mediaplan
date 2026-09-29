@@ -177,6 +177,15 @@ export default function MediatorsView() {
                     <td>
                       <span className="slot-mediator-glyph" style={{ color: m.color || '#ccc' }}>●</span>{' '}
                       {m.lastName}
+                      {m.contractType && (
+                        <span
+                          className="pill pill-contract"
+                          title={`Type de contrat : ${m.contractType}`}
+                          style={{ marginLeft: 6 }}
+                        >
+                          {m.contractType}
+                        </span>
+                      )}
                     </td>
                     <td>{m.firstName}</td>
                     <td>{m.email || '—'}</td>
