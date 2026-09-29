@@ -136,9 +136,13 @@ export default function CycleChainModal({ mediator, onClose }: Props) {
 
   async function readClipboard(): Promise<string> {
     if (navigator.clipboard?.readText) {
-      return navigator.clipboard.readText();
+      try {
+        return await navigator.clipboard.readText();
+      } catch {
+        // Read permission denied (http contexts, headless): fall through
+      }
     }
-    // No clipboard read API (http / older browsers): prompt for the JSON
+    // No clipboard read API or permission: prompt for the JSON
     return window.prompt('Collez ici le JSON du cycle :') ?? '';
   }
 
