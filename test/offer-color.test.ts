@@ -46,6 +46,7 @@ describe('store — offer color persistence', () => {
       schedules: [],
       slots: [],
       absences: [],
+      cycles: [],
     };
     expect(save(data)).toBe(true);
     const loaded = load();
@@ -61,6 +62,7 @@ describe('store — offer color persistence', () => {
       schedules: [],
       slots: [],
       absences: [],
+      cycles: [],
     };
     localStorage.setItem('mediaplan_data_v1', JSON.stringify(stored));
     const loaded = load();

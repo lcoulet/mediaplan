@@ -15,7 +15,7 @@ describe('demo seed distribution', () => {
   });
 
   it('seeds mostly-OK slots over a one-year-ahead span', () => {
-    const data: AppData = { mediators: [], offers: [], schedules: [], slots: [], absences: [] };
+    const data: AppData = { mediators: [], offers: [], schedules: [], slots: [], absences: [], cycles: [] };
     seedDemoData(data);
     const counts: Record<string, number> = { ok: 0, unassigned: 0, dispo_issue: 0, learning: 0, incompetent: 0 };
     for (const s of data.slots) counts[getSlotPlanningStatus(s, data)]++;

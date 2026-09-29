@@ -389,7 +389,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Reset demo data
   const resetData = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
-    const fresh: AppData = { mediators: [], offers: [], schedules: [], slots: [], absences: [] };
+    const fresh: AppData = { mediators: [], offers: [], schedules: [], slots: [], absences: [], cycles: [] };
     seedDemoData(fresh);
     save(fresh);
     history.init(fresh);

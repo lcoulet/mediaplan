@@ -19,6 +19,7 @@ const mockData: AppData = {
     { id: 's1', date: '2026-09-15', startTime: '10:00', endTime: '12:00', offerId: 'o1', mediatorIds: ['m1'], status: 'planned', origin: 'manual', scheduleId: '', participantCount: 0, notes: '', importSource: '', importedAt: '', modifiedAfterImport: false, groupName: '', guide: '', location: '', groupNature: '', contactName: '', contactPhone: '', contactEmail: '' },
   ],
   absences: [],
+  cycles: [],
 };
 
 describe('WeeklyView', () => {

@@ -43,6 +43,7 @@ const data: AppData = {
   ],
   schedules: [],
   absences: [],
+  cycles: [],
   slots: [],
 };
 

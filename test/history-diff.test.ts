@@ -79,6 +79,7 @@ function data(overrides: Partial<AppData> = {}): AppData {
     schedules: [],
     slots: [],
     absences: [],
+    cycles: [],
     ...overrides,
   };
 }

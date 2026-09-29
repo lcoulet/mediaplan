@@ -45,6 +45,7 @@ function seedStorage(offers: Offer[]): void {
     schedules: [],
     slots: [],
     absences: [],
+    cycles: [],
   };
   localStorage.setItem('mediaplan_data_v1', JSON.stringify(data));
 }
@@ -96,6 +97,7 @@ describe('OfferModal — color picker', () => {
         schedules: [],
         slots: [],
         absences: [],
+        cycles: [],
       })
     );
     render(
@@ -133,6 +135,7 @@ describe('offers — colored pills display', () => {
         schedules: [],
         slots: [],
         absences: [],
+        cycles: [],
       })
     );
   }

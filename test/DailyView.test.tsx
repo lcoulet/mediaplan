@@ -27,6 +27,7 @@ const mockData: AppData = {
     { id: 's3', scheduleId: '', date: '2026-09-19', startTime: '11:00', endTime: '12:00', offerId: 'o3', mediatorIds: [], status: 'planned', origin: 'manual', participantCount: 25, notes: '', importSource: '', importedAt: '', modifiedAfterImport: false, groupName: 'GROUPE LIBRE', guide: '', location: '', groupNature: '', contactName: '', contactPhone: '', contactEmail: '' },
   ],
   absences: [],
+  cycles: [],
 };
 
 // Mock Date to always return 2026-09-19

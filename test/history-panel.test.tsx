@@ -32,6 +32,7 @@ const mockData: AppData = {
   schedules: [],
   slots: [mockSlot],
   absences: [],
+  cycles: [],
 };
 
 // Full app harness: Header (button) + shortcuts hook + panel + probe —

@@ -33,6 +33,7 @@ const mockData: AppData = {
   schedules: [],
   slots: [mockSlot],
   absences: [],
+  cycles: [],
 };
 
 // Probe exposing the context + CRUD to the assertions

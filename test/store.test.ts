@@ -34,6 +34,7 @@ describe('store.load', () => {
       schedules: [],
       slots: [],
       absences: [],
+      cycles: [],
     });
   });
 
@@ -71,6 +72,7 @@ describe('store.save', () => {
       schedules: [],
       slots: [],
       absences: [],
+      cycles: [],
     };
     const result = save(data);
     expect(result).toBe(true);

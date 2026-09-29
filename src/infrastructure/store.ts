@@ -13,6 +13,7 @@ const defaultData: AppData = {
   schedules: [],
   slots: [],
   absences: [],
+  cycles: [],
 };
 
 export function load(): AppData {
@@ -46,6 +47,9 @@ export function load(): AppData {
       schedules: parsed.schedules || [],
       slots,
       absences: parsed.absences || [],
+      // Work cycles — legacy data persisted before the field existed
+      // simply has none; an explicit empty list is the correct migration.
+      cycles: parsed.cycles || [],
     };
   } catch (e) {
     console.error('Failed to load data:', e);
