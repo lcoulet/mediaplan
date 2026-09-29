@@ -32,6 +32,7 @@ const mockData: AppData = {
   ],
   absences: [],
   cycles: [],
+  quotas: [],
 };
 
 // Mock Date to always return 2026-09-19

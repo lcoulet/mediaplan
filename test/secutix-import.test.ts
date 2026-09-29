@@ -367,6 +367,7 @@ describe('applySecutixImport', () => {
       slots: [existing, gone],
       absences: [],
       cycles: [],
+      quotas: [],
     };
     const bookings = normalizeSecutixRows([
       row({ participantCount: '30' }),               // same key as existing, changed headcount
@@ -391,7 +392,7 @@ describe('applySecutixImport', () => {
 
   it('is a pure function — the input data is not mutated', () => {
     const existing = importedSlot();
-    const data: AppData = { mediators: [], offers: [offer], schedules: [], slots: [existing], absences: [], cycles: [] };
+    const data: AppData = { mediators: [], offers: [offer], schedules: [], slots: [existing], absences: [], cycles: [], quotas: [] };
     const bookings = normalizeSecutixRows([row({ participantCount: '30' })]).bookings;
     const matched = reconcileOffers(bookings, [offer]).matched;
     const plan = buildSecutixImportPlan(matched, [offer], [existing], NOW);

@@ -17,6 +17,7 @@ const mockData: AppData = {
   slots: [],
   absences: [],
   cycles: [],
+  quotas: [],
 };
 
 const MOCK_DATE = new Date('2026-09-19T10:00:00.000Z');

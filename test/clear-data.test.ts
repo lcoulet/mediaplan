@@ -25,6 +25,7 @@ function buildData(): AppData {
       createAbsence({ mediatorId: 'm1', startDate: '2026-09-12', endDate: '2026-09-12' }),
     ],
     cycles: [],
+    quotas: [],
   };
 }
 
@@ -60,6 +61,7 @@ describe('clearPlanningData', () => {
       slots: [],
       absences: [],
       cycles: [],
+      quotas: [],
     });
   });
 

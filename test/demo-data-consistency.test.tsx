@@ -11,7 +11,7 @@ function t2m(t: string): number {
 }
 
 function emptyData(): AppData {
-  return { mediators: [], offers: [], schedules: [], slots: [], absences: [], cycles: [] };
+  return { mediators: [], offers: [], schedules: [], slots: [], absences: [], cycles: [], quotas: [] };
 }
 
 describe('seedDemoData consistency', () => {

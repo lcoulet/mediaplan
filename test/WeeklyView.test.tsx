@@ -20,6 +20,7 @@ const mockData: AppData = {
   ],
   absences: [],
   cycles: [],
+  quotas: [],
 };
 
 describe('WeeklyView', () => {

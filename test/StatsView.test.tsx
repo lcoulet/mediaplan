@@ -27,6 +27,7 @@ const mockData: AppData = {
   schedules: [],
   absences: [],
   cycles: [],
+  quotas: [],
   slots: [
     slot({ id: 's1', offerId: 'o1', mediatorIds: ['m1'], date: '2026-09-10', participantCount: 20 }),
     slot({ id: 's2', offerId: 'o3', date: '2026-09-11', participantCount: 30, groupNature: 'SCOLAIRES C2' }),

@@ -46,6 +46,7 @@ function seedStorage(offers: Offer[]): void {
     slots: [],
     absences: [],
     cycles: [],
+    quotas: [],
   };
   localStorage.setItem('mediaplan_data_v1', JSON.stringify(data));
 }
@@ -136,6 +137,7 @@ describe('offers — colored pills display', () => {
         slots: [],
         absences: [],
         cycles: [],
+        quotas: [],
       })
     );
   }

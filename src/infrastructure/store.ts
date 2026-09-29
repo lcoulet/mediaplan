@@ -14,6 +14,7 @@ const defaultData: AppData = {
   slots: [],
   absences: [],
   cycles: [],
+  quotas: [],
 };
 
 export function load(): AppData {
@@ -50,6 +51,8 @@ export function load(): AppData {
       // Work cycles — legacy data persisted before the field existed
       // simply has none; an explicit empty list is the correct migration.
       cycles: parsed.cycles || [],
+      // Quarterly hour quotas — same migration as cycles.
+      quotas: parsed.quotas || [],
     };
   } catch (e) {
     console.error('Failed to load data:', e);

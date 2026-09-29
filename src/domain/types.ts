@@ -13,6 +13,14 @@ export interface Mediator {
   // The mediator's active work cycle (see WorkCycle). A mediator has ONE
   // active cycle at a time; undefined = no cycle defined (legacy data).
   activeCycleId?: string;
+  // Contract type (type de contrat): 'temps plein', 'stagiaire', ...
+  // Free text, INDEPENDENT of the arrangement below (spec decision 1).
+  contractType?: string;
+  // Working-time arrangement (aménagement du temps de travail): 'temps
+  // partiel', 'mi-temps thérapeutique', '80%', ... Free text. The quarterly
+  // hour quota applies ONLY to mediators with an arrangement set; undefined
+  // = no arrangement (no quota tracking).
+  arrangement?: string;
 }
 
 export interface Offer {
@@ -147,6 +155,50 @@ export interface WorkCycle {
   forcedWeeks: Record<IsoWeekKey, string>;
 }
 
+/**
+ * Quarterly hour quota for a mediator with a working-time arrangement
+ * (aménagement). One entry per mediator/year/quarter; a quarter without an
+ * entry tracks nothing. `effectiveFrom` is the date the quota configuration
+ * became effective: only slots ON OR AFTER that date consume it (mid-quarter
+ * arrangement changes don't retroactively count earlier slots).
+ */
+export interface QuarterlyQuota {
+  id: string;
+  mediatorId: string;
+  /** Calendar year of the quarter (e.g. 2026). */
+  year: number;
+  /** Calendar quarter: 1 (Jan-Mar) .. 4 (Oct-Dec). */
+  quarter: 1 | 2 | 3 | 4;
+  /** Quota in hours; may be fractional (e.g. 120.5). */
+  hours: number;
+  /** ISO date from which the quota counts (inclusive). */
+  effectiveFrom: string;
+}
+
+/**
+ * App-level valorisation settings (persisted). Public holidays count ×2
+ * (fixed); the Sunday and valued-Saturday multipliers are configurable.
+ * The French holiday list is auto-computed per year; `holidayOverrides`
+ * stores per-year modifications (add/remove) against that default.
+ */
+export interface ValorisationConfig {
+  /** Multiplier for Sundays (default 1.5). */
+  sundayMultiplier: number;
+  /**
+   * Saturdays from the Nth Saturday of the year ONWARD are valued
+   * (1-based index, default 12); earlier Saturdays count ×1.
+   */
+  valuedSaturdayThreshold: number;
+  /** Multiplier for valued Saturdays (default 1.5). */
+  valuedSaturdayMultiplier: number;
+  /**
+   * Per-year holiday list overrides: year ('2026') -> full list of ISO
+   * dates replacing the auto-computed French holidays for that year.
+   * Years absent from this map use the auto-computed list.
+   */
+  holidayOverrides: Record<string, string[]>;
+}
+
 export interface AppData {
   mediators: Mediator[];
   offers: Offer[];
@@ -156,6 +208,12 @@ export interface AppData {
   // Work cycles, one active per mediator (see WorkCycle). Legacy data
   // persisted before the feature existed loads as [].
   cycles: WorkCycle[];
+  // Quarterly hour quotas (see QuarterlyQuota). Legacy data persisted
+  // before the feature existed loads as [].
+  quotas: QuarterlyQuota[];
+  // Valorisation settings (multipliers, holiday overrides). Legacy data
+  // loads with defaults.
+  valorisation?: ValorisationConfig;
   halfDayConfig?: {
     morningEnd: string;
     afternoonStart: string;
