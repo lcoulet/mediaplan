@@ -1,9 +1,11 @@
 // MediatorModal.tsx — Add/edit mediator form
 
-import { useState } from 'react';
-import { useData, useCRUD } from './DataContext';
+import { useMemo, useState } from 'react';
+import { useData } from './DataContext';
 import { createMediator, normalizeCompetences } from '../domain/models';
-import type { Mediator } from '../domain/types';
+import { computeQuarterlyBalance, quarterOfDate, validateQuota } from '../domain/hours';
+import { cycleQuotaSummary, quotaNumberFromInput } from '../domain/cycle-edit';
+import type { Mediator, QuarterlyQuota } from '../domain/types';
 import Modal from './Modal';
 import MultiSelect from './MultiSelect';
 import type { MultiSelectOption } from './MultiSelect';
@@ -19,14 +21,58 @@ interface Props {
 }
 
 export default function MediatorModal({ mediator, onClose }: Props) {
-  const { state } = useData();
-  const crud = useCRUD();
+  const { state, dispatch, commit } = useData();
   const isEdit = !!mediator;
 
   const [form, setForm] = useState<Mediator>(() => mediator || createMediator());
 
+  // ---- Quarterly quota editing (visible only when arrangement is set) ----
+  // Quotas of the CURRENT year for this mediator; the form edits hours +
+  // effectiveFrom. Empty hours = quarter not configured (no tracking).
+  const currentYear = new Date().getFullYear();
+  const [quotaForm, setQuotaForm] = useState<Record<1 | 2 | 3 | 4, { hours: string; effectiveFrom: string }>>(() => {
+    const init = {
+      1: { hours: '', effectiveFrom: `${currentYear}-01-01` },
+      2: { hours: '', effectiveFrom: `${currentYear}-04-01` },
+      3: { hours: '', effectiveFrom: `${currentYear}-07-01` },
+      4: { hours: '', effectiveFrom: `${currentYear}-10-01` },
+    } as Record<1 | 2 | 3 | 4, { hours: string; effectiveFrom: string }>;
+    for (const q of state.data.quotas) {
+      if (q.mediatorId === mediator?.id && q.year === currentYear && (q.quarter === 1 || q.quarter === 2 || q.quarter === 3 || q.quarter === 4)) {
+        init[q.quarter] = { hours: String(q.hours), effectiveFrom: q.effectiveFrom };
+      }
+    }
+    return init;
+  });
+  const [quotaError, setQuotaError] = useState('');
+
+  const arrangementSet = !!(form.arrangement?.trim());
+
+  // Current-quarter balance (counter), null when nothing is tracked
+  const currentQuarter = quarterOfDate(new Date());
+  const balance = useMemo(
+    () =>
+      arrangementSet
+        ? computeQuarterlyBalance(
+            { ...form, arrangement: form.arrangement?.trim() || undefined },
+            state.data.slots,
+            state.data.quotas,
+            state.data.valorisation,
+            currentYear,
+            currentQuarter
+          )
+        : null,
+    [arrangementSet, form, state.data.slots, state.data.quotas, state.data.valorisation, currentYear, currentQuarter]
+  );
+  const quotaSummary = balance ? cycleQuotaSummary(form, balance, currentQuarter, currentYear) : null;
+
   function setField<K extends keyof Mediator>(key: K, value: Mediator[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function setQuotaField(quarter: 1 | 2 | 3 | 4, patch: Partial<{ hours: string; effectiveFrom: string }>) {
+    setQuotaForm((prev) => ({ ...prev, [quarter]: { ...prev[quarter], ...patch } }));
+    setQuotaError('');
   }
 
   function handleConfirmedCompetencesChange(selected: string[]) {
@@ -49,6 +95,37 @@ export default function MediatorModal({ mediator, onClose }: Props) {
     }));
   }
 
+  function buildQuotas(mediatorId: string, savedMediator: Mediator): QuarterlyQuota[] | { error: string } {
+    // Quotas apply ONLY with an arrangement; without one nothing is tracked
+    if (!savedMediator.arrangement) {
+      // Removing the arrangement stops the tracking entirely: existing
+      // quotas of the current year are dropped from the form's perspective
+      return state.data.quotas.filter((q) => q.mediatorId !== mediatorId);
+    }
+    const quotas: QuarterlyQuota[] = state.data.quotas.filter((q) => !(q.mediatorId === mediatorId && q.year === currentYear));
+    for (const quarter of [1, 2, 3, 4] as const) {
+      const { hours, effectiveFrom } = quotaForm[quarter];
+      if (!hours.trim()) continue; // quarter not configured: no tracking
+      const parsed = quotaNumberFromInput(hours);
+      if (parsed === null) {
+        return { error: 'Le quota d\u2019heures doit être un nombre positif (ex. 120 ou 120,5)' };
+      }
+      const quota: QuarterlyQuota = {
+        id: state.data.quotas.find((q) => q.mediatorId === mediatorId && q.year === currentYear && q.quarter === quarter)?.id
+          ?? `quota_${mediatorId}_${currentYear}_Q${quarter}`,
+        mediatorId,
+        year: currentYear,
+        quarter,
+        hours: parsed,
+        effectiveFrom,
+      };
+      const v = validateQuota(savedMediator, quota);
+      if (!v.ok) return { error: v.reason! };
+      quotas.push(quota);
+    }
+    return quotas;
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const m: Mediator = {
@@ -63,11 +140,23 @@ export default function MediatorModal({ mediator, onClose }: Props) {
       contractType: form.contractType?.trim() || undefined,
       arrangement: form.arrangement?.trim() || undefined,
     };
-    if (isEdit) {
-      crud({ type: 'UPDATE_MEDIATOR', mediator: m });
-    } else {
-      crud({ type: 'ADD_MEDIATOR', mediator: m });
+    // Validate quotas BEFORE saving anything (no partial save on error)
+    const quotas = buildQuotas(m.id, m);
+    if (typeof quotas === 'string') {
+      setQuotaError(quotas);
+      return;
     }
+    if ('error' in quotas) {
+      setQuotaError(quotas.error);
+      return;
+    }
+    const next = { ...state.data, quotas };
+    // Mediator + quotas are committed together in ONE undoable history entry
+    const withMediator = isEdit
+      ? { ...next, mediators: next.mediators.map((x) => (x.id === m.id ? m : x)) }
+      : { ...next, mediators: [...next.mediators, m] };
+    dispatch({ type: 'SET_DATA', data: withMediator });
+    commit(withMediator, isEdit ? 'Médiateur modifié' : 'Médiateur ajouté');
     onClose();
   }
 
@@ -185,6 +274,61 @@ export default function MediatorModal({ mediator, onClose }: Props) {
             <div className="form-hint">Déclenche le suivi du quota d'heures trimestriel.</div>
           </div>
         </div>
+
+        {/* ===== Quarterly hour quota (only with an arrangement) ===== */}
+        {arrangementSet && (
+          <div className="quota-section">
+            {/* Current-quarter counter */}
+            {quotaSummary ? (
+              <div
+                className={`quota-counter${quotaSummary.overrun ? ' quota-overrun' : ''}`}
+                role="status"
+              >
+                <strong>{quotaSummary.counter}</strong>
+                <span className={`quota-balance${quotaSummary.overrun ? ' light-warning' : ''}`}>
+                  {quotaSummary.balance}
+                </span>
+                {quotaSummary.carriedLabel && (
+                  <span className="quota-carried">{quotaSummary.carriedLabel}</span>
+                )}
+              </div>
+            ) : (
+              <p className="form-hint quota-unconfigured">
+                Quota non configuré pour le trimestre en cours (T{currentQuarter} {currentYear}) —
+                renseignez un quota ci-dessous pour activer le suivi.
+              </p>
+            )}
+
+            {/* Per-quarter quota fields (current year) */}
+            <div className="quota-grid">
+              {([1, 2, 3, 4] as const).map((quarter) => (
+                <div key={quarter} className="quota-quarter">
+                  <label htmlFor={`quota-hours-${quarter}`}>T{quarter} {currentYear} (heures)</label>
+                  <input
+                    id={`quota-hours-${quarter}`}
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="—"
+                    value={quotaForm[quarter].hours}
+                    onChange={(e) => setQuotaField(quarter, { hours: e.target.value })}
+                  />
+                  <label htmlFor={`quota-from-${quarter}`}>Date d'effet</label>
+                  <input
+                    id={`quota-from-${quarter}`}
+                    type="date"
+                    value={quotaForm[quarter].effectiveFrom}
+                    onChange={(e) => setQuotaField(quarter, { effectiveFrom: e.target.value })}
+                  />
+                </div>
+              ))}
+            </div>
+            <p className="form-hint">
+              Trimestre vide = pas de suivi pour ce trimestre. Le solde (reliquat ou déficit)
+              est reporté sur les trimestres suivants configurés.
+            </p>
+            {quotaError && <p className="warning-text" role="alert">{quotaError}</p>}
+          </div>
+        )}
         <div className="form-group">
           <label>Compétences confirmées</label>
           {state.data.offers.length === 0 ? (

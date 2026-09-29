@@ -1057,3 +1057,55 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
   color: var(--color-text, inherit);
   opacity: 0.7;
 }
+
+/* ===== Quarterly hour quota (mediator form) ===== */
+/* Counter + per-quarter quota fields, visible only with an arrangement */
+.quota-section {
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius);
+    background: #fafafa;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.quota-counter {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.quota-counter strong { font-variant-numeric: tabular-nums; }
+
+.quota-balance { font-size: 13px; font-weight: 600; }
+
+/* Amber (non-blocking) overrun warning — light-warning color from the
+   cycles mockups */
+.quota-balance.light-warning { color: #8f5410; }
+
+.quota-carried {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.quota-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.quota-quarter { display: flex; flex-direction: column; gap: 4px; }
+.quota-quarter label { font-size: 12px; font-weight: 600; }
+.quota-quarter input {
+    padding: 4px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--color-text);
+    background: var(--color-surface);
+}

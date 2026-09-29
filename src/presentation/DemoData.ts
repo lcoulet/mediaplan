@@ -1,7 +1,7 @@
 // DemoData.ts — seedDemoData, ported from js/app.js seedDemoData()
 
 import type { AppData } from '../domain/types';
-import { createMediator, createOffer, createSlot, createAbsence, getDefaultHalfDayConfig } from '../domain/models';
+import { createMediator, createOffer, createSlot, createAbsence, getDefaultHalfDayConfig, generateId } from '../domain/models';
 import { createDefaultCycle, isoWeekKey } from '../domain/cycles';
 import type { CycleWeek, WorkCycle } from '../domain/types';
 
@@ -490,10 +490,27 @@ export function seedDemoData(data: AppData): void {
   med2.activeCycleId = cycles[cycles.length - 1].id;
   med2.arrangement = 'mi-temps thérapeutique';
 
-  // Lavandier (3): Tue-Thu 13:00-19:00 — afternoon week
+  // Lavandier (3): Tue-Thu 13:00-19:00 — afternoon week, with a therapeutic
+  // half-time arrangement and a quarterly hour quota so the mediator-form
+  // quota counter is demonstrable (spec: hourly-management.feature).
   const med3 = mediators[3];
   cycles.push(mkCycle(med3.id, 'S1', { 2: ['13:00', '19:00'], 4: ['13:00', '19:00'], 6: ['13:00', '18:00'] }, currentWeek));
   med3.activeCycleId = cycles[cycles.length - 1].id;
+  med3.arrangement = 'mi-temps thérapeutique';
 
   data.cycles = cycles;
+
+  // --- Quarterly hour quotas (demo) ---
+  // Lavandier: quota per quarter of the CURRENT year, effective from the
+  // start of the year (the arrangement predates the year start).
+  const now2 = new Date();
+  const quotaYear = now2.getFullYear();
+  data.quotas = [1, 2, 3, 4].map((quarter, i) => ({
+    id: generateId('quota'),
+    mediatorId: med3.id,
+    year: quotaYear,
+    quarter: quarter as 1 | 2 | 3 | 4,
+    hours: [120, 100, 100, 100][i],
+    effectiveFrom: `${quotaYear}-01-01`,
+  }));
 }
