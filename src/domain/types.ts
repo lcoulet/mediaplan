@@ -10,6 +10,9 @@ export interface Mediator {
   active: boolean;
   color: string;
   notes: string;
+  // The mediator's active work cycle (see WorkCycle). A mediator has ONE
+  // active cycle at a time; undefined = no cycle defined (legacy data).
+  activeCycleId?: string;
 }
 
 export interface Offer {
@@ -105,12 +108,54 @@ export interface Absence {
   endTime?: string;   // HH:mm
 }
 
+// Work Cycle (Cycle de travail) — a mediator's recurring weekly schedule
+// pattern: 1..N named cycle weeks rotating one per ISO week, anchored on an
+// ISO week, with optional per-ISO-week forcing. See docs/LEXICON.md.
+
+/** One day in a cycle week. startTime/endTime are absent when not worked. */
+export interface CycleWeekDay {
+  /** Day of week: 1 = Monday .. 7 = Sunday (ISO 8601). */
+  day: number;
+  /** Work start, 'HH:MM'. Undefined when the day is not worked. */
+  startTime?: string;
+  /** Work end, 'HH:MM'. Undefined when the day is not worked. */
+  endTime?: string;
+}
+
+/** A named cycle week (S1, S2, ...) with one entry per day, Mon..Sun. */
+export interface CycleWeek {
+  id: string;
+  name: string;
+  /** Exactly 7 entries, one per day of week in Mon..Sun order. */
+  days: CycleWeekDay[];
+}
+
+/** ISO week key of the form 'YYYY-Www', e.g. '2026-W41'. */
+export type IsoWeekKey = string;
+
+export interface WorkCycle {
+  id: string;
+  mediatorId: string;
+  /** Ordered cycle weeks; the rotation walks them in order, then loops. */
+  weeks: CycleWeek[];
+  /**
+   * ISO week where the rotation starts: weeks[0] is active during
+   * anchorIsoWeek. Dates before the anchor follow the rotation backwards.
+   */
+  anchorIsoWeek: IsoWeekKey;
+  /** Manual overrides: ISO week key -> cycle week NAME. Absolute precedence. */
+  forcedWeeks: Record<IsoWeekKey, string>;
+}
+
 export interface AppData {
   mediators: Mediator[];
   offers: Offer[];
   schedules: Schedule[];
   slots: Slot[];
   absences: Absence[];
+  // Work cycles, one active per mediator (see WorkCycle). Legacy data
+  // persisted before the feature existed loads as [].
+  cycles: WorkCycle[];
   halfDayConfig?: {
     morningEnd: string;
     afternoonStart: string;

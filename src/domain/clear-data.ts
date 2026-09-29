@@ -20,5 +20,6 @@ export function clearPlanningData(data: AppData, options: ClearOptions = {}): Ap
     schedules: [],
     slots: [],
     absences: [],
+    cycles: [...data.cycles],
   };
 }
