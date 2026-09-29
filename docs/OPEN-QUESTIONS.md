@@ -105,6 +105,42 @@ weeks 39–51, analyzed locally, never committed):**
 - [x] Visible visually as a pill or icon next to the mediator
 - [x] Selector with predefined values + free text allowed
 
+**Hourly management for part-time mediators (raised 2026-09-29):**
+- [x] Contract types must distinguish the CONTRACT from the working-time
+      ARRANGEMENT (aménagement du temps de travail): e.g. "mi-temps
+      thérapeutique" and "temps partiel" are aménagements, alongside
+      regular contracts
+- [x] Part-time mediators need FINE HOURLY MANAGEMENT: a configurable
+      QUARTERLY HOUR QUOTA (quota d'heures trimestriel, configurable
+      per quarter)
+- [x] Some days are MORE VALUED (jours valorisés): Sundays, Saturdays
+      (starting from the 10th or 12th in the year — configurable
+      quantity), and public holidays (jours fériés)
+- [x] Fine hourly management must be specified and provided
+
+**Open questions (hourly management):**
+- [ ] Exact valorisation MULTIPLIERS for Sunday and valued Saturdays —
+      open; will be CONFIGURABLE in the app. CONFIRMED: jours fériés
+      count DOUBLE (×2)
+- [ ] Quarterly quota config UI: per-quarter value on the mediator form?
+
+**Established (hourly management, decided 2026-09-29):**
+- [x] Valorisation: jours fériés count DOUBLE (×2); Sunday/Saturday
+      multipliers TBD but must be configurable in the app
+- [x] VALUED SATURDAYS: Saturdays FROM the 10th/12th Saturday of the
+      year onward are valued (first ones are normal) — the threshold
+      (10 or 12) is a configurable quantity
+- [x] Quota overrun/underrun: WARNING (non-blocking); the remaining
+      balance (reliquat or déficit) is CARRIED OVER to the next quarter
+- [x] Quota display: in the mediator form AND in the "tableau de
+      fonctionnement" (annual presence-days view)
+- [x] TWO separate fields: contractType (temps plein, stagiaire...) +
+      aménagement (temps partiel, mi-temps thérapeutique...) — the
+      quarterly quota applies to aménagements
+- [x] Jours fériés: default French public-holiday list (auto-computed
+      per year), modifiable in the tableau de fonctionnement
+- [x] Museum CLOSED on 25/12, 01/01 and 01/05
+
 **Open questions:**
 - [ ] Exact meaning of remaining numeric cells (1-19) and "Réf. WE" —
       Loic to provide. Main codes DECODED (2026-09-26):
