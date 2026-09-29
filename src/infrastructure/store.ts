@@ -2,7 +2,8 @@
 
 import { generateExportFilename, buildExportMetadata } from '../domain/export-utils';
 import { defaultOfferColor } from '../domain/models';
-import type { AppData, Offer, Slot } from '../domain/types';
+import { defaultValorisationConfig } from '../domain/hours';
+import type { AppData, Offer, Slot, ValorisationConfig } from '../domain/types';
 
 export const STORAGE_KEY = 'mediaplan_data_v1';
 const LAST_MODIFIED_KEY = 'mediaplan_last_modified';
@@ -53,11 +54,30 @@ export function load(): AppData {
       cycles: parsed.cycles || [],
       // Quarterly hour quotas — same migration as cycles.
       quotas: parsed.quotas || [],
+      // Valorisation settings — legacy data loads with the defaults;
+      // partially persisted configs are filled in with the defaults.
+      valorisation: migrateValorisation(parsed.valorisation),
     };
   } catch (e) {
     console.error('Failed to load data:', e);
     return { ...defaultData };
   }
+}
+
+/** Fill in default valorisation values for a partially persisted config. */
+function migrateValorisation(
+  valorisation: Partial<ValorisationConfig> | undefined
+): ValorisationConfig {
+  const defaults = defaultValorisationConfig();
+  if (!valorisation) return defaults;
+  return {
+    sundayMultiplier: valorisation.sundayMultiplier ?? defaults.sundayMultiplier,
+    valuedSaturdayThreshold:
+      valorisation.valuedSaturdayThreshold ?? defaults.valuedSaturdayThreshold,
+    valuedSaturdayMultiplier:
+      valorisation.valuedSaturdayMultiplier ?? defaults.valuedSaturdayMultiplier,
+    holidayOverrides: valorisation.holidayOverrides ?? defaults.holidayOverrides,
+  };
 }
 
 export function save(data: AppData): boolean {
