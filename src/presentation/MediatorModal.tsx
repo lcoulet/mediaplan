@@ -48,21 +48,33 @@ export default function MediatorModal({ mediator, onClose }: Props) {
 
   const arrangementSet = !!(form.arrangement?.trim());
 
-  // Current-quarter balance (counter), null when nothing is tracked
+  // Current-quarter balance (counter), null when nothing is tracked.
+  // The quota form values are OVERLAID on the stored quotas so the counter
+  // (and its overrun warning) reflects the in-form edits live.
   const currentQuarter = quarterOfDate(new Date());
+  const effectiveQuotas = useMemo(() => {
+    const overlay = (q: typeof state.data.quotas[number]) => {
+      if (q.mediatorId !== (mediator?.id ?? form.id) || q.year !== currentYear) return q;
+      if (q.quarter !== 1 && q.quarter !== 2 && q.quarter !== 3 && q.quarter !== 4) return q;
+      const edited = quotaForm[q.quarter];
+      const hours = quotaNumberFromInput(edited.hours);
+      return hours === null ? q : { ...q, hours, effectiveFrom: edited.effectiveFrom };
+    };
+    return state.data.quotas.map(overlay);
+  }, [state.data.quotas, mediator?.id, form.id, currentYear, quotaForm]);
   const balance = useMemo(
     () =>
       arrangementSet
         ? computeQuarterlyBalance(
             { ...form, arrangement: form.arrangement?.trim() || undefined },
             state.data.slots,
-            state.data.quotas,
+            effectiveQuotas,
             state.data.valorisation,
             currentYear,
             currentQuarter
           )
         : null,
-    [arrangementSet, form, state.data.slots, state.data.quotas, state.data.valorisation, currentYear, currentQuarter]
+    [arrangementSet, form, state.data.slots, effectiveQuotas, state.data.valorisation, currentYear, currentQuarter]
   );
   const quotaSummary = balance ? cycleQuotaSummary(form, balance, currentQuarter, currentYear) : null;
 
