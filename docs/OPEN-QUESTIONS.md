@@ -125,6 +125,12 @@ weeks 39–51, analyzed locally, never committed):**
 - [ ] Quarterly quota config UI: per-quarter value on the mediator form?
 
 **Established (hourly management, decided 2026-09-29):**
+- [x] VALORISED DAYS AND CLOSED DAYS (validated 2026-09-29): assigning a
+      slot on a museum-closed day (25/12, 01/01, 01/05) is REFUSED;
+      a férié falling on a weekend counts férié ×2 only (highest single
+      multiplier, no stacking); adding an aménagement mid-quarter counts
+      only slots AFTER configuration (removal stops tracking); quota
+      config without aménagement is refused
 - [x] Valorisation: jours fériés count DOUBLE (×2); Sunday/Saturday
       multipliers TBD but must be configurable in the app
 - [x] VALUED SATURDAYS: Saturdays FROM the 10th/12th Saturday of the
