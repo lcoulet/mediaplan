@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediaPlan — Modale chaîne de cycles (maquette)</title>
+<style>
+/* ===== Base (tokens copied from src/style.css) ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --color-primary: #2c6e49;
+  --color-primary-dark: #1e5536;
+  --color-primary-light: #4c956c;
+  --color-accent: #d68c45;
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-text: #2b2b2b;
+  --color-text-muted: #6b6b6b;
+  --color-border: #d9d9d9;
+  --color-border-light: #eaeaea;
+  --color-danger: #c0392b;
+  --color-danger-bg: #fdecea;
+  --color-warning: #d68c45;
+  --color-warning-bg: #fef5e7;
+  --color-success: #27ae60;
+  --color-success-bg: #eafaf1;
+  --radius: 6px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.25);
+  --header-h: 56px;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+}
+button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ===== Header (dimmed backdrop) ===== */
+.app-header {
+  min-height: var(--header-h);
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  row-gap: 4px;
+  padding: 8px 20px;
+  box-shadow: var(--shadow-sm);
+}
+.header-left { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; flex-shrink: 1; min-width: 0; }
+.app-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.app-subtitle { font-size: 12px; opacity: 0.8; white-space: normal; }
+.header-nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.nav-btn {
+  background: transparent; border: none; color: rgba(255,255,255,0.8);
+  padding: 8px 12px; border-radius: var(--radius); font-size: 14px; cursor: pointer;
+}
+.nav-btn.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
+
+/* ===== Dimmed Mediators view backdrop ===== */
+.backdrop-page { filter: saturate(0.6); opacity: 0.55; pointer-events: none; }
+.mediators-page { max-width: 1000px; margin: 0 auto; padding: 16px; }
+.mediators-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.mediators-toolbar h2 { font-size: 18px; font-weight: 600; }
+.mediators-card {
+  background: var(--color-surface); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); overflow: hidden;
+}
+.mediator-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 16px; border-bottom: 1px solid var(--color-border-light);
+}
+.mediator-row:last-child { border-bottom: none; }
+.mediator-name { font-weight: 600; }
+.mediator-email { color: var(--color-text-muted); font-size: 13px; flex: 1; min-width: 120px; }
+.row-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* Pills (style aligned on .daily-unassigned-count) */
+.pill {
+  flex-shrink: 0; padding: 1px 6px; border-radius: 10px;
+  font-size: 11px; font-weight: 700; line-height: 1.6;
+}
+.pill-week { background: #e3efe8; color: #1e5536; }
+.pill-contract { background: #f0f0f0; color: #5a5a5a; }
+
+/* ===== Modal overlay ===== */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.4);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 24px 16px; overflow-y: auto;
+}
+.modal {
+  background: var(--color-surface); border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  width: 720px; max-width: 100%;
+  display: flex; flex-direction: column;
+  max-height: calc(100vh - 48px);
+}
+.modal-header {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 14px 20px; border-bottom: 1px solid var(--color-border);
+}
+.modal-header h3 { font-size: 17px; font-weight: 600; flex: 1; min-width: 200px; }
+.modal-close {
+  background: transparent; border: none; font-size: 18px; cursor: pointer;
+  color: var(--color-text-muted); padding: 4px 8px; border-radius: var(--radius);
+}
+.modal-body { padding: 16px 20px; overflow-y: auto; }
+.modal-footer {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 20px; border-top: 1px solid var(--color-border);
+}
+.footer-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: 1px solid transparent; border-radius: var(--radius);
+  font-size: 14px; cursor: pointer; white-space: nowrap; font-family: inherit;
+}
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover { background: var(--color-primary-dark); }
+.btn-secondary { background: var(--color-surface); color: var(--color-text); border-color: var(--color-border); }
+.btn-secondary:hover { background: #f0f0f0; }
+.btn-danger { background: transparent; color: var(--color-danger); border-color: var(--color-danger); }
+.btn-danger:hover { background: var(--color-danger); color: #fff; }
+.icon-only { padding: 4px 8px; font-size: 14px; }
+
+/* ===== Section headings inside the modal ===== */
+.modal-section { margin-bottom: 20px; }
+.modal-section:last-child { margin-bottom: 0; }
+.modal-section > h4 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--color-text-muted); font-weight: 600; margin-bottom: 8px;
+}
+.section-head-row {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 8px; flex-wrap: wrap; margin-bottom: 8px;
+}
+.section-hint { font-size: 12px; color: var(--color-text-muted); }
+
+/* ===== Cycle weeks list ===== */
+.week-list { display: flex; flex-direction: column; gap: 8px; }
+.week-item {
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.week-item.expanded { border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(44,110,73,0.12); }
+.week-head {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 8px 10px;
+}
+.drag-handle {
+  color: var(--color-text-muted); cursor: grab; font-size: 15px;
+  letter-spacing: -2px; user-select: none; padding: 0 2px;
+  border: none; background: transparent;
+  font-family: inherit;
+}
+.order-btns { display: flex; flex-direction: column; gap: 0; }
+.order-btns button {
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  color: var(--color-text-muted); font-size: 9px; line-height: 1;
+  padding: 2px 6px; cursor: pointer; font-family: inherit;
+}
+.order-btns button:first-child { border-radius: 4px 4px 0 0; }
+.order-btns button:last-child { border-radius: 0 0 4px 4px; border-top: none; }
+.week-name-input {
+  width: 130px; padding: 4px 8px; font-size: 14px; font-weight: 600;
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+  font-family: inherit; color: var(--color-text); background: var(--color-surface);
+}
+.week-summary { flex: 1; min-width: 140px; font-size: 13px; color: var(--color-text-muted); }
+.week-summary strong { color: var(--color-text); font-weight: 600; }
+.week-actions { display: flex; gap: 4px; margin-left: auto; align-items: center; }
+.expand-btn {
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  border-radius: var(--radius); padding: 3px 8px; cursor: pointer;
+  color: var(--color-text-muted); font-size: 12px; font-family: inherit;
+}
+.week-item.collapsed .expand-btn { background: var(--color-bg); }
+
+/* ===== Per-day grid of an expanded week ===== */
+.week-days { border-top: 1px solid var(--color-border-light); padding: 10px; }
+.day-grid {
+  display: grid;
+  grid-template-columns: 76px 110px 1fr 1fr;
+  gap: 6px 10px; align-items: center;
+}
+.day-grid .grid-head {
+  font-size: 11px; color: var(--color-text-muted); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.4px;
+}
+.day-name { font-size: 13px; font-weight: 600; }
+.day-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-muted); cursor: pointer; user-select: none; }
+.day-toggle input { accent-color: var(--color-primary); width: 14px; height: 14px; }
+.day-toggle .toggle-state { font-weight: 600; }
+.day-toggle input:not(:checked) + .toggle-state { color: var(--color-text-muted); }
+.time-pair { display: flex; align-items: center; gap: 4px; grid-column: 3 / -1; }
+@media (max-width: 640px) { .day-grid .time-pair { grid-column: auto; } }
+.time-pair input {
+  width: 74px; padding: 4px 6px; font-size: 13px; font-variant-numeric: tabular-nums;
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+  font-family: inherit; color: var(--color-text); background: var(--color-surface);
+}
+.time-pair input:disabled { background: #f0f0f0; color: var(--color-text-muted); }
+.time-pair span { color: var(--color-text-muted); }
+.time-pair.invalid input { border-color: var(--color-danger); background: var(--color-danger-bg); }
+.day-error { grid-column: 3 / -1; font-size: 12px; color: var(--color-danger); font-weight: 600; }
+@media (max-width: 640px) {
+  .day-grid { grid-template-columns: 1fr; }
+  .day-grid .grid-head { display: none; }
+  .day-grid .day-name { grid-column: 1 / -1; }
+}
+
+/* ===== Rotation: anchor + forced weeks ===== */
+.rotation-box {
+  border: 1px solid var(--color-border-light); border-radius: var(--radius);
+  background: #fafafa; padding: 12px;
+}
+.anchor-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.anchor-row label { font-size: 13px; font-weight: 600; }
+.anchor-input {
+  width: 110px; padding: 4px 8px; font-size: 14px; font-variant-numeric: tabular-nums;
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+  font-family: inherit; color: var(--color-text); background: var(--color-surface);
+}
+.anchor-select, .force-select {
+  padding: 4px 8px; font-size: 13px; border: 1px solid var(--color-border);
+  border-radius: var(--radius); font-family: inherit; color: var(--color-text);
+  background: var(--color-surface);
+}
+.forced-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.forced-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--color-surface); border: 1px solid var(--color-border-light);
+  border-radius: var(--radius); padding: 6px 10px; font-size: 13px;
+}
+.forced-row .iso-week { font-variant-numeric: tabular-nums; font-weight: 600; }
+.forced-row .arrow { color: var(--color-text-muted); }
+.forced-remove {
+  margin-left: auto; border: none; background: transparent; color: var(--color-text-muted);
+  cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: var(--radius);
+}
+.forced-remove:hover { color: var(--color-danger); }
+.forced-empty { font-size: 12px; color: var(--color-text-muted); font-style: italic; }
+
+/* ===== Mockup state switch (same convention as sync mockups) ===== */
+.mockup-switch {
+  position: fixed; bottom: 12px; left: 12px; z-index: 300;
+  display: flex; gap: 6px; background: var(--color-surface);
+  border: 1px solid var(--color-border); border-radius: 16px;
+  padding: 4px 6px; box-shadow: var(--shadow-md); flex-wrap: wrap; max-width: calc(100vw - 24px);
+}
+.mockup-switch span { font-size: 11px; color: var(--color-text-muted); align-self: center; padding: 0 4px; }
+.mockup-switch button {
+  font-size: 11px; padding: 3px 10px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted);
+}
+.mockup-switch button.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.state-box[hidden] { display: none; }
+
+/* ===== Paste confirmation / error dialog (small overlay above the modal) ===== */
+.confirm-overlay {
+  position: fixed; inset: 0; z-index: 250;
+  background: rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.confirm-dialog {
+  background: var(--color-surface); border-radius: var(--radius);
+  box-shadow: var(--shadow-lg); padding: 20px; width: 420px; max-width: 100%;
+}
+.confirm-dialog h4 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.confirm-dialog p { font-size: 13px; color: var(--color-text-muted); margin-bottom: 16px; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.paste-error {
+  margin: 0 0 16px; padding: 10px 12px; border-radius: var(--radius);
+  background: var(--color-danger-bg); color: var(--color-danger);
+  font-size: 13px; font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Dimmed Mediators view (backdrop) ===== -->
+<div class="backdrop-page">
+<header class="app-header">
+  <div class="header-left">
+    <h1 class="app-title">MediaPlan</h1>
+    <span class="app-subtitle">Gestion des plannings de médiation — Museum</span>
+  </div>
+  <nav class="header-nav" aria-label="Navigation principale">
+    <button class="nav-btn" type="button">Plan Jour</button>
+    <button class="nav-btn" type="button">Plan Hebdo</button>
+    <button class="nav-btn" type="button">Plan Accueil</button>
+    <button class="nav-btn active" aria-current="page" type="button">Médiateurs</button>
+    <button class="nav-btn" type="button">Offres</button>
+    <button class="nav-btn" type="button">Absences</button>
+    <button class="nav-btn" type="button">Statistiques</button>
+  </nav>
+</header>
+
+<main class="mediators-page">
+  <div class="mediators-toolbar">
+    <h2>Médiateurs</h2>
+    <button class="btn btn-primary" type="button">+ Ajouter un médiateur</button>
+  </div>
+  <div class="mediators-card">
+    <div class="mediator-row">
+      <span class="mediator-name">Alice Dupont</span>
+      <span class="pill pill-contract">temps plein</span>
+      <span class="mediator-email">alice.dupont@museum.fr</span>
+      <div class="row-btns">
+        <button class="btn btn-secondary icon-only" type="button" title="Modifier la fiche">✎</button>
+        <button class="btn btn-secondary" type="button" title="Cycle de travail">Cycle ▤</button>
+      </div>
+    </div>
+    <div class="mediator-row">
+      <span class="mediator-name">Karim Benali</span>
+      <span class="pill pill-contract">stagiaire</span>
+      <span class="mediator-email">karim.benali@museum.fr</span>
+      <div class="row-btns">
+        <button class="btn btn-secondary icon-only" type="button" title="Modifier la fiche">✎</button>
+        <button class="btn btn-secondary" type="button" title="Cycle de travail">Cycle ▤</button>
+      </div>
+    </div>
+    <div class="mediator-row">
+      <span class="mediator-name">Marie Lambert</span>
+      <span class="mediator-email">marie.lambert@museum.fr</span>
+      <div class="row-btns">
+        <button class="btn btn-secondary icon-only" type="button" title="Modifier la fiche">✎</button>
+        <button class="btn btn-secondary" type="button" title="Cycle de travail">Cycle ▤</button>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- ===== Cycle chain modal ===== -->
+<div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cycle-modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="cycle-modal-title">Cycle de travail — Alice Dupont</h3>
+      <span class="pill pill-week" title="Semaine de cycle active pour la semaine ISO affichée">S1 active</span>
+      <button class="modal-close" type="button" title="Fermer" aria-label="Fermer la modale de cycle">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- ============ Ordered cycle weeks ============ -->
+      <section class="modal-section" aria-labelledby="weeks-title">
+        <div class="section-head-row">
+          <h4 id="weeks-title">Semaines de cycle (ordre de rotation)</h4>
+          <button class="btn btn-secondary" type="button">+ Ajouter une semaine</button>
+        </div>
+        <p class="section-hint" style="margin-bottom: 8px;">La rotation suit l'ordre de la liste : S1 → S2 → S3 → S1… Une semaine au minimum.</p>
+
+        <div class="week-list">
+          <!-- S1 — expanded (edit mode) -->
+          <div class="week-item expanded">
+            <div class="week-head">
+              <span class="drag-handle" title="Glisser pour réordonner" aria-hidden="true">⋮⋮</span>
+              <span class="order-btns" aria-hidden="true" title="Monter / descendre dans la rotation">
+                <button type="button" tabindex="-1">▲</button><button type="button" tabindex="-1">▼</button>
+              </span>
+              <label class="sr-only" for="week-name-s1" hidden>Nom de la semaine de cycle</label>
+              <input class="week-name-input" id="week-name-s1" type="text" value="S1" aria-label="Nom de la semaine de cycle">
+              <span class="week-summary"><strong>3 semaines</strong> · rotation S1 → S2 → S3</span>
+              <span class="week-actions">
+                <button class="expand-btn" type="button" title="Replier la semaine">▾</button>
+                <button class="btn btn-danger icon-only" type="button" title="Supprimer la semaine S1" aria-label="Supprimer la semaine S1">🗑</button>
+              </span>
+            </div>
+            <div class="week-days">
+              <div class="day-grid" role="group" aria-label="Jours travaillés et plages horaires de S1">
+                <span class="grid-head">Jour</span>
+                <span class="grid-head">Travaillé</span>
+                <span class="grid-head">Début</span>
+                <span class="grid-head">Fin</span>
+
+                <span class="day-name">Lundi</span>
+                <label class="day-toggle"><input type="checkbox" checked><span class="toggle-state">oui</span></label>
+                <span class="time-pair"><input type="time" value="09:30" aria-label="Début lundi"> – <input type="time" value="18:00" aria-label="Fin lundi"></span>
+
+                <span class="day-name">Mardi</span>
+                <label class="day-toggle"><input type="checkbox" checked><span class="toggle-state">oui</span></label>
+                <span class="time-pair"><input type="time" value="10:00" aria-label="Début mardi"> – <input type="time" value="18:30" aria-label="Fin mardi"></span>
+
+                <span class="day-name">Mercredi</span>
+                <label class="day-toggle"><input type="checkbox"><span class="toggle-state">non</span></label>
+                <span class="time-pair"><input type="time" disabled placeholder="—" aria-label="Début mercredi (jour non travaillé)"> – <input type="time" disabled placeholder="—" aria-label="Fin mercredi (jour non travaillé)"></span>
+
+                <span class="day-name">Jeudi</span>
+                <label class="day-toggle"><input type="checkbox" checked><span class="toggle-state">oui</span></label>
+                <span class="time-pair"><input type="time" value="09:30" aria-label="Début jeudi"> – <input type="time" value="18:00" aria-label="Fin jeudi"></span>
+
+                <span class="day-name">Vendredi</span>
+                <label class="day-toggle"><input type="checkbox" checked><span class="toggle-state">oui</span></label>
+                <span class="time-pair"><input type="time" value="09:30" aria-label="Début vendredi"> – <input type="time" value="18:00" aria-label="Fin vendredi"></span>
+
+                <span class="day-name">Samedi</span>
+                <label class="day-toggle"><input type="checkbox"><span class="toggle-state">non</span></label>
+                <span class="time-pair"><input type="time" disabled placeholder="—" aria-label="Début samedi (jour non travaillé)"> – <input type="time" disabled placeholder="—" aria-label="Fin samedi (jour non travaillé)"></span>
+
+                <span class="day-name">Dimanche</span>
+                <label class="day-toggle"><input type="checkbox"><span class="toggle-state">non</span></label>
+                <span class="time-pair"><input type="time" disabled placeholder="—" aria-label="Début dimanche (jour non travaillé)"> – <input type="time" disabled placeholder="—" aria-label="Fin dimanche (jour non travaillé)"></span>
+              </div>
+              <p class="section-hint" style="margin-top: 8px;">Exemple d'erreur de saisie rejetée (état illustré, non actif) :</p>
+              <p class="day-error" style="margin-top: 2px;">⚠ L'heure de début doit précéder l'heure de fin</p>
+            </div>
+          </div>
+
+          <!-- S2 — collapsed -->
+          <div class="week-item collapsed">
+            <div class="week-head">
+              <span class="drag-handle" title="Glisser pour réordonner" aria-hidden="true">⋮⋮</span>
+              <span class="order-btns" aria-hidden="true" title="Monter / descendre dans la rotation">
+                <button type="button" tabindex="-1">▲</button><button type="button" tabindex="-1">▼</button>
+              </span>
+              <span class="week-name" style="font-weight: 600; width: 130px;">S2</span>
+              <span class="week-summary"><strong>lun-ven 09:30-18:00</strong></span>
+              <span class="week-actions">
+                <button class="expand-btn" type="button" title="Déplier la semaine">▸</button>
+                <button class="btn btn-danger icon-only" type="button" title="Supprimer la semaine S2" aria-label="Supprimer la semaine S2">🗑</button>
+              </span>
+            </div>
+          </div>
+
+          <!-- S3 — collapsed, weekend worked -->
+          <div class="week-item collapsed">
+            <div class="week-head">
+              <span class="drag-handle" title="Glisser pour réordonner" aria-hidden="true">⋮⋮</span>
+              <span class="order-btns" aria-hidden="true" title="Monter / descendre dans la rotation">
+                <button type="button" tabindex="-1">▲</button><button type="button" tabindex="-1">▼</button>
+              </span>
+              <span class="week-name" style="font-weight: 600; width: 130px;">S3</span>
+              <span class="week-summary"><strong>lun 09:30-18:00 · sam 10:00-17:00</strong></span>
+              <span class="week-actions">
+                <button class="expand-btn" type="button" title="Déplier la semaine">▸</button>
+                <button class="btn btn-danger icon-only" type="button" title="Supprimer la semaine S3" aria-label="Supprimer la semaine S3">🗑</button>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Rotation anchor + forced ISO weeks ============ -->
+      <section class="modal-section" aria-labelledby="rotation-title">
+        <h4 id="rotation-title">Rotation et ancrage</h4>
+        <div class="rotation-box">
+          <div class="anchor-row">
+            <label for="anchor-week">Ancrage : la rotation démarre sur</label>
+            <select class="anchor-select" id="anchor-cycle-week" aria-label="Semaine de cycle d'ancrage">
+              <option selected>S1</option>
+              <option>S2</option>
+              <option>S3</option>
+            </select>
+            <span style="font-size: 13px; color: var(--color-text-muted);">à la semaine ISO</span>
+            <input class="anchor-input" id="anchor-week" type="text" value="2026-W40" spellcheck="false" aria-label="Semaine ISO d'ancrage">
+          </div>
+          <p class="section-hint" style="margin-top: 6px;">Par défaut la rotation démarre à S1. Les semaines ISO antérieures à l'ancrage suivent la rotation précédente.</p>
+
+          <div class="forced-list" aria-label="Semaines ISO forcées">
+            <div class="forced-row">
+              <span class="iso-week">2026-W41</span>
+              <span class="arrow">→</span>
+              <select class="force-select" aria-label="Semaine de cycle forcée pour 2026-W41">
+                <option>S1</option>
+                <option selected>S3</option>
+              </select>
+              <span class="section-hint">forçage manuel</span>
+              <button class="forced-remove" type="button" title="Annuler le forçage de 2026-W41" aria-label="Annuler le forçage de 2026-W41">✕</button>
+            </div>
+            <div class="forced-row">
+              <span class="iso-week">2026-W52</span>
+              <span class="arrow">→</span>
+              <select class="force-select" aria-label="Semaine de cycle forcée pour 2026-W52">
+                <option selected>S1</option>
+                <option>S2</option>
+              </select>
+              <span class="section-hint">forçage manuel</span>
+              <button class="forced-remove" type="button" title="Annuler le forçage de 2026-W52" aria-label="Annuler le forçage de 2026-W52">✕</button>
+            </div>
+            <button class="btn btn-secondary" type="button">+ Forcer une semaine ISO</button>
+          </div>
+          <p class="section-hint" style="margin-top: 8px;">Une semaine ISO forcée ignore la rotation pour cette semaine uniquement ; les semaines suivantes reprennent la rotation comme si le forçage n'existait pas.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal-footer">
+      <div class="footer-group">
+        <button class="btn btn-secondary" type="button" title="Copier le cycle au format JSON dans le presse-papiers">⧉ Copier le cycle</button>
+        <button class="btn btn-secondary" type="button" title="Coller un cycle depuis le presse-papiers (avec confirmation)">⇩ Coller le cycle</button>
+      </div>
+      <div class="footer-group">
+        <button class="btn btn-secondary" type="button">Annuler</button>
+        <button class="btn btn-primary" type="button">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== State 2: paste confirmation dialog (mockup switch) ===== -->
+<div class="confirm-overlay state-box" id="state-confirm" hidden role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+  <div class="confirm-dialog">
+    <h4 id="confirm-title">Remplacer le cycle d'Alice ?</h4>
+    <p>Le presse-papiers contient un cycle de 2 semaines (S1, S2). Le coller remplacera intégralement le cycle actuel d'Alice Dupont (3 semaines).</p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" type="button">Annuler</button>
+      <button class="btn btn-primary" type="button">Remplacer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== State 3: invalid pasted JSON (mockup switch) ===== -->
+<div class="confirm-overlay state-box" id="state-json-error" hidden role="dialog" aria-modal="true" aria-labelledby="json-error-title">
+  <div class="confirm-dialog">
+    <h4 id="json-error-title">Remplacer le cycle d'Alice ?</h4>
+    <div class="paste-error" role="alert">⚠ JSON invalide</div>
+    <p>Le contenu du presse-papiers n'est pas un cycle valide. Le cycle de travail d'Alice reste inchangé.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" type="button">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mockup state switch (same convention as the sync mockups) -->
+<div class="mockup-switch" role="group" aria-label="États de maquette de la modale de cycle">
+  <span>États :</span>
+  <button type="button" data-state="modal" class="active" aria-pressed="true">Modale</button>
+  <button type="button" data-state="confirm" aria-pressed="false">Confirmation « Coller le cycle »</button>
+  <button type="button" data-state="json-error" aria-pressed="false">Erreur JSON</button>
+</div>
+
+<script>
+// Mockup-only interaction: switch between the modal states (paste confirmation,
+// invalid pasted JSON) and the plain modal view.
+var boxes = { modal: null, confirm: document.getElementById('state-confirm'), 'json-error': document.getElementById('state-json-error') };
+document.querySelectorAll('.mockup-switch button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.mockup-switch button').forEach(function (b) {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
+    Object.keys(boxes).forEach(function (k) {
+      if (boxes[k]) boxes[k].hidden = btn.dataset.state !== k;
+    });
+  });
+});
+</script>
+</body>
+</html>

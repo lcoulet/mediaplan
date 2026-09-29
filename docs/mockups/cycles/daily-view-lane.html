@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediaPlan — Vue quotidienne : voies et cycle de travail (maquette)</title>
+<style>
+/* ===== Base (tokens copied from src/style.css) ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --color-primary: #2c6e49;
+  --color-primary-dark: #1e5536;
+  --color-primary-light: #4c956c;
+  --color-accent: #d68c45;
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-text: #2b2b2b;
+  --color-text-muted: #6b6b6b;
+  --color-border: #d9d9d9;
+  --color-border-light: #eaeaea;
+  --color-danger: #c0392b;
+  --color-warning: #d68c45;
+  --color-warning-bg: #fef5e7;
+  --radius: 6px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --header-h: 56px;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+}
+button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* ===== Header ===== */
+.app-header {
+  min-height: var(--header-h);
+  background: var(--color-primary);
+  color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; row-gap: 4px;
+  padding: 8px 20px; box-shadow: var(--shadow-sm);
+}
+.header-left { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; flex-shrink: 1; min-width: 0; }
+.app-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.app-subtitle { font-size: 12px; opacity: 0.8; white-space: normal; }
+.header-nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.nav-btn {
+  background: transparent; border: none; color: rgba(255,255,255,0.8);
+  padding: 8px 12px; border-radius: var(--radius); font-size: 14px; cursor: pointer;
+}
+.nav-btn.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
+
+/* ===== Page ===== */
+.app-main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.toolbar h2 { font-size: 18px; font-weight: 600; }
+.toolbar-note { font-size: 13px; color: var(--color-text-muted); }
+
+/* ===== Daily view slice (structure from src/calendar.css) ===== */
+.daily-card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+/* Date header row */
+.daily-date-head {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  padding: 10px 12px; border-bottom: 1px solid var(--color-border);
+  background: #fafafa;
+}
+.daily-date-head .date-title { font-size: 15px; font-weight: 700; }
+.daily-date-head .iso-week { font-size: 12px; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+
+/* Time axis: 08:00 -> 19:00 = 11 h, each hour = 100/11 % */
+.time-axis {
+  display: flex; border-bottom: 1px solid var(--color-border); background: #fafafa;
+}
+.time-axis .axis-spacer { width: 200px; flex-shrink: 0; border-right: 1px solid var(--color-border); }
+.time-axis .axis-hours { flex: 1; display: flex; position: relative; height: 22px; }
+.time-axis .axis-hour {
+  flex: 1; font-size: 11px; color: var(--color-text-muted);
+  padding: 3px 0 0 6px; border-left: 1px solid var(--color-border-light);
+  font-variant-numeric: tabular-nums;
+}
+.time-axis .axis-hour:first-child { border-left: none; }
+
+/* Mediator rows (mirrors .daily-mediator-row / -label / -track) */
+.daily-mediator-row { display: flex; align-items: stretch; border-bottom: 1px solid var(--color-border-light); min-height: 32px; }
+.daily-mediator-row:last-child { border-bottom: none; }
+.daily-mediator-label {
+  width: 200px; flex-shrink: 0;
+  display: flex; align-items: center;
+  padding: 8px 12px;
+  border-right: 1px solid var(--color-border);
+  background: #fafafa;
+  overflow: hidden;
+}
+.daily-mediator-idbox { display: flex; flex-direction: column; flex: 1; min-width: 0; line-height: 1.25; }
+.daily-mediator-name {
+  margin-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1; min-width: 0; font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+}
+.daily-mediator-phone {
+  display: block; margin-left: 8px; font-size: 11px; color: var(--color-text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Pills (style aligned on .daily-unassigned-count) */
+.pill {
+  flex-shrink: 0; padding: 1px 6px; border-radius: 10px;
+  font-size: 11px; font-weight: 700; line-height: 1.6;
+}
+.pill-week { background: #e3efe8; color: #1e5536; }
+.pill-contract { background: #f0f0f0; color: #5a5a5a; }
+
+/* Track + hour grid lines */
+.daily-mediator-track { position: relative; min-height: 32px; overflow: hidden; flex: 1; }
+.hour-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(100% / 11 - 1px),
+    var(--color-border-light) calc(100% / 11 - 1px),
+    var(--color-border-light) calc(100% / 11)
+  );
+}
+
+/* Hatching outside working hours (per design decision) */
+.work-range {
+  position: absolute; top: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 6px,
+    rgba(0,0,0,0.06) 6px 8px
+  );
+  pointer-events: none;
+}
+.work-range.before { left: 0; }
+.work-range.after { right: 0; }
+/* Fully hatched lane: non-worked day */
+.daily-mediator-track.full-hatch {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 6px,
+    rgba(0,0,0,0.06) 6px 8px
+  );
+}
+.nonworked-note {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--color-text-muted); font-style: italic;
+  pointer-events: none;
+}
+
+/* Working-hours label shown on the lane (small, right side) */
+.work-hours-tag {
+  position: absolute; top: 1px; font-size: 9px; color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums; pointer-events: none;
+}
+
+/* Slots (mirrors .daily-slot) */
+.daily-slot {
+  position: absolute; top: 1px; bottom: 1px;
+  border-radius: 4px; padding: 2px 4px; font-size: 10px;
+  cursor: pointer; overflow: hidden;
+  background: #e8f5e9;
+  border-left: 3px solid var(--color-primary);
+  z-index: 1;
+}
+.daily-slot .slot-time { font-weight: 600; font-size: 9px; white-space: nowrap; }
+.daily-slot .slot-title { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ===== Mockup annotations (not part of the real UI) ===== */
+.mockup-caption {
+  display: flex; gap: 6px; align-items: flex-start;
+  font-size: 12px; color: var(--color-text-muted); margin: 14px 2px 0;
+  flex-wrap: wrap;
+}
+.annotation {
+  border-left: 3px solid var(--color-primary-light);
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 8px 12px; flex: 1; min-width: 220px;
+}
+.annotation strong { color: var(--color-text); }
+.legend {
+  display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+  margin-top: 12px; font-size: 12px; color: var(--color-text-muted);
+}
+.legend .swatch {
+  display: inline-block; width: 28px; height: 12px; border-radius: 3px;
+  vertical-align: middle; margin-right: 6px;
+  border: 1px solid var(--color-border-light);
+}
+.legend .swatch.hatch {
+  background: repeating-linear-gradient(45deg, transparent 0 6px, rgba(0,0,0,0.06) 6px 8px);
+}
+.legend .swatch.free { background: var(--color-surface); }
+@media (max-width: 560px) {
+  .daily-mediator-label { width: 140px; }
+  .time-axis .axis-spacer { width: 140px; }
+  .time-axis .axis-hours { overflow: hidden; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-left">
+    <h1 class="app-title">MediaPlan</h1>
+    <span class="app-subtitle">Gestion des plannings de médiation — Museum</span>
+  </div>
+  <nav class="header-nav" aria-label="Navigation principale">
+    <button class="nav-btn active" aria-current="page" type="button">Plan Jour</button>
+    <button class="nav-btn" type="button">Plan Hebdo</button>
+    <button class="nav-btn" type="button">Plan Accueil</button>
+    <button class="nav-btn" type="button">Médiateurs</button>
+    <button class="nav-btn" type="button">Offres</button>
+    <button class="nav-btn" type="button">Absences</button>
+    <button class="nav-btn" type="button">Statistiques</button>
+  </nav>
+</header>
+
+<main class="app-main">
+  <div class="toolbar">
+    <h2>Plan Jour</h2>
+    <span class="toolbar-note">Extrait de la vue quotidienne — plage horaire 08:00–19:00.</span>
+  </div>
+
+  <div class="daily-card">
+    <div class="daily-date-head">
+      <span class="date-title">Mardi 6 octobre 2026</span>
+      <span class="iso-week">semaine ISO 2026-W41</span>
+      <span class="toolbar-note" style="margin-left: auto;">← jour précédent · jour suivant →</span>
+    </div>
+
+    <!-- Time axis: 08:00 to 19:00 -->
+    <div class="time-axis" aria-hidden="true">
+      <div class="axis-spacer"></div>
+      <div class="axis-hours">
+        <span class="axis-hour">08</span><span class="axis-hour">09</span><span class="axis-hour">10</span>
+        <span class="axis-hour">11</span><span class="axis-hour">12</span><span class="axis-hour">13</span>
+        <span class="axis-hour">14</span><span class="axis-hour">15</span><span class="axis-hour">16</span>
+        <span class="axis-hour">17</span><span class="axis-hour">18</span><span class="axis-hour">19</span>
+      </div>
+    </div>
+
+    <!-- (a) Alice — worked day 09:30-18:00, cycle pill S2, contract pill 'temps plein' -->
+    <!-- Percentages on an 08:00-19:00 axis: 09:30 = 13.64 %, 18:00 = 90.91 % -->
+    <div class="daily-mediator-row">
+      <div class="daily-mediator-label">
+        <div class="daily-mediator-idbox">
+          <span class="daily-mediator-name">Alice Dupont <span class="pill pill-week" title="Semaine de cycle active">S2</span> <span class="pill pill-contract" title="Type de contrat">temps plein</span></span>
+          <span class="daily-mediator-phone">06 12 34 56 78</span>
+        </div>
+      </div>
+      <div class="daily-mediator-track">
+        <div class="hour-grid"></div>
+        <div class="work-range before" style="width: 13.64%;"></div>
+        <div class="work-range after" style="width: 9.09%;"></div>
+        <span class="work-hours-tag" style="left: 14.2%;">09:30</span>
+        <span class="work-hours-tag" style="right: 9.6%;">18:00</span>
+        <div class="daily-slot assigned" style="left: 18.18%; width: 18.18%;" title="Visite guidée 10:00-12:00">
+          <span class="slot-time">10:00-12:00</span> <span class="slot-title">Visite guidée</span>
+        </div>
+        <div class="daily-slot assigned" style="left: 54.55%; width: 13.64%;" title="Atelier 14:00-15:30">
+          <span class="slot-time">14:00-15:30</span> <span class="slot-title">Atelier</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- (b) Karim — non-worked day: fully hatched lane + note -->
+    <div class="daily-mediator-row">
+      <div class="daily-mediator-label">
+        <div class="daily-mediator-idbox">
+          <span class="daily-mediator-name">Karim Benali <span class="pill pill-week" title="Semaine de cycle active">S3</span> <span class="pill pill-contract" title="Type de contrat">mi-temps (temps partiel)</span></span>
+          <span class="daily-mediator-phone">06 98 76 54 32</span>
+        </div>
+      </div>
+      <div class="daily-mediator-track full-hatch">
+        <div class="hour-grid"></div>
+        <span class="nonworked-note">Mardi — jour non travaillé (semaine S3)</span>
+      </div>
+    </div>
+
+    <!-- (c) Marie — worked day with a different range, contract pill 'stagiaire' -->
+    <!-- 10:00 = 18.18 %, 16:30 = 77.27 % -->
+    <div class="daily-mediator-row">
+      <div class="daily-mediator-label">
+        <div class="daily-mediator-idbox">
+          <span class="daily-mediator-name">Marie Lambert <span class="pill pill-week" title="Semaine de cycle active">S1</span> <span class="pill pill-contract" title="Type de contrat">stagiaire</span></span>
+          <span class="daily-mediator-phone">06 45 67 89 01</span>
+        </div>
+      </div>
+      <div class="daily-mediator-track">
+        <div class="hour-grid"></div>
+        <div class="work-range before" style="width: 18.18%;"></div>
+        <div class="work-range after" style="width: 22.73%;"></div>
+        <span class="work-hours-tag" style="left: 18.8%;">10:00</span>
+        <span class="work-hours-tag" style="right: 23.2%;">16:30</span>
+        <div class="daily-slot assigned" style="left: 22.73%; width: 13.64%;" title="Visite guidée 10:30-12:00">
+          <span class="slot-time">10:30-12:00</span> <span class="slot-title">Visite guidée</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- (d) Claire — no cycle: no pills, no hatching -->
+    <div class="daily-mediator-row">
+      <div class="daily-mediator-label">
+        <div class="daily-mediator-idbox">
+          <span class="daily-mediator-name">Claire Fontaine</span>
+          <span class="daily-mediator-phone">06 33 22 11 00</span>
+        </div>
+      </div>
+      <div class="daily-mediator-track">
+        <div class="hour-grid"></div>
+        <div class="daily-slot assigned" style="left: 4.55%; width: 9.09%;" title="Accueil 08:30-09:30">
+          <span class="slot-time">08:30-09:30</span> <span class="slot-title">Accueil</span>
+        </div>
+        <div class="daily-slot assigned" style="left: 63.64%; width: 13.64%;" title="Visite guidée 15:00-16:30">
+          <span class="slot-time">15:00-16:30</span> <span class="slot-title">Visite guidée</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend + annotations (mockup documentation, not part of the real UI) -->
+  <div class="legend" aria-hidden="true">
+    <span><span class="swatch hatch"></span>Hachures = hors plage horaire de travail (ou jour non travaillé)</span>
+    <span><span class="swatch free"></span>Plage de travail : aucune hachure</span>
+  </div>
+  <div class="mockup-caption">
+    <div class="annotation"><strong>(a) Jour travaillé :</strong> pilule de semaine de cycle « S2 » + pilule « temps plein » à côté du nom ; plage 09:30-18:00 dégagée, hachures avant 09:30 et après 18:00. Les créneaux posés dans la plage apparaissent normalement.</div>
+    <div class="annotation"><strong>(b) Jour non travaillé :</strong> voie entièrement hachurée et visuellement distincte, avec la mention « jour non travaillé ». Les créneaux peuvent néanmoins y être posés (avertissement léger non bloquant).</div>
+    <div class="annotation"><strong>(c) Plage différente :</strong> 10:00-16:30 avec la pilule « stagiaire » — chaque jour de chaque semaine de cycle a sa propre plage.</div>
+    <div class="annotation"><strong>(d) Sans cycle :</strong> aucune pilule, aucune hachure, aucun avertissement lors de l'attribution de créneaux.</div>
+  </div>
+</main>
+
+</body>
+</html>

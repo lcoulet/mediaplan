@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediaPlan — Type de contrat (maquette)</title>
+<style>
+/* ===== Base (tokens copied from src/style.css) ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --color-primary: #2c6e49;
+  --color-primary-dark: #1e5536;
+  --color-primary-light: #4c956c;
+  --color-accent: #d68c45;
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-text: #2b2b2b;
+  --color-text-muted: #6b6b6b;
+  --color-border: #d9d9d9;
+  --color-border-light: #eaeaea;
+  --color-danger: #c0392b;
+  --color-danger-bg: #fdecea;
+  --color-warning: #d68c45;
+  --color-warning-bg: #fef5e7;
+  --color-success: #27ae60;
+  --color-success-bg: #eafaf1;
+  --radius: 6px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.25);
+  --header-h: 56px;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+}
+button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ===== Header (dimmed backdrop) ===== */
+.app-header {
+  min-height: var(--header-h);
+  background: var(--color-primary);
+  color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; row-gap: 4px;
+  padding: 8px 20px; box-shadow: var(--shadow-sm);
+}
+.header-left { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; flex-shrink: 1; min-width: 0; }
+.app-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.app-subtitle { font-size: 12px; opacity: 0.8; white-space: normal; }
+.header-nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.nav-btn {
+  background: transparent; border: none; color: rgba(255,255,255,0.8);
+  padding: 8px 12px; border-radius: var(--radius); font-size: 14px; cursor: pointer;
+}
+.nav-btn.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
+
+.backdrop-page { filter: saturate(0.6); opacity: 0.55; pointer-events: none; }
+.mediators-page { max-width: 1000px; margin: 0 auto; padding: 16px; }
+.mediators-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.mediators-toolbar h2 { font-size: 18px; font-weight: 600; }
+.mediators-card { background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
+.mediator-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 16px; border-bottom: 1px solid var(--color-border-light);
+}
+.mediator-row:last-child { border-bottom: none; }
+.mediator-name { font-weight: 600; }
+.mediator-email { color: var(--color-text-muted); font-size: 13px; flex: 1; min-width: 120px; }
+
+/* Pills (style aligned on .daily-unassigned-count) */
+.pill {
+  flex-shrink: 0; padding: 1px 6px; border-radius: 10px;
+  font-size: 11px; font-weight: 700; line-height: 1.6;
+}
+.pill-week { background: #e3efe8; color: #1e5536; }
+.pill-contract { background: #f0f0f0; color: #5a5a5a; }
+.pill-contract.truncated {
+  max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* ===== Modal overlay ===== */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.4);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 24px 16px; overflow-y: auto;
+}
+.modal {
+  background: var(--color-surface); border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  width: 560px; max-width: 100%;
+  display: flex; flex-direction: column;
+  max-height: calc(100vh - 48px);
+}
+.modal-header {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 14px 20px; border-bottom: 1px solid var(--color-border);
+}
+.modal-header h3 { font-size: 17px; font-weight: 600; flex: 1; min-width: 180px; }
+.modal-close {
+  background: transparent; border: none; font-size: 18px; cursor: pointer;
+  color: var(--color-text-muted); padding: 4px 8px; border-radius: var(--radius);
+}
+.modal-body { padding: 16px 20px; overflow-y: auto; }
+.modal-footer {
+  display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 12px 20px; border-top: 1px solid var(--color-border);
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: 1px solid transparent; border-radius: var(--radius);
+  font-size: 14px; cursor: pointer; white-space: nowrap; font-family: inherit;
+}
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover { background: var(--color-primary-dark); }
+.btn-secondary { background: var(--color-surface); color: var(--color-text); border-color: var(--color-border); }
+
+/* ===== Forms ===== */
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.form-group input, .form-group select {
+  width: 100%; padding: 8px 12px; border: 1px solid var(--color-border);
+  border-radius: var(--radius); font-size: 14px; font-family: inherit;
+  background: var(--color-surface); color: var(--color-text);
+}
+.form-group input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(44,110,73,0.15); }
+.form-hint { margin-top: 4px; font-size: 12px; color: var(--color-text-muted); }
+.optional-tag {
+  font-size: 11px; font-weight: 400; color: var(--color-text-muted);
+  text-transform: none; letter-spacing: 0;
+}
+
+/* ===== Contract-type selector: suggestions + free text ===== */
+.contract-select { position: relative; }
+.suggestion-box {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius); box-shadow: var(--shadow-md);
+  z-index: 10; overflow: hidden;
+}
+.suggestion-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--color-text-muted); font-weight: 600;
+  padding: 8px 12px 4px;
+}
+.suggestion {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; padding: 8px 12px; border: none; background: transparent;
+  font-size: 14px; font-family: inherit; color: var(--color-text);
+  cursor: pointer; text-align: left;
+}
+.suggestion:hover, .suggestion.focused { background: var(--color-bg); }
+.suggestion.selected { background: rgba(44,110,73,0.08); font-weight: 600; }
+.suggestion .check { color: var(--color-primary); font-weight: 700; visibility: hidden; }
+.suggestion.selected .check { visibility: visible; }
+
+/* ===== Pill preview ===== */
+.preview-box {
+  margin-top: 4px; padding: 12px;
+  background: #fafafa; border: 1px solid var(--color-border-light); border-radius: var(--radius);
+}
+.preview-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--color-text-muted); font-weight: 600; margin-bottom: 6px;
+}
+.preview-name {
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+  font-size: 13px; font-weight: 600;
+}
+.preview-hint { margin-top: 4px; font-size: 11px; color: var(--color-text-muted); }
+.pill-preview-none { font-size: 12px; color: var(--color-text-muted); font-style: italic; }
+
+/* ===== Slot assignment section (light warning) ===== */
+.slot-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--color-border-light); }
+.slot-section h4 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--color-text-muted); font-weight: 600; margin-bottom: 8px;
+}
+.slot-form {
+  border: 1px solid var(--color-border-light); border-radius: var(--radius);
+  background: #fafafa; padding: 12px;
+}
+.slot-form-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.slot-form-row .form-group { flex: 1; min-width: 140px; margin-bottom: 0; }
+.time-inputs { display: flex; gap: 8px; align-items: center; }
+.time-inputs input { width: 90px; font-variant-numeric: tabular-nums; }
+.time-inputs span { color: var(--color-text-muted); }
+.light-warning {
+  margin-top: 6px; font-size: 12px; color: #b06a1e; font-weight: 600;
+}
+.light-warning .warn-detail { font-weight: 400; color: var(--color-text-muted); }
+.no-warning { margin-top: 6px; font-size: 12px; color: var(--color-text-muted); }
+
+/* ===== Mockup switch (same convention as the sync mockups) ===== */
+.mockup-switch {
+  position: fixed; bottom: 12px; left: 12px; z-index: 300;
+  display: flex; gap: 6px; background: var(--color-surface);
+  border: 1px solid var(--color-border); border-radius: 16px;
+  padding: 4px 6px; box-shadow: var(--shadow-md); flex-wrap: wrap; max-width: calc(100vw - 24px);
+}
+.mockup-switch span { font-size: 11px; color: var(--color-text-muted); align-self: center; padding: 0 4px; }
+.mockup-switch button {
+  font-size: 11px; padding: 3px 10px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted);
+}
+.mockup-switch button.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.state-box[hidden] { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ===== Dimmed Mediators view (backdrop) ===== -->
+<div class="backdrop-page">
+<header class="app-header">
+  <div class="header-left">
+    <h1 class="app-title">MediaPlan</h1>
+    <span class="app-subtitle">Gestion des plannings de médiation — Museum</span>
+  </div>
+  <nav class="header-nav" aria-label="Navigation principale">
+    <button class="nav-btn" type="button">Plan Jour</button>
+    <button class="nav-btn" type="button">Plan Hebdo</button>
+    <button class="nav-btn" type="button">Plan Accueil</button>
+    <button class="nav-btn active" aria-current="page" type="button">Médiateurs</button>
+    <button class="nav-btn" type="button">Offres</button>
+    <button class="nav-btn" type="button">Absences</button>
+    <button class="nav-btn" type="button">Statistiques</button>
+  </nav>
+</header>
+
+<main class="mediators-page">
+  <div class="mediators-toolbar">
+    <h2>Médiateurs</h2>
+    <button class="btn btn-primary" type="button">+ Ajouter un médiateur</button>
+  </div>
+  <div class="mediators-card">
+    <div class="mediator-row">
+      <span class="mediator-name">Alice Dupont</span>
+      <span class="pill pill-contract">temps plein</span>
+      <span class="mediator-email">alice.dupont@museum.fr</span>
+      <button class="btn btn-secondary" type="button">✎ Modifier</button>
+    </div>
+    <div class="mediator-row">
+      <span class="mediator-name">Marie Lambert</span>
+      <span class="pill pill-contract">stagiaire</span>
+      <span class="pill pill-week" title="Semaine de cycle active">S1</span>
+      <span class="mediator-email">marie.lambert@museum.fr</span>
+      <button class="btn btn-secondary" type="button">✎ Modifier</button>
+    </div>
+    <div class="mediator-row">
+      <span class="mediator-name">Karim Benali</span>
+      <span class="mediator-email">karim.benali@museum.fr</span>
+      <button class="btn btn-secondary" type="button">✎ Modifier</button>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- ===== Mediator form modal with contract-type selector open ===== -->
+<div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="form-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="form-title">Fiche médiateur — Alice Dupont</h3>
+      <button class="modal-close" type="button" title="Fermer" aria-label="Fermer la fiche médiateur">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-group">
+        <label for="med-name">Nom</label>
+        <input id="med-name" type="text" value="Alice Dupont">
+      </div>
+
+      <div class="form-row" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+        <div class="form-group" style="flex: 1; min-width: 140px; margin-bottom: 0;">
+          <label for="med-phone">Téléphone</label>
+          <input id="med-phone" type="tel" value="06 12 34 56 78">
+        </div>
+        <div class="form-group" style="flex: 1; min-width: 140px; margin-bottom: 0;">
+          <label for="med-email">Courriel</label>
+          <input id="med-email" type="email" value="alice.dupont@museum.fr">
+        </div>
+      </div>
+
+      <!-- ===== Contract type selector (open, suggestions visible) ===== -->
+      <div class="form-group">
+        <label for="contract-type">Type de contrat <span class="optional-tag">(optionnel)</span></label>
+        <div class="contract-select">
+          <input id="contract-type" type="text" autocomplete="off" spellcheck="false"
+                 placeholder="Choisissez une suggestion ou saisissez librement…"
+                 aria-expanded="true" aria-controls="contract-suggestions">
+          <div class="suggestion-box" id="contract-suggestions" role="listbox" aria-label="Suggestions de type de contrat">
+            <p class="suggestion-title">Suggestions</p>
+            <button class="suggestion selected" type="button" role="option" aria-selected="true">
+              temps plein <span class="check" aria-hidden="true">✓</span>
+            </button>
+            <button class="suggestion" type="button" role="option" aria-selected="false">
+              mi-temps (temps partiel) <span class="check" aria-hidden="true">✓</span>
+            </button>
+            <button class="suggestion" type="button" role="option" aria-selected="false">
+              stagiaire <span class="check" aria-hidden="true">✓</span>
+            </button>
+          </div>
+        </div>
+        <p class="form-hint">Champ libre — aucune validation de format. Effacez la valeur pour retirer la pilule. Un texte long est tronqué dans la pilule, le texte complet reste accessible.</p>
+
+        <!-- Live pill preview next to the mediator name -->
+        <div class="preview-box">
+          <p class="preview-label">Aperçu (pilules à côté du nom)</p>
+          <p class="preview-name">
+            Alice Dupont
+            <span class="pill pill-contract">temps plein</span>
+            <span class="pill pill-week" title="Semaine de cycle active">S1</span>
+          </p>
+          <p class="preview-hint">Exemple pilule seule : Marie Lambert <span class="pill pill-contract" style="margin-left: 4px;">stagiaire</span></p>
+          <p class="preview-hint">Exemple texte libre long : <span class="pill pill-contract truncated" title="vacataire longue durée renouvelable 24 mois">vacataire longue durée renouvelable 2…</span> <span class="preview-hint" style="display: inline;">(title au survol = texte complet)</span></p>
+          <p class="preview-hint">Sans type de contrat : Karim Benali <span class="pill-preview-none">— aucune pilule affichée</span></p>
+        </div>
+      </div>
+
+      <!-- ===== Slot assignment context: light warning ===== -->
+      <div class="slot-section" aria-labelledby="slot-title">
+        <h4 id="slot-title">Avertissement léger lors de l'attribution d'un créneau (contexte vue Plan Jour)</h4>
+        <div class="slot-form">
+          <div class="slot-form-row">
+            <div class="form-group">
+              <label for="slot-offer">Offre</label>
+              <select id="slot-offer">
+                <option selected>Visite guidée</option>
+                <option>Atelier</option>
+                <option>Accueil</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="slot-mediator">Médiateur</label>
+              <select id="slot-mediator">
+                <option selected>Alice Dupont</option>
+                <option>Marie Lambert</option>
+                <option>Karim Benali</option>
+              </select>
+              <!-- State 1: slot outside the working amplitude -->
+              <p class="light-warning state-box" id="warn-amplitude" role="status">
+                ⚠ Hors plage horaire de travail d'Alice (09:30-18:00)
+                <span class="warn-detail">— le créneau peut néanmoins être enregistré.</span>
+              </p>
+              <!-- State 2: slot on a non-worked day -->
+              <p class="light-warning state-box" id="warn-nonworked" role="status" hidden>
+                ⚠ Le mercredi n'est pas un jour travaillé d'Alice
+                <span class="warn-detail">— le créneau peut néanmoins être enregistré.</span>
+              </p>
+              <!-- State 3: no warning (in amplitude / no cycle) -->
+              <p class="no-warning state-box" id="warn-none" hidden>
+                Aucun avertissement — créneau dans la plage 09:30-18:00, ou médiateur sans cycle défini.
+              </p>
+            </div>
+            <div class="form-group">
+              <label for="slot-times">Horaire</label>
+              <div class="time-inputs">
+                <input id="slot-times" type="time" value="08:00" aria-label="Début du créneau">
+                <span>–</span>
+                <input type="time" value="09:00" aria-label="Fin du créneau">
+              </div>
+              <p class="form-hint">Mardi 6 octobre 2026 · semaine ISO 2026-W41 · semaine de cycle S2 pour Alice.</p>
+            </div>
+          </div>
+          <div class="modal-footer" style="padding: 12px 0 0; border-top: none; justify-content: flex-end;">
+            <button class="btn btn-secondary" type="button">Annuler</button>
+            <button class="btn btn-primary" type="button">Enregistrer le créneau</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mockup state switch (same convention as the sync mockups) -->
+<div class="mockup-switch" role="group" aria-label="États de maquette de l'avertissement léger">
+  <span>Avertissement :</span>
+  <button type="button" data-state="warn-amplitude" class="active" aria-pressed="true">Hors plage (08:00-09:00)</button>
+  <button type="button" data-state="warn-nonworked" aria-pressed="false">Jour non travaillé</button>
+  <button type="button" data-state="warn-none" aria-pressed="false">Aucun</button>
+</div>
+
+<script>
+// Mockup-only interaction: switch between the light-warning states.
+var boxes = { 'warn-amplitude': document.getElementById('warn-amplitude'),
+              'warn-nonworked': document.getElementById('warn-nonworked'),
+              'warn-none': document.getElementById('warn-none') };
+document.querySelectorAll('.mockup-switch button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.mockup-switch button').forEach(function (b) {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
+    Object.keys(boxes).forEach(function (k) { boxes[k].hidden = k !== btn.dataset.state; });
+  });
+});
+</script>
+</body>
+</html>
