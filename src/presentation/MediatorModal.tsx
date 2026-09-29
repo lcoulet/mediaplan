@@ -8,6 +8,11 @@ import Modal from './Modal';
 import MultiSelect from './MultiSelect';
 import type { MultiSelectOption } from './MultiSelect';
 
+// Predefined suggestions for the free-text contract type (spec:
+// contract-type.feature) and working-time arrangement.
+const CONTRACT_TYPE_SUGGESTIONS = ['temps plein', 'mi-temps (temps partiel)', 'stagiaire'];
+const ARRANGEMENT_SUGGESTIONS = ['temps partiel', 'mi-temps thérapeutique'];
+
 interface Props {
   mediator: Mediator | null;
   onClose: () => void;
@@ -54,6 +59,9 @@ export default function MediatorModal({ mediator, onClose }: Props) {
       phone: form.phone.trim(),
       competences: normalizeCompetences(form.competences),
       notes: form.notes.trim(),
+      // Optional free-text fields: empty string means "not set" (erasable)
+      contractType: form.contractType?.trim() || undefined,
+      arrangement: form.arrangement?.trim() || undefined,
     };
     if (isEdit) {
       crud({ type: 'UPDATE_MEDIATOR', mediator: m });
@@ -133,6 +141,48 @@ export default function MediatorModal({ mediator, onClose }: Props) {
               <option value="true">Actif</option>
               <option value="false">Inactif</option>
             </select>
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="mediator-contract-type">
+              Type de contrat <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}>(optionnel)</span>
+            </label>
+            <input
+              id="mediator-contract-type"
+              type="text"
+              list="contract-type-suggestions"
+              autoComplete="off"
+              value={form.contractType ?? ''}
+              onChange={(e) => setField('contractType', e.target.value)}
+              placeholder="Choisissez une suggestion ou saisissez librement…"
+            />
+            <datalist id="contract-type-suggestions">
+              {CONTRACT_TYPE_SUGGESTIONS.map((s) => (
+                <option key={s} value={s} />
+              ))}
+            </datalist>
+            <div className="form-hint">Champ libre — effacez la valeur pour retirer la pilule.</div>
+          </div>
+          <div className="form-group">
+            <label htmlFor="mediator-arrangement">
+              Aménagement du temps de travail <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}>(optionnel)</span>
+            </label>
+            <input
+              id="mediator-arrangement"
+              type="text"
+              list="arrangement-suggestions"
+              autoComplete="off"
+              value={form.arrangement ?? ''}
+              onChange={(e) => setField('arrangement', e.target.value)}
+              placeholder="ex. temps partiel, mi-temps thérapeutique…"
+            />
+            <datalist id="arrangement-suggestions">
+              {ARRANGEMENT_SUGGESTIONS.map((s) => (
+                <option key={s} value={s} />
+              ))}
+            </datalist>
+            <div className="form-hint">Déclenche le suivi du quota d'heures trimestriel.</div>
           </div>
         </div>
         <div className="form-group">
