@@ -116,7 +116,7 @@ Fonctionnalité: Cycle de travail d'un médiateur
     Et la rotation ancrée sur la semaine ISO 2026-W40 avec « S1 »
     Quand le coordinateur force la semaine ISO 2026-W41 sur « S3 »
     Alors la semaine de cycle active pour 2026-W41 est « S3 »
-    Et la semaine de cycle active pour 2026-W42 suit la rotation « S2 » comme si la force n'existait pas
+    Et la semaine de cycle active pour 2026-W42 suit la rotation pure « S3 », le forçage étant ponctuel et sans effet sur les semaines suivantes
 
   Scénario: Plusieurs semaines ISO forcées indépendamment
     Etant donné le cycle de travail d'Alice composé des semaines « S1 » et « S2 »

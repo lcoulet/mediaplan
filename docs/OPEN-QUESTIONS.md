@@ -125,6 +125,11 @@ weeks 39–51, analyzed locally, never committed):**
 - [ ] Quarterly quota config UI: per-quarter value on the mediator form?
 
 **Established (hourly management, decided 2026-09-29):**
+- [x] FORCED WEEKS ARE PUNCTUAL (decided 2026-09-29, option A): forcing an
+      ISO week onto a cycle week does NOT shift the rotation of following
+      weeks — pure anchor-difference rotation resumes immediately after
+      (W41 forced to S3 with anchor W40=S1, cycle S1-S2-S3: W42 = S3,
+      not S2). Spec text fixed accordingly.
 - [x] VALORISED DAYS AND CLOSED DAYS (validated 2026-09-29): assigning a
       slot on a museum-closed day (25/12, 01/01, 01/05) is REFUSED;
       a férié falling on a weekend counts férié ×2 only (highest single
