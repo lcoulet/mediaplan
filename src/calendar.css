@@ -1557,3 +1557,116 @@ body.edit-mode .cal-day-col:hover {
   }
 }
 
+
+/* ===== Cycle-chain modal (mockups/cycles/cycle-chain-modal.html) ===== */
+/* Wider modal for the cycle-chain editor (the default .modal is 480px) */
+.modal .week-list .week-item { border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); }
+.modal .week-item.expanded { border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(44,110,73,0.12); }
+.modal .week-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 10px; }
+.modal .order-btns { display: flex; flex-direction: column; }
+.modal .order-btns button {
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  color: var(--color-text-muted); font-size: 9px; line-height: 1;
+  padding: 2px 6px; cursor: pointer; font-family: inherit;
+}
+.modal .order-btns button:first-child { border-radius: 4px 4px 0 0; }
+.modal .order-btns button:last-child { border-radius: 0 0 4px 4px; border-top: none; }
+.modal .order-btns button:disabled { opacity: 0.35; cursor: default; }
+.modal .week-name-input {
+  width: 130px; padding: 4px 8px; font-size: 14px; font-weight: 600;
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+  font-family: inherit; color: var(--color-text); background: var(--color-surface);
+}
+.modal .week-summary { flex: 1; min-width: 140px; font-size: 13px; color: var(--color-text-muted); }
+.modal .week-summary strong { color: var(--color-text); font-weight: 600; }
+.modal .expand-btn {
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  border-radius: var(--radius); padding: 3px 8px; cursor: pointer;
+  color: var(--color-text-muted); font-size: 12px; font-family: inherit;
+}
+.modal .week-item.collapsed .expand-btn { background: var(--color-bg); }
+.modal .week-days { border-top: 1px solid var(--color-border-light); padding: 10px; }
+.modal .day-grid {
+  display: grid;
+  grid-template-columns: 76px 110px 1fr 1fr;
+  gap: 6px 10px; align-items: center;
+}
+.modal .day-grid .grid-head {
+  font-size: 11px; color: var(--color-text-muted); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.4px;
+}
+.modal .day-grid .day-name { font-size: 13px; font-weight: 600; }
+.modal .day-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-muted); cursor: pointer; user-select: none; }
+.modal .day-toggle input { accent-color: var(--color-primary); width: 14px; height: 14px; }
+.modal .day-toggle .toggle-state { font-weight: 600; }
+.modal .day-toggle input:not(:checked) + .toggle-state { color: var(--color-text-muted); }
+.modal .time-pair { display: flex; align-items: center; gap: 4px; grid-column: 3 / -1; }
+@media (max-width: 640px) { .modal .day-grid .time-pair { grid-column: auto; } }
+.modal .time-pair input {
+  width: 74px; padding: 4px 6px; font-size: 13px; font-variant-numeric: tabular-nums;
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+  font-family: inherit; color: var(--color-text); background: var(--color-surface);
+}
+.modal .time-pair input:disabled { background: #f0f0f0; color: var(--color-text-muted); }
+.modal .time-pair span { color: var(--color-text-muted); }
+.modal .btn-danger.icon-only { padding: 4px 8px; font-size: 14px; background: transparent; color: var(--color-danger); border-color: var(--color-danger); cursor: pointer; border-radius: var(--radius); border-width: 1px; border-style: solid; font-family: inherit; }
+.modal .btn-danger.icon-only:hover { background: var(--color-danger); color: #fff; }
+
+/* Rotation box: anchor + forced weeks */
+.modal .rotation-box {
+  border: 1px solid var(--color-border-light); border-radius: var(--radius);
+  background: #fafafa; padding: 12px;
+}
+.modal .anchor-row label { font-size: 13px; font-weight: 600; }
+.modal .anchor-input {
+  width: 110px; padding: 4px 8px; font-size: 14px; font-variant-numeric: tabular-nums;
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+  font-family: inherit; color: var(--color-text); background: var(--color-surface);
+}
+.modal .anchor-select, .modal .force-select {
+  padding: 4px 8px; font-size: 13px; border: 1px solid var(--color-border);
+  border-radius: var(--radius); font-family: inherit; color: var(--color-text);
+  background: var(--color-surface);
+}
+.modal .forced-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.modal .forced-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--color-surface); border: 1px solid var(--color-border-light);
+  border-radius: var(--radius); padding: 6px 10px; font-size: 13px;
+}
+.modal .forced-row .iso-week { font-variant-numeric: tabular-nums; font-weight: 600; }
+.modal .forced-row .arrow, .modal .forced-add .arrow { color: var(--color-text-muted); }
+.modal .forced-remove {
+  margin-left: auto; border: none; background: transparent; color: var(--color-text-muted);
+  cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: var(--radius);
+  font-family: inherit;
+}
+.modal .forced-remove:hover { color: var(--color-danger); }
+
+/* Modal section headings (mockup .modal-section h4) */
+.modal .modal-section-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--color-text-muted); font-weight: 600; margin-bottom: 8px;
+}
+
+/* Paste confirmation dialog — small overlay ABOVE the modal (z-index 250) */
+.confirm-overlay {
+  position: fixed; inset: 0; z-index: 250;
+  background: rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.confirm-dialog {
+  background: var(--color-surface); border-radius: var(--radius);
+  box-shadow: var(--shadow-md); padding: 20px; width: 420px; max-width: 100%;
+}
+.confirm-dialog h4 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.confirm-dialog p { font-size: 13px; color: var(--color-text-muted); margin-bottom: 16px; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.paste-error {
+  margin: 0 0 16px; padding: 10px 12px; border-radius: var(--radius);
+  background: var(--color-danger-bg); color: var(--color-danger);
+  font-size: 13px; font-weight: 600;
+}
+
+/* Cycle-chain modal is wider than the default 480px (mockup: 720px) */
+.modal-overlay .modal:has(.week-list) { width: 720px; }

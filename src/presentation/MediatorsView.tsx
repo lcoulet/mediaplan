@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useData, useCRUD } from './DataContext';
 import MediatorModal from './MediatorModal';
+import CycleChainModal from './CycleChainModal';
 import OfferPill from './OfferPill';
 import type { Mediator, Offer } from '../domain/types';
 
@@ -17,6 +18,7 @@ export default function MediatorsView() {
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<Mediator | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [cycleMediator, setCycleMediator] = useState<Mediator | null>(null);
   const [showActiveOnly, setShowActiveOnly] = useState(false);
   const [sort, setSort] = useState<SortConfig>({ key: null, direction: null });
 
@@ -195,6 +197,12 @@ export default function MediatorsView() {
                     </td>
                     <td className="actions-cell">
                       <button className="action-btn" title="Modifier" onClick={() => openEdit(m)}>✏</button>
+                      <button
+                        className="action-btn"
+                        title={`Modifier le cycle de ${m.firstName} ${m.lastName}`.trim()}
+                        aria-label={`Modifier le cycle de ${m.firstName} ${m.lastName}`.trim()}
+                        onClick={() => setCycleMediator(m)}
+                      >▤</button>
                       <button className="action-btn" title="Supprimer" onClick={() => handleDelete(m.id)}>🗑</button>
                     </td>
                   </tr>
@@ -209,6 +217,13 @@ export default function MediatorsView() {
         <MediatorModal
           mediator={editing}
           onClose={() => setShowModal(false)}
+        />
+      )}
+
+      {cycleMediator && (
+        <CycleChainModal
+          mediator={cycleMediator}
+          onClose={() => setCycleMediator(null)}
         />
       )}
     </div>

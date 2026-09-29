@@ -128,6 +128,9 @@ export const COMMIT_LABELS = {
   secutixImport: 'Import Secutix',
   jsonImport: 'Import JSON',
   clearData: 'Nettoyage des données',
+  saveCycle: 'Cycle de travail modifié',
+  pasteCycle: 'Cycle collé',
+  saveQuotas: 'Quotas d’heures configurés',
 } as const;
 
 function reducer(state: AppState, action: Action): AppState {
