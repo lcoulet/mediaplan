@@ -106,15 +106,24 @@ weeks 39–51, analyzed locally, never committed):**
 - [x] Selector with predefined values + free text allowed
 
 **Open questions:**
-- [ ] Exact meaning of the main codes: TP (1696×, 2nd most common), CA,
-      RHS, AM, "Réf. WE", "amgt JJ/MM", and the numeric cells (1-19) —
-      Loic to provide the legend (needed to extend AbsenceType)
+- [ ] Exact meaning of remaining numeric cells (1-19) and "Réf. WE" —
+      Loic to provide. Main codes DECODED (2026-09-26):
+      - TP = Temps Partiel (1696×, 2nd most common)
+      - CA = Congé Annuel
+      - RHS = Récupération Heures Supplémentaires
+      - AM = Arrêt Maladie
+      - amgt = Aménagement (exceptional change of one or more worked days)
+      - CEX = Congé Exceptionnel
+      - TPT = Temps Partiel Thérapeutique
 - [ ] Which absence/mission types should the app model natively vs. free
       text? (current AbsenceType: leave, mission, training, sick, other,
-      leave_request)
+      leave_request — the decoded codes map onto these: CA/RHS/CEX → leave,
+      AM/TPT → sick, TP → contract type or availability state, amgt →
+      cycle override; to confirm during specs)
 - [ ] Predefined contract-type list: TBD — the selector starts with
-      temps plein / mi-temps / stagiaire + free text; more predefined
-      values may be added later once the real list is known
+      temps plein / mi-temps / stagiaire + free text; TP (temps partiel)
+      should be added to the predefined list; more values may be added
+      later once the real list is known
 - [ ] Should the count columns (per-day presence totals) be reproduced?
 
 ## OneDrive Synchronization (synchro cloud collaborative)
