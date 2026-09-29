@@ -487,6 +487,14 @@ body.edit-mode .cal-day-col:hover {
   font-weight: 600;
 }
 
+/* Name text inside the name line (pills sit next to it, wrap allowed) */
+.daily-mediator-nametext {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
 /* Mediator phone under the name in the daily view lane label */
 .daily-mediator-phone {
   display: block;
@@ -586,6 +594,116 @@ body.edit-mode .cal-day-col:hover {
   border-right: 1px solid #e8e8e8;
   pointer-events: none;
 }
+
+/* ===== Work-cycle lane pills (mockups/cycles/daily-view-lane.html) ===== */
+/* Pills next to the mediator name, before the phone — style aligned on
+   .daily-unassigned-count. Decorative: the title attribute conveys the
+   full information to screen readers / mouse-over. */
+.pill {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+/* Active cycle week (« S2 ») — primary-tinted */
+.pill-week {
+  background: #e3efe8;
+  color: var(--color-primary-dark, #1e5536);
+}
+
+/* Contract type / arrangement — neutral grey, truncated with the full
+   text kept in the title attribute (spec: long free text stays readable) */
+.pill-contract {
+  background: #f0f0f0;
+  color: var(--color-text-secondary, #5a5a5a);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Working-time arrangement pill — accent-tinted to distinguish it from
+   the contract-type pill when both are shown */
+.pill-arrangement {
+  background: #fdf3e7;
+  color: #8f5410;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* The name line needs flex-wrap so pills never push the name out */
+.daily-mediators-section .daily-mediator-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ===== Working-hours hatching (mockups/cycles/daily-view-lane.html) ===== */
+/* Hatched overlay OUTSIDE the worked range — absolute-positioned,
+   pointer-events none so slot clicks/drags pass through */
+.daily-work-hatch {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 6px,
+    rgba(0, 0, 0, 0.06) 6px 8px
+  );
+  pointer-events: none;
+}
+
+/* Non-worked day: the ENTIRE track hatched + visually distinct (lighter
+   background + dashed border to tell it from a worked day at a glance) */
+.daily-mediator-track.cycle-nonworked {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 6px,
+    rgba(0, 0, 0, 0.06) 6px 8px
+  );
+}
+
+.daily-mediator-track.cycle-nonworked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-bottom: 1px dashed var(--color-border, #d9d9d9);
+  pointer-events: none;
+}
+
+/* Small italic note « jour non travaillé » centered on the fully hatched lane */
+.daily-nonworked-note {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Small worked-range tags (09:30 / 18:00) at the range edges, from the mockup */
+.daily-work-hours-tag {
+  position: absolute;
+  top: 1px;
+  font-size: 9px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  z-index: 0;
+}
+
 
 /* Slots inside daily view */
 .daily-slot {

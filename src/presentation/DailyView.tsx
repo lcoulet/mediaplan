@@ -10,6 +10,8 @@ import { useElementWidth, pxPerHourFromWidth } from './useElementWidth';
 import { computeParallelLanes } from '../domain/parallel-lanes';
 import { getDynamicMasking, setDynamicMasking } from '../infrastructure/ui-settings';
 import { mediatorsForPrint } from '../domain/print-selection';
+import { getPillsForMediator, hatchingForDate } from '../domain/cycle-display';
+import { getWorkedHoursForDate } from '../domain/cycles';
 import { usePrint, printDateLine } from './usePrint';
 import SlotModal from './SlotModal';
 
@@ -644,6 +646,18 @@ export default function DailyView() {
             const competenceStatus = highlightOfferId ? 
               getMediatorCompetenceStatus(mediator, highlightOfferId) : null;
 
+            // Work cycle display: pills (cycle week / contract type /
+            // arrangement) + hatching for the displayed date
+            const activeCycle = mediator.activeCycleId
+              ? data.cycles.find(c => c.id === mediator.activeCycleId)
+              : undefined;
+            const pills = getPillsForMediator(mediator, data.cycles, selectedDate);
+            const hatching = hatchingForDate(activeCycle, selectedDate, START_HOUR * 60, END_HOUR * 60);
+            const workedHours = activeCycle
+              ? getWorkedHoursForDate(activeCycle, selectedDate)
+              : undefined;
+            const dayName = selectedDate.toLocaleDateString('fr-FR', { weekday: 'long' });
+
             return (
               <div 
                 key={mediator.id} 
@@ -652,12 +666,23 @@ export default function DailyView() {
                 <div className="daily-mediator-label">
                   <span className="slot-mediator-glyph daily-mediator-color" style={{ color: mediator.color || '#ccc' }}>●</span>
                   <span className="daily-mediator-idbox">
-                    <span className="daily-mediator-name">{mediator.lastName} {mediator.firstName}</span>
+                    <span className="daily-mediator-name">
+                      <span className="daily-mediator-nametext">{mediator.lastName} {mediator.firstName}</span>
+                      {pills.cycleWeek && (
+                        <span className="pill pill-week" title={`Semaine de cycle active : ${pills.cycleWeek}`}>{pills.cycleWeek}</span>
+                      )}
+                      {pills.contractType && (
+                        <span className="pill pill-contract" title={`Type de contrat : ${pills.contractType}`}>{pills.contractType}</span>
+                      )}
+                      {pills.arrangement && (
+                        <span className="pill pill-arrangement" title={`Aménagement du temps de travail : ${pills.arrangement}`}>{pills.arrangement}</span>
+                      )}
+                    </span>
                     {mediator.phone && <span className="daily-mediator-phone">{mediator.phone}</span>}
                   </span>
                 </div>
                 <div
-                  className="daily-mediator-track"
+                  className={`daily-mediator-track${hatching.kind === 'full' ? ' cycle-nonworked' : ''}`}
                   style={{
                     width: `${totalGridWidth}px`,
                     height: `${TRACK_HEIGHT}px`,
@@ -675,7 +700,47 @@ export default function DailyView() {
                       style={{ left: `${i * pxPerHour}px`, width: `${pxPerHour}px` }}
                     />
                   ))}
-                  
+
+                  {/* Work-cycle hatching (outside the worked range, or the
+                      whole track on a non-worked day). pointer-events: none
+                      in CSS so slots stay clickable/draggable. */}
+                  {hatching.kind === 'segments' && hatching.segments.map((seg, i) => (
+                    <div
+                      key={`hatch_${i}`}
+                      className="daily-work-hatch"
+                      style={{
+                        left: `${(seg.startMin - START_HOUR * 60) * pxPerMin}px`,
+                        width: `${(seg.endMin - seg.startMin) * pxPerMin}px`,
+                      }}
+                      aria-hidden="true"
+                    />
+                  ))}
+                  {hatching.kind === 'full' && (
+                    <span className="daily-nonworked-note" aria-hidden="true">
+                      {dayName} — jour non travaillé{pills.cycleWeek ? ` (semaine ${pills.cycleWeek})` : ''}
+                    </span>
+                  )}
+                  {workedHours?.worked && (
+                    <>
+                      <span
+                        className="daily-work-hours-tag"
+                        style={{ left: `${(toMinutes(workedHours.startTime) - START_HOUR * 60) * pxPerMin + 2}px` }}
+                        aria-hidden="true"
+                      >
+                        {workedHours.startTime}
+                      </span>
+                      <span
+                        className="daily-work-hours-tag"
+                        style={{
+                          left: `${(toMinutes(workedHours.endTime) - START_HOUR * 60) * pxPerMin - 30}px`,
+                        }}
+                        aria-hidden="true"
+                      >
+                        {workedHours.endTime}
+                      </span>
+                    </>
+                  )}
+
                   {/* Drag indicator (red bar) */}
                   {dragIndicator && (
                     <div

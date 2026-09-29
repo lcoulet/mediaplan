@@ -2,6 +2,20 @@
 
 import type { AppData } from '../domain/types';
 import { createMediator, createOffer, createSlot, createAbsence, getDefaultHalfDayConfig } from '../domain/models';
+import { createDefaultCycle, isoWeekKey } from '../domain/cycles';
+import type { CycleWeek, WorkCycle } from '../domain/types';
+
+/** Build a work cycle for a mediator from worked-day ranges (Mon..Sun). */
+function mkCycle(mediatorId: string, weekName: string, worked: Record<number, [string, string]>, anchor: string): WorkCycle {
+  const cycle = createDefaultCycle(mediatorId, anchor);
+  const days: CycleWeek['days'] = [];
+  for (let d = 1; d <= 7; d++) {
+    const range = worked[d];
+    days.push(range ? { day: d, startTime: range[0], endTime: range[1] } : { day: d });
+  }
+  cycle.weeks = [{ id: cycle.weeks[0].id, name: weekName, days }];
+  return cycle;
+}
 
 export function seedDemoData(data: AppData): void {
   // --- 20 mediators with creative French names ---
@@ -450,4 +464,36 @@ export function seedDemoData(data: AppData): void {
   data.slots = slots;
   data.absences = absences;
   data.halfDayConfig = getDefaultHalfDayConfig();
+
+  // --- Work cycles, contract types and arrangements (demo) ---
+  // 4 mediators with cycles (incl. one weekend-worked cycle), 2 with a
+  // contract type, 1 with an arrangement — so the daily-view pills and
+  // hatching are demonstrable. Anchored on the current ISO week.
+  const currentWeek = isoWeekKey(new Date());
+  const cycles: WorkCycle[] = [];
+
+  // Tempête (0): Mon-Fri 09:30-18:00 — the standard week
+  const med0 = mediators[0];
+  cycles.push(mkCycle(med0.id, 'S1', { 1: ['09:30', '18:00'], 2: ['09:30', '18:00'], 3: ['09:30', '18:00'], 4: ['09:30', '18:00'], 5: ['09:30', '18:00'] }, currentWeek));
+  med0.activeCycleId = cycles[cycles.length - 1].id;
+  med0.contractType = 'temps plein';
+
+  // Fortin (1): Wed-Sun 10:00-17:00 — weekend-worked cycle
+  const med1 = mediators[1];
+  cycles.push(mkCycle(med1.id, 'S1', { 3: ['10:00', '17:00'], 4: ['10:00', '17:00'], 5: ['10:00', '17:00'], 6: ['10:00', '17:00'], 7: ['10:00', '17:00'] }, currentWeek));
+  med1.activeCycleId = cycles[cycles.length - 1].id;
+  med1.contractType = 'mi-temps (temps partiel)';
+
+  // Vermillon (2): Mon + Wed + Fri 09:00-16:30 — part-time week
+  const med2 = mediators[2];
+  cycles.push(mkCycle(med2.id, 'S1', { 1: ['09:00', '16:30'], 3: ['09:00', '16:30'], 5: ['09:00', '16:30'] }, currentWeek));
+  med2.activeCycleId = cycles[cycles.length - 1].id;
+  med2.arrangement = 'mi-temps thérapeutique';
+
+  // Lavandier (3): Tue-Thu 13:00-19:00 — afternoon week
+  const med3 = mediators[3];
+  cycles.push(mkCycle(med3.id, 'S1', { 2: ['13:00', '19:00'], 4: ['13:00', '19:00'], 6: ['13:00', '18:00'] }, currentWeek));
+  med3.activeCycleId = cycles[cycles.length - 1].id;
+
+  data.cycles = cycles;
 }
