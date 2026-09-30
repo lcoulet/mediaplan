@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediaPlan — Vue Configuration (maquette)</title>
+<style>
+/* ===== Base (tokens copied from src/style.css) ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --color-primary: #2c6e49;
+  --color-primary-dark: #1e5536;
+  --color-primary-light: #4c956c;
+  --color-accent: #d68c45;
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-text: #2b2b2b;
+  --color-text-muted: #6b6b6b;
+  --color-border: #d9d9d9;
+  --color-border-light: #eaeaea;
+  --color-danger: #c0392b;
+  --color-danger-bg: #fdecea;
+  --color-warning: #d68c45;
+  --color-warning-bg: #fef5e7;
+  --radius: 6px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --header-h: 56px;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+}
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* ===== Header ===== */
+.app-header {
+  min-height: var(--header-h);
+  background: var(--color-primary);
+  color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; row-gap: 4px;
+  padding: 8px 20px; box-shadow: var(--shadow-sm);
+}
+.header-left { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; flex-shrink: 1; min-width: 0; }
+.app-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.app-subtitle { font-size: 12px; opacity: 0.8; white-space: normal; }
+.header-nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.nav-btn {
+  background: transparent; border: none; color: rgba(255,255,255,0.8);
+  padding: 8px 12px; border-radius: var(--radius); font-size: 14px; cursor: pointer;
+}
+.nav-btn.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
+/* Header action area: the Secutix import lives HERE (daily foreground action),
+   NOT in the Configuration view (spec configuration-view.feature). */
+.header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: 1px solid transparent; border-radius: var(--radius);
+  font-size: 14px; cursor: pointer; white-space: nowrap; font-family: inherit;
+}
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover { background: var(--color-primary-dark); }
+/* Accent button for the daily Secutix import (visible from every view) */
+.btn-accent { background: var(--color-accent); color: #3a2408; font-weight: 600; }
+.btn-accent:hover { background: #c47a35; color: #fff; }
+.btn-secondary { background: var(--color-surface); color: var(--color-text); border-color: var(--color-border); }
+.btn-secondary:hover { background: #f0f0f0; }
+.btn-danger { background: transparent; color: var(--color-danger); border-color: var(--color-danger); }
+.btn-danger:hover { background: var(--color-danger); color: #fff; }
+.icon-only { padding: 4px 8px; font-size: 14px; }
+
+/* ===== Page ===== */
+.app-main { max-width: 900px; margin: 0 auto; padding: 16px; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.toolbar h2 { font-size: 18px; font-weight: 600; }
+.toolbar-note { font-size: 13px; color: var(--color-text-muted); }
+
+/* ===== Sections ===== */
+.config-section {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.config-section-head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: #fafafa;
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+}
+.config-section-head h3 { font-size: 15px; font-weight: 700; }
+.config-section-head .section-hint { font-size: 12px; color: var(--color-text-muted); flex: 1; min-width: 200px; }
+.config-body { padding: 14px 16px; }
+
+/* ===== Espaces list ===== */
+.space-list { display: flex; flex-direction: column; }
+.space-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 9px 12px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  background: var(--color-surface);
+}
+.space-row:last-child { margin-bottom: 0; }
+.space-swatch {
+  width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0;
+  border: 1px solid rgba(0,0,0,0.18);
+}
+.space-name { font-weight: 600; min-width: 120px; }
+.space-note { font-size: 12px; color: var(--color-text-muted); font-style: italic; }
+.space-color-input {
+  width: 46px; height: 26px; padding: 1px; border: 1px solid var(--color-border);
+  border-radius: var(--radius); background: var(--color-surface); cursor: pointer;
+}
+.space-color-hex { font-size: 12px; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.space-actions { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+
+/* Inline row errors (delete refused / rename duplicate) */
+.space-row-error {
+  width: 100%;
+  font-size: 12px; color: var(--color-danger); font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+}
+.space-row.refused { border-color: var(--color-danger); background: var(--color-danger-bg); }
+
+/* ===== Add-space form ===== */
+.add-space-form {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 12px; padding: 10px 12px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  background: #fafafa;
+}
+.add-space-form label { font-size: 13px; font-weight: 600; }
+.add-space-form input[type="text"] {
+  padding: 6px 10px; font-size: 14px;
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+  font-family: inherit; color: var(--color-text); background: var(--color-surface);
+  width: 200px; max-width: 100%;
+}
+.add-space-form input[type="text"].invalid { border-color: var(--color-danger); background: var(--color-danger-bg); }
+.add-space-form .color-wrap { display: flex; align-items: center; gap: 6px; }
+.form-error {
+  width: 100%; font-size: 12px; color: var(--color-danger); font-weight: 600;
+}
+.form-error[hidden] { display: none; }
+
+/* ===== Données section ===== */
+.data-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 6px 0; }
+.data-row .data-label { min-width: 220px; flex: 1; }
+.data-row .data-label strong { display: block; }
+.data-row .data-label .section-hint { font-size: 12px; color: var(--color-text-muted); display: block; }
+.data-row + .data-row { border-top: 1px solid var(--color-border-light); margin-top: 6px; padding-top: 12px; }
+
+/* ===== Demi-journées section ===== */
+.halfday-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.halfday-row label { font-weight: 600; font-size: 13px; }
+.time-input {
+  width: 90px; padding: 6px 8px; font-size: 14px; font-variant-numeric: tabular-nums;
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+  font-family: inherit; color: var(--color-text); background: var(--color-surface);
+}
+.time-input.invalid { border-color: var(--color-danger); background: var(--color-danger-bg); }
+.halfday-error {
+  width: 100%; font-size: 12px; color: var(--color-danger); font-weight: 600; display: flex; align-items: center; gap: 6px;
+}
+.halfday-error[hidden] { display: none; }
+
+/* ===== Confirmation dialog (delete data) ===== */
+.confirm-overlay {
+  position: fixed; inset: 0; z-index: 250;
+  background: rgba(0,0,0,0.35);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.confirm-dialog {
+  background: var(--color-surface); border-radius: var(--radius);
+  box-shadow: var(--shadow-md); padding: 20px; width: 440px; max-width: 100%;
+}
+.confirm-dialog h4 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.confirm-dialog p { font-size: 13px; color: var(--color-text-muted); margin-bottom: 16px; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+/* ===== Mockup annotations ===== */
+.mockup-caption {
+  display: flex; gap: 6px; align-items: flex-start;
+  font-size: 12px; color: var(--color-text-muted); margin: 14px 2px 0;
+  flex-wrap: wrap;
+}
+.annotation {
+  border-left: 3px solid var(--color-primary-light);
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 8px 12px; flex: 1; min-width: 220px;
+}
+.annotation strong { color: var(--color-text); }
+
+/* ===== Mockup state switch (same convention as other mockups) ===== */
+.mockup-switch {
+  position: fixed; bottom: 12px; left: 12px; z-index: 300;
+  display: flex; gap: 6px; background: var(--color-surface);
+  border: 1px solid var(--color-border); border-radius: 16px;
+  padding: 4px 6px; box-shadow: var(--shadow-md); flex-wrap: wrap; max-width: calc(100vw - 24px);
+}
+.mockup-switch span { font-size: 11px; color: var(--color-text-muted); align-self: center; padding: 0 4px; }
+.mockup-switch button {
+  font-size: 11px; padding: 3px 10px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted);
+}
+.mockup-switch button.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.state-box[hidden] { display: none; }
+
+@media (max-width: 560px) {
+  .space-name { min-width: 0; flex: 1 1 100%; }
+  .space-actions { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Header : nav shows « Configuration » (replaces « Import / Export »),
+     and the Secutix import button lives in the header actions ===== -->
+<header class="app-header">
+  <div class="header-left">
+    <h1 class="app-title">MediaPlan</h1>
+    <span class="app-subtitle">Gestion des plannings de médiation — Museum</span>
+  </div>
+  <nav class="header-nav" aria-label="Navigation principale">
+    <button class="nav-btn" type="button">Plan Jour</button>
+    <button class="nav-btn" type="button">Plan Hebdo</button>
+    <button class="nav-btn" type="button">Plan Accueil</button>
+    <button class="nav-btn" type="button">Médiateurs</button>
+    <button class="nav-btn" type="button">Offres</button>
+    <button class="nav-btn" type="button">Absences</button>
+    <button class="nav-btn" type="button">Statistiques</button>
+    <button class="nav-btn active" aria-current="page" type="button">Configuration</button>
+  </nav>
+  <div class="header-actions">
+    <button class="btn btn-accent" type="button" title="Ouvrir le flux d'import Secutix">⇩ Import Secutix</button>
+  </div>
+</header>
+
+<main class="app-main">
+  <div class="toolbar">
+    <h2>Configuration</h2>
+    <span class="toolbar-note">Espaces, données et demi-journées. L'import Secutix quotidien reste dans l'en-tête, à portée de main.</span>
+  </div>
+
+  <!-- ================= (a) ESPACES ================= -->
+  <section class="config-section" aria-labelledby="spaces-title">
+    <div class="config-section-head">
+      <h3 id="spaces-title">Espaces</h3>
+      <span class="section-hint">Lieux où se déroulent les créneaux. La couleur d'espace est le signal principal de la vue quotidienne et du plan accueil. Le blanc est réservé aux espaces auto-créés par l'import Secutix.</span>
+    </div>
+    <div class="config-body">
+      <div class="space-list" id="spaces-list">
+        <!-- Normal rows (always visible) -->
+        <div class="space-row">
+          <span class="space-swatch" style="background:#1F5FA8;" aria-hidden="true"></span>
+          <span class="space-name">Exposition permanente</span>
+          <input class="space-color-input" type="color" value="#1F5FA8" aria-label="Couleur de l'espace Exposition permanente">
+          <span class="space-color-hex">#1F5FA8</span>
+          <div class="space-actions">
+            <button class="btn btn-secondary icon-only" type="button" title="Renommer l'espace">✎</button>
+            <button class="btn btn-danger icon-only" type="button" title="Supprimer l'espace">🗑</button>
+          </div>
+        </div>
+        <div class="space-row">
+          <span class="space-swatch" style="background:#7B1FA2;" aria-hidden="true"></span>
+          <span class="space-name">Jardin</span>
+          <input class="space-color-input" type="color" value="#7B1FA2" aria-label="Couleur de l'espace Jardin">
+          <span class="space-color-hex">#7B1FA2</span>
+          <div class="space-actions">
+            <button class="btn btn-secondary icon-only" type="button" title="Renommer l'espace">✎</button>
+            <button class="btn btn-danger icon-only" type="button" title="Supprimer l'espace">🗑</button>
+          </div>
+        </div>
+        <div class="space-row">
+          <span class="space-swatch" style="background:#2E7D32;" aria-hidden="true"></span>
+          <span class="space-name">Auditorium</span>
+          <input class="space-color-input" type="color" value="#2E7D32" aria-label="Couleur de l'espace Auditorium">
+          <span class="space-color-hex">#2E7D32</span>
+          <div class="space-actions">
+            <button class="btn btn-secondary icon-only" type="button" title="Renommer l'espace">✎</button>
+            <button class="btn btn-danger icon-only" type="button" title="Supprimer l'espace">🗑</button>
+          </div>
+        </div>
+        <div class="space-row">
+          <span class="space-swatch" style="background:#C2410C;" aria-hidden="true"></span>
+          <span class="space-name">Atelier</span>
+          <input class="space-color-input" type="color" value="#C2410C" aria-label="Couleur de l'espace Atelier">
+          <span class="space-color-hex">#C2410C</span>
+          <div class="space-actions">
+            <button class="btn btn-secondary icon-only" type="button" title="Renommer l'espace">✎</button>
+            <button class="btn btn-danger icon-only" type="button" title="Supprimer l'espace">🗑</button>
+          </div>
+        </div>
+        <div class="space-row">
+          <span class="space-swatch" style="background:#00838F;" aria-hidden="true"></span>
+          <span class="space-name">Hors les murs</span>
+          <input class="space-color-input" type="color" value="#00838F" aria-label="Couleur de l'espace Hors les murs">
+          <span class="space-color-hex">#00838F</span>
+          <div class="space-actions">
+            <button class="btn btn-secondary icon-only" type="button" title="Renommer l'espace">✎</button>
+            <button class="btn btn-danger icon-only" type="button" title="Supprimer l'espace">🗑</button>
+          </div>
+        </div>
+        <!-- White auto-created space (Secutix) — normal state row -->
+        <div class="space-row" id="row-crypte">
+          <span class="space-swatch" style="background:#ffffff;" aria-hidden="true"></span>
+          <span class="space-name">Crypte</span>
+          <span class="space-note">(auto Secutix)</span>
+          <input class="space-color-input" type="color" value="#ffffff" aria-label="Couleur de l'espace Crypte">
+          <span class="space-color-hex">#ffffff — blanc réservé aux espaces auto-créés</span>
+          <div class="space-actions">
+            <button class="btn btn-secondary icon-only" type="button" title="Renommer l'espace">✎</button>
+            <button class="btn btn-danger icon-only" type="button" title="Supprimer l'espace">🗑</button>
+          </div>
+        </div>
+
+        <!-- State: delete refused (referenced space) -->
+        <div class="space-row refused state-box" id="state-delete-refused" hidden>
+          <span class="space-swatch" style="background:#1F5FA8;" aria-hidden="true"></span>
+          <span class="space-name">Exposition permanente</span>
+          <input class="space-color-input" type="color" value="#1F5FA8" aria-label="Couleur de l'espace Exposition permanente">
+          <span class="space-color-hex">#1F5FA8</span>
+          <div class="space-actions">
+            <button class="btn btn-secondary icon-only" type="button" title="Renommer l'espace">✎</button>
+            <button class="btn btn-danger icon-only" type="button" title="Supprimer l'espace">🗑</button>
+          </div>
+          <span class="space-row-error" role="alert">⚠ Espace référencé par des offres — suppression impossible. <span class="space-note" style="font-style: normal;">Détail : « Cet espace est utilisé par une offre ou un créneau ».</span></span>
+        </div>
+      </div>
+
+      <!-- Add-space form -->
+      <form class="add-space-form" aria-labelledby="add-space-title" onsubmit="return false;">
+        <span id="add-space-title" style="font-size: 13px; font-weight: 600; color: var(--color-text);">Ajouter un espace</span>
+        <label for="new-space-name" class="visually-hidden" style="position:absolute; width:1px; height:1px; overflow:hidden;">Nom de l'espace</label>
+        <input id="new-space-name" class="state-dependent" type="text" placeholder="Nom du nouvel espace" aria-label="Nom du nouvel espace">
+        <span class="color-wrap">
+          <label for="new-space-color" style="font-weight: 400; color: var(--color-text-muted);">Couleur</label>
+          <input id="new-space-color" class="space-color-input" type="color" value="#5C6BC0" aria-label="Couleur du nouvel espace">
+        </span>
+        <button class="btn btn-primary" type="submit">+ Ajouter</button>
+        <!-- State: duplicate-name error -->
+        <span class="form-error state-box" id="state-duplicate" role="alert" hidden>⚠ Un espace porte déjà ce nom</span>
+      </form>
+    </div>
+  </section>
+
+  <!-- ================= (b) DONNÉES ================= -->
+  <section class="config-section" aria-labelledby="data-title">
+    <div class="config-section-head">
+      <h3 id="data-title">Données</h3>
+      <span class="section-hint">Sauvegarde, import, suppression et données de démonstration — contenu déplacé à l'identique depuis l'ancienne vue Import / Export.</span>
+    </div>
+    <div class="config-body">
+      <div class="data-row">
+        <span class="data-label"><strong>Export JSON.gz</strong><span class="section-hint">Télécharge l'état complet des données (médiateurs, offres, créneaux, absences, espaces).</span></span>
+        <button class="btn btn-primary" type="button">💾 Exporter JSON.gz</button>
+      </div>
+      <div class="data-row">
+        <span class="data-label"><strong>Import JSON.gz</strong><span class="section-hint">⚠️ L'import remplace toutes les données actuelles. Faites une sauvegarde JSON.gz d'abord.</span></span>
+        <button class="btn btn-secondary" type="button">📂 Choisir un fichier…</button>
+        <button class="btn btn-primary" type="button" disabled title="Actif une fois un fichier sélectionné">Importer</button>
+      </div>
+      <div class="data-row">
+        <span class="data-label"><strong>Supprimer les données</strong><span class="section-hint">⚠️ Action irréversible : réservations, absences et plannings. Sauvegardez d'abord.</span></span>
+        <button class="btn btn-danger" type="button">🧹 Supprimer les données</button>
+      </div>
+      <div class="data-row">
+        <span class="data-label"><strong>Données de démonstration</strong><span class="section-hint">Remplace les données actuelles par un jeu de démonstration (médiateurs, offres et créneaux).</span></span>
+        <button class="btn btn-secondary" type="button">🔄 Charger les données de démonstration</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= (c) DEMI-JOURNÉES ================= -->
+  <section class="config-section" aria-labelledby="halfday-title">
+    <div class="config-section-head">
+      <h3 id="halfday-title">Demi-journées</h3>
+      <span class="section-hint">Bornes utilisées par la vue quotidienne et la valorisation. Déplacées à l'identique depuis l'ancienne vue Import / Export.</span>
+    </div>
+    <div class="config-body">
+      <div class="halfday-row">
+        <label for="morning-end">Fin de matinée</label>
+        <input id="morning-end" class="time-input state-dependent" type="time" value="13:00" aria-label="Heure de fin de matinée">
+        <label for="afternoon-start">Début d'après-midi</label>
+        <input id="afternoon-start" class="time-input state-dependent" type="time" value="12:00" aria-label="Heure de début d'après-midi">
+        <button class="btn btn-primary" type="button">Enregistrer</button>
+        <!-- State: validation error -->
+        <span class="halfday-error state-box" id="state-halfday-error" role="alert" hidden>⚠ L'heure de début doit précéder l'heure de fin</span>
+      </div>
+      <p class="section-hint" style="margin-top: 10px; font-size: 12px; color: var(--color-text-muted);">Les réglages enregistrés bornent les demi-journées de la vue quotidienne et de la valorisation.</p>
+    </div>
+  </section>
+
+  <!-- Mockup annotations -->
+  <div class="mockup-caption" aria-hidden="true">
+    <div class="annotation"><strong>En-tête :</strong> l'entrée « Import / Export » est remplacée par « Configuration » ; le bouton « Import Secutix » vit dans l'en-tête à côté des actions, visible depuis toutes les vues — il n'apparaît dans aucune section de cette vue.</div>
+    <div class="annotation"><strong>Espaces :</strong> le blanc (Crypte, « auto Secutix ») est réservé aux espaces auto-créés par l'import Secutix ; la palette de migration n'attribue jamais de blanc. La suppression d'un espace référencé par une offre ou un créneau est refusée.</div>
+  </div>
+</main>
+
+<!-- ===== State: delete-data confirmation dialog ===== -->
+<div class="confirm-overlay state-box" id="state-delete-confirm" hidden role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
+  <div class="confirm-dialog">
+    <h4 id="delete-confirm-title">Supprimer toutes les données ?</h4>
+    <p>Cette action supprime définitivement les réservations, absences et plannings locaux. Sauvegardez vos données au format JSON.gz avant de continuer. Cette action est irréversible.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" type="button">Annuler</button>
+      <button class="btn btn-danger" type="button">Supprimer les données</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mockup state switch -->
+<div class="mockup-switch" role="group" aria-label="États de maquette de la vue Configuration">
+  <span>États :</span>
+  <button type="button" data-state="normal" class="active" aria-pressed="true">Normal</button>
+  <button type="button" data-state="duplicate" aria-pressed="false">Doublon de nom</button>
+  <button type="button" data-state="delete-refused" aria-pressed="false">Suppression refusée</button>
+  <button type="button" data-state="delete-confirm" aria-pressed="false">Confirmation suppression</button>
+  <button type="button" data-state="halfday-error" aria-pressed="false">Erreur demi-journées</button>
+</div>
+
+<script>
+// Mockup-only interaction: switch between the configuration view states.
+var boxes = {
+  'duplicate': document.getElementById('state-duplicate'),
+  'delete-refused': document.getElementById('state-delete-refused'),
+  'delete-confirm': document.getElementById('state-delete-confirm'),
+  'halfday-error': document.getElementById('state-halfday-error')
+};
+// Per-state tweaks on dependent controls (static mockup: presentation only).
+var extras = {
+  normal: function () {
+    setInvalid('#new-space-name', false);
+    setTimeInvalid(false);
+    document.getElementById('row-crypte').hidden = false;
+  },
+  duplicate: function () {
+    setInvalid('#new-space-name', true);
+    setTimeInvalid(false);
+    document.getElementById('row-crypte').hidden = false;
+  },
+  'delete-refused': function () {
+    setInvalid('#new-space-name', false);
+    setTimeInvalid(false);
+    // The refused row replaces the normal "Exposition permanente" row.
+    document.getElementById('row-crypte').hidden = false;
+  },
+  'delete-confirm': function () {
+    setInvalid('#new-space-name', false);
+    setTimeInvalid(false);
+    document.getElementById('row-crypte').hidden = false;
+  },
+  'halfday-error': function () {
+    setInvalid('#new-space-name', false);
+    setTimeInvalid(true);
+    document.getElementById('row-crypte').hidden = false;
+  }
+};
+function setInvalid(sel, on) {
+  var el = document.querySelector(sel);
+  if (el) el.classList.toggle('invalid', on);
+}
+function setTimeInvalid(on) {
+  ['morning-end', 'afternoon-start'].forEach(function (id) {
+    document.getElementById(id).classList.toggle('invalid', on);
+  });
+}
+document.querySelectorAll('.mockup-switch button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.mockup-switch button').forEach(function (b) {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
+    Object.keys(boxes).forEach(function (k) {
+      boxes[k].hidden = btn.dataset.state !== k;
+    });
+    extras[btn.dataset.state]();
+  });
+});
+</script>
+</body>
+</html>

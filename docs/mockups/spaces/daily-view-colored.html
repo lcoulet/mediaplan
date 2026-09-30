@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediaPlan — Vue quotidienne : couleurs d'espace et labels courts (maquette)</title>
+<style>
+/* ===== Base (tokens copied from src/style.css) ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --color-primary: #2c6e49;
+  --color-primary-dark: #1e5536;
+  --color-primary-light: #4c956c;
+  --color-accent: #d68c45;
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-text: #2b2b2b;
+  --color-text-muted: #6b6b6b;
+  --color-border: #d9d9d9;
+  --color-border-light: #eaeaea;
+  --color-danger: #c0392b;
+  --color-warning: #d68c45;
+  --color-warning-bg: #fef5e7;
+  --radius: 6px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --header-h: 56px;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+}
+button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* ===== Header ===== */
+.app-header {
+  min-height: var(--header-h);
+  background: var(--color-primary);
+  color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; row-gap: 4px;
+  padding: 8px 20px; box-shadow: var(--shadow-sm);
+}
+.header-left { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; flex-shrink: 1; min-width: 0; }
+.app-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.app-subtitle { font-size: 12px; opacity: 0.8; white-space: normal; }
+.header-nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.nav-btn {
+  background: transparent; border: none; color: rgba(255,255,255,0.8);
+  padding: 8px 12px; border-radius: var(--radius); font-size: 14px; cursor: pointer;
+}
+.nav-btn.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
+
+/* ===== Page ===== */
+.app-main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.toolbar h2 { font-size: 18px; font-weight: 600; }
+.toolbar-note { font-size: 13px; color: var(--color-text-muted); }
+
+/* ===== Daily view slice (structure from src/calendar.css) ===== */
+.daily-card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.daily-date-head {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  padding: 10px 12px; border-bottom: 1px solid var(--color-border);
+  background: #fafafa;
+}
+.daily-date-head .date-title { font-size: 15px; font-weight: 700; }
+.daily-date-head .iso-week { font-size: 12px; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+
+/* Time axis: 08:00 -> 19:00 = 11 h, each hour = 100/11 % */
+.time-axis { display: flex; border-bottom: 1px solid var(--color-border); background: #fafafa; }
+.time-axis .axis-spacer { width: 200px; flex-shrink: 0; border-right: 1px solid var(--color-border); }
+.time-axis .axis-hours { flex: 1; display: flex; position: relative; height: 22px; }
+.time-axis .axis-hour {
+  flex: 1; font-size: 11px; color: var(--color-text-muted);
+  padding: 3px 0 0 6px; border-left: 1px solid var(--color-border-light);
+  font-variant-numeric: tabular-nums;
+}
+.time-axis .axis-hour:first-child { border-left: none; }
+
+/* Mediator rows */
+.daily-mediator-row { display: flex; align-items: stretch; border-bottom: 1px solid var(--color-border-light); min-height: 32px; }
+.daily-mediator-row:last-child { border-bottom: none; }
+.daily-mediator-label {
+  width: 200px; flex-shrink: 0;
+  display: flex; align-items: center;
+  padding: 8px 12px;
+  border-right: 1px solid var(--color-border);
+  background: #fafafa;
+  overflow: hidden;
+}
+.daily-mediator-idbox { display: flex; flex-direction: column; flex: 1; min-width: 0; line-height: 1.25; }
+.daily-mediator-name {
+  margin-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1; min-width: 0; font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+}
+.daily-mediator-phone {
+  display: block; margin-left: 8px; font-size: 11px; color: var(--color-text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Pills */
+.pill { flex-shrink: 0; padding: 1px 6px; border-radius: 10px; font-size: 11px; font-weight: 700; line-height: 1.6; }
+.pill-week { background: #e3efe8; color: #1e5536; }
+.pill-contract { background: #f0f0f0; color: #5a5a5a; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+
+/* Track + hour grid lines */
+.daily-mediator-track { position: relative; min-height: 32px; overflow: hidden; flex: 1; }
+.hour-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(100% / 11 - 1px),
+    var(--color-border-light) calc(100% / 11 - 1px),
+    var(--color-border-light) calc(100% / 11)
+  );
+}
+
+/* Hatching outside working hours */
+.work-range {
+  position: absolute; top: 0; bottom: 0;
+  background: repeating-linear-gradient(45deg, transparent 0 6px, rgba(0,0,0,0.06) 6px 8px);
+  pointer-events: none;
+}
+.work-range.before { left: 0; }
+.work-range.after { right: 0; }
+.daily-mediator-track.full-hatch {
+  background: repeating-linear-gradient(45deg, transparent 0 6px, rgba(0,0,0,0.06) 6px 8px);
+}
+.nonworked-note {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--color-text-muted); font-style: italic;
+  pointer-events: none;
+}
+.work-hours-tag {
+  position: absolute; top: 1px; font-size: 9px; color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums; pointer-events: none;
+}
+
+/* ===== Slots : SPACE color as block background (primary signal) ===== */
+.daily-slot {
+  position: absolute; top: 1px; bottom: 1px;
+  border-radius: 4px; padding: 2px 4px; font-size: 10px;
+  cursor: pointer; overflow: hidden;
+  z-index: 1;
+  box-sizing: border-box;
+  display: flex; flex-direction: column; justify-content: center;
+}
+/* Block inner text: readableTextColor applied server-side in the app —
+   mockup uses precomputed classes (contrast verified, see legend note). */
+.slot-dark-text { color: #1b1b1b; }   /* dark text on light space colors */
+.slot-light-text { color: #ffffff; }  /* white text on dark space colors */
+.daily-slot .slot-time { font-weight: 600; font-size: 9px; white-space: nowrap; }
+.slot-label-row {
+  display: flex; align-items: center; gap: 4px;
+  min-width: 0; white-space: nowrap; overflow: hidden;
+}
+.offer-dot {
+  flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.25);
+  /* White ring keeps the offer dot perceivable on any space color (WCAG 1.4.11) */
+  box-shadow: 0 0 0 1.5px #ffffff;
+}
+.daily-slot.space-white .offer-dot { box-shadow: 0 0 0 1.5px #ffffff; }
+.slot-label {
+  font-size: 10px; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+/* Fallback: offer without short label — full name, slightly smaller */
+.slot-label.full-name { font-size: 9px; font-weight: 500; }
+
+/* Setup / teardown zones inside a slot block (dashed separators, existing pattern).
+   Two variants: dark dashed hatch on light blocks, light dashed hatch on dark blocks. */
+.slot-zone {
+  position: absolute; top: 1px; bottom: 1px;
+  border-right: 1px dashed rgba(0,0,0,0.4); border-left: 1px dashed rgba(0,0,0,0.4);
+  background: repeating-linear-gradient(45deg, transparent 0 4px, rgba(0,0,0,0.06) 4px 6px);
+  z-index: 2; pointer-events: none;
+}
+.slot-zone.zone-light {
+  border-right: 1px dashed rgba(255,255,255,0.7); border-left: 1px dashed rgba(255,255,255,0.7);
+  background: repeating-linear-gradient(45deg, transparent 0 4px, rgba(255,255,255,0.16) 4px 6px);
+}
+.slot-zone-label {
+  position: absolute; bottom: 0; font-size: 8px; opacity: 0.8; z-index: 3;
+  font-variant-numeric: tabular-nums; pointer-events: none;
+}
+
+/* White space block (auto Secutix): visible border + dark text (spec:
+   « le bloc a un contour et un texte suffisamment contrastés pour rester
+   lisible sur fond blanc ») */
+.daily-slot.space-white {
+  background: #ffffff;
+  border: 1.5px solid #8a8a8a;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+/* Truncation state: tooltip bubble shown next to the truncated block */
+.tooltip-bubble {
+  position: absolute; z-index: 40;
+  background: #2b2b2b; color: #fff;
+  font-size: 11px; padding: 5px 9px; border-radius: 4px;
+  box-shadow: var(--shadow-md);
+  white-space: nowrap; pointer-events: none;
+}
+.tooltip-bubble::after {
+  content: ""; position: absolute; left: 14px; bottom: -5px;
+  border: 5px solid transparent; border-top-color: #2b2b2b; border-bottom: none;
+}
+
+/* ===== Legend (space colors) ===== */
+.legend {
+  display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+  margin-top: 12px; font-size: 12px; color: var(--color-text-muted);
+}
+.legend .swatch {
+  display: inline-block; width: 16px; height: 16px; border-radius: 3px;
+  vertical-align: middle; margin-right: 5px;
+  border: 1px solid rgba(0,0,0,0.18);
+}
+
+/* ===== Mockup annotations ===== */
+.mockup-caption {
+  display: flex; gap: 6px; align-items: flex-start;
+  font-size: 12px; color: var(--color-text-muted); margin: 14px 2px 0;
+  flex-wrap: wrap;
+}
+.annotation {
+  border-left: 3px solid var(--color-primary-light);
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 8px 12px; flex: 1; min-width: 220px;
+}
+.annotation strong { color: var(--color-text); }
+
+/* ===== Mockup state switch ===== */
+.mockup-switch {
+  position: fixed; bottom: 12px; left: 12px; z-index: 300;
+  display: flex; gap: 6px; background: var(--color-surface);
+  border: 1px solid var(--color-border); border-radius: 16px;
+  padding: 4px 6px; box-shadow: var(--shadow-md); flex-wrap: wrap; max-width: calc(100vw - 24px);
+}
+.mockup-switch span { font-size: 11px; color: var(--color-text-muted); align-self: center; padding: 0 4px; }
+.mockup-switch button {
+  font-size: 11px; padding: 3px 10px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted);
+}
+.mockup-switch button.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.state-box[hidden] { display: none; }
+
+@media (max-width: 560px) {
+  .daily-mediator-label { width: 140px; }
+  .time-axis .axis-spacer { width: 140px; }
+  .time-axis .axis-hours { overflow: hidden; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-left">
+    <h1 class="app-title">MediaPlan</h1>
+    <span class="app-subtitle">Gestion des plannings de médiation — Museum</span>
+  </div>
+  <nav class="header-nav" aria-label="Navigation principale">
+    <button class="nav-btn active" aria-current="page" type="button">Plan Jour</button>
+    <button class="nav-btn" type="button">Plan Hebdo</button>
+    <button class="nav-btn" type="button">Plan Accueil</button>
+    <button class="nav-btn" type="button">Médiateurs</button>
+    <button class="nav-btn" type="button">Offres</button>
+    <button class="nav-btn" type="button">Absences</button>
+    <button class="nav-btn" type="button">Statistiques</button>
+    <button class="nav-btn" type="button">Configuration</button>
+  </nav>
+</header>
+
+<main class="app-main">
+  <div class="toolbar">
+    <h2>Plan Jour</h2>
+    <span class="toolbar-note">Extrait de la vue quotidienne — plage 08:00–19:00. Fond du bloc = couleur de l'ESPACE ; pastille ● = couleur de l'OFFRE.</span>
+  </div>
+
+  <div class="daily-card">
+    <div class="daily-date-head">
+      <span class="date-title">Mardi 6 octobre 2026</span>
+      <span class="iso-week">semaine ISO 2026-W41</span>
+      <span class="toolbar-note" style="margin-left: auto;">← jour précédent · jour suivant →</span>
+    </div>
+
+    <!-- Time axis: 08:00 to 19:00 -->
+    <div class="time-axis" aria-hidden="true">
+      <div class="axis-spacer"></div>
+      <div class="axis-hours">
+        <span class="axis-hour">08</span><span class="axis-hour">09</span><span class="axis-hour">10</span>
+        <span class="axis-hour">11</span><span class="axis-hour">12</span><span class="axis-hour">13</span>
+        <span class="axis-hour">14</span><span class="axis-hour">15</span><span class="axis-hour">16</span>
+        <span class="axis-hour">17</span><span class="axis-hour">18</span><span class="axis-hour">19</span>
+      </div>
+    </div>
+
+    <!-- (a) Alice — 09:30-18:00 worked range; short-label blocks on colored spaces -->
+    <!-- Axis %: 08:00=0, 09:30=13.64, 10:00=18.18, 12:00=36.36, 14:00=54.55, 15:30=68.18, 16:30=77.27, 18:00=90.91 -->
+    <div class="daily-mediator-row">
+      <div class="daily-mediator-label">
+        <div class="daily-mediator-idbox">
+          <span class="daily-mediator-name">Alice Dupont <span class="pill pill-week" title="Semaine de cycle active">S2</span> <span class="pill pill-contract" title="Type de contrat">temps plein</span></span>
+          <span class="daily-mediator-phone">06 12 34 56 78</span>
+        </div>
+      </div>
+      <div class="daily-mediator-track">
+        <div class="hour-grid"></div>
+        <div class="work-range before" style="width: 13.64%;"></div>
+        <div class="work-range after" style="width: 9.09%;"></div>
+        <span class="work-hours-tag" style="left: 14.2%;">09:30</span>
+        <span class="work-hours-tag" style="right: 9.6%;">18:00</span>
+        <!-- 10:00-12:00, space Exposition permanente #1F5FA8 (dark blue → white text,
+             AA 6.4:1), offer Visite guidée #E65100, short label « Visite » -->
+        <div class="daily-slot slot-light-text" style="left: 18.18%; width: 18.18%; background: #1F5FA8;" title="Visite guidée · Exposition permanente · 10:00-12:00">
+          <span class="slot-time">10:00-12:00</span>
+          <span class="slot-label-row"><span class="offer-dot" style="background:#E65100;" aria-hidden="true"></span><span class="slot-label">Visite</span></span>
+        </div>
+        <!-- 14:00-15:30 + montage 30 min avant (13:30), space Atelier #C2410C (dark orange → white text,
+             AA 5.2:1), offer Atelier nature #2E7D32, short label « Atelier ». Setup zone: light dashed separator. -->
+        <div class="daily-slot slot-light-text" style="left: 50%; width: 18.18%; background: #C2410C;" title="Atelier nature · Atelier · 14:00-15:30 (montage 30 min)">
+          <span class="slot-zone zone-light" style="left: 0; width: 27.5%;"></span>
+          <span class="slot-time" style="margin-left: 27.5%;">14:00-15:30</span>
+          <span class="slot-label-row"><span class="offer-dot" style="background:#2E7D32;" aria-hidden="true"></span><span class="slot-label">Atelier</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- (b) Karim — non-worked day -->
+    <div class="daily-mediator-row">
+      <div class="daily-mediator-label">
+        <div class="daily-mediator-idbox">
+          <span class="daily-mediator-name">Karim Benali <span class="pill pill-week" title="Semaine de cycle active">S3</span> <span class="pill pill-contract" title="Type de contrat">mi-temps (temps partiel)</span></span>
+          <span class="daily-mediator-phone">06 98 76 54 32</span>
+        </div>
+      </div>
+      <div class="daily-mediator-track full-hatch">
+        <div class="hour-grid"></div>
+        <span class="nonworked-note">Mardi — jour non travaillé (semaine S3)</span>
+      </div>
+    </div>
+
+    <!-- (c) Marie — includes the full-name fallback block and the white-space block -->
+    <!-- Axis %: 10:00=18.18, 11:30=31.82, 11:00=27.27, 12:30=40.91, 16:00=72.73, 17:30=86.36 -->
+    <div class="daily-mediator-row">
+      <div class="daily-mediator-label">
+        <div class="daily-mediator-idbox">
+          <span class="daily-mediator-name">Marie Lambert <span class="pill pill-week" title="Semaine de cycle active">S1</span> <span class="pill pill-contract" title="Type de contrat">stagiaire</span></span>
+          <span class="daily-mediator-phone">06 45 67 89 01</span>
+        </div>
+      </div>
+      <div class="daily-mediator-track">
+        <div class="hour-grid"></div>
+        <div class="work-range before" style="width: 18.18%;"></div>
+        <div class="work-range after" style="width: 13.64%;"></div>
+        <span class="work-hours-tag" style="left: 18.8%;">10:00</span>
+        <span class="work-hours-tag" style="right: 14.2%;">17:30</span>
+        <!-- Fallback: offer WITHOUT short label → full name shown, slightly smaller.
+             Space Jardin #7B1FA2 (dark purple → white text), offer Parcours ludique « découverte du
+             musée en famille » (no short label) color #00838F. -->
+        <div class="daily-slot slot-light-text" style="left: 18.18%; width: 13.64%; background: #7B1FA2;" title="Parcours ludique « découverte du musée en famille » · Jardin · 10:00-11:30">
+          <span class="slot-time">10:00-11:30</span>
+          <span class="slot-label-row"><span class="offer-dot" style="background:#00838F;" aria-hidden="true"></span><span class="slot-label full-name">Parcours ludique « découverte du musée en famille »</span></span>
+        </div>
+        <!-- White space block (Crypte, auto Secutix): border + dark text, offer dot stays readable -->
+        <div class="daily-slot space-white slot-dark-text" style="left: 40.91%; width: 13.64%;" title="Visite guidée · Crypte (auto Secutix) · 12:30-14:00">
+          <span class="slot-time">12:30-14:00</span>
+          <span class="slot-label-row"><span class="offer-dot" style="background:#E65100;" aria-hidden="true"></span><span class="slot-label">Visite</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- (d) Claire — no cycle: no pills, no hatching; long-short-label truncation block -->
+    <!-- Axis %: 08:30=4.55, 09:30=13.64, 15:00=63.64, 16:30=77.27 -->
+    <div class="daily-mediator-row">
+      <div class="daily-mediator-label">
+        <div class="daily-mediator-idbox">
+          <span class="daily-mediator-name">Claire Fontaine</span>
+          <span class="daily-mediator-phone">06 33 22 11 00</span>
+        </div>
+      </div>
+      <div class="daily-mediator-track">
+        <div class="hour-grid"></div>
+        <!-- Normal-state block: short label « Parcours » (offer Parcours ludique #00838F),
+             space Hors les murs #00838F (dark teal → white text) -->
+        <div class="daily-slot state-normal slot-light-text" style="left: 4.55%; width: 9.09%; background: #00838F;" title="Accueil · Hors les murs · 08:30-09:30">
+          <span class="slot-time">08:30-09:30</span>
+          <span class="slot-label-row"><span class="offer-dot" style="background:#5C6BC0;" aria-hidden="true"></span><span class="slot-label">Accueil</span></span>
+        </div>
+        <!-- Truncation-state variant: same geometry, long short-label with ellipsis.
+             In the truncation state the normal block is hidden and this one shown. -->
+        <div class="daily-slot state-trunc slot-light-text" style="left: 63.64%; width: 13.64%; background: #00838F; display: none;" title="Parcours exceptionnel des collections permanentes · Hors les murs · 15:00-16:30">
+          <span class="slot-time">15:00-16:30</span>
+          <span class="slot-label-row"><span class="offer-dot" style="background:#E65100;" aria-hidden="true"></span><span class="slot-label">Parcours exceptionnel des co…</span></span>
+        </div>
+        <!-- Normal-state block at the same position (short label « Parcours ») -->
+        <div class="daily-slot state-normal slot-light-text" style="left: 63.64%; width: 13.64%; background: #00838F;" title="Parcours ludique · Hors les murs · 15:00-16:30">
+          <span class="slot-time">15:00-16:30</span>
+          <span class="slot-label-row"><span class="offer-dot" style="background:#E65100;" aria-hidden="true"></span><span class="slot-label">Parcours</span></span>
+        </div>
+        <!-- Truncation-state twin: long label with ellipsis + visible tooltip -->
+        <div class="daily-slot state-trunc slot-light-text" style="left: 4.55%; width: 9.09%; background: #00838F; display: none;" title="Accueil renforcé des groupes scolaires · Hors les murs · 08:30-09:30">
+          <span class="slot-time">08:30-09:30</span>
+          <span class="slot-label-row"><span class="offer-dot" style="background:#5C6BC0;" aria-hidden="true"></span><span class="slot-label">Accueil renforcé…</span></span>
+        </div>
+        <!-- Tooltip bubble (truncation state only) -->
+        <div class="tooltip-bubble state-trunc" style="left: 64.4%; bottom: 34px; display: none;">Parcours exceptionnel des collections permanentes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Legend: space colors (small row under the lanes) ===== -->
+  <div class="legend" aria-label="Légende des couleurs d'espace">
+    <span style="font-weight: 600; color: var(--color-text);">Espaces :</span>
+    <span><span class="swatch" style="background:#1F5FA8;"></span>Exposition permanente</span>
+    <span><span class="swatch" style="background:#7B1FA2;"></span>Jardin</span>
+    <span><span class="swatch" style="background:#2E7D32;"></span>Auditorium</span>
+    <span><span class="swatch" style="background:#C2410C;"></span>Atelier</span>
+    <span><span class="swatch" style="background:#00838F;"></span>Hors les murs</span>
+    <span><span class="swatch" style="background:#ffffff;"></span>Crypte (auto Secutix)</span>
+    <span style="margin-left: 8px;"><span class="offer-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%; border:1px solid rgba(0,0,0,0.25); background:#E65100;" aria-hidden="true"></span> pastille = couleur de l'offre</span>
+  </div>
+
+  <!-- Mockup annotations -->
+  <div class="mockup-caption" aria-hidden="true">
+    <div class="annotation"><strong>Signal principal :</strong> le FOND du bloc est la couleur de l'ESPACE ; la couleur de l'OFFRE n'est plus le fond. La pastille ● de l'offre accompagne le label court (« Visite guidée » → « Visite », « Atelier nature » → « Atelier », « Parcours ludique » → « Parcours »).</div>
+    <div class="annotation"><strong>Repli sans label court :</strong> le bloc de Marie à 10:00 affiche le nom complet de l'offre en corps légèrement réduit.</div>
+    <div class="annotation"><strong>Espace blanc (auto Secutix) :</strong> le bloc de 12:30 garde un contour visible et un texte sombre ; la pastille d'offre reste lisible sur fond blanc. Le blanc n'est jamais attribué par la palette de migration.</div>
+    <div class="annotation"><strong>Montage / démontage :</strong> zone hachurée en pointillés à l'intérieur du bloc, séparée du créneau par un trait pointillé (motif existant).</div>
+  </div>
+</main>
+
+<!-- Mockup state switch -->
+<div class="mockup-switch" role="group" aria-label="États de maquette de la vue quotidienne">
+  <span>États :</span>
+  <button type="button" data-state="normal" class="active" aria-pressed="true">Normal</button>
+  <button type="button" data-state="trunc" aria-pressed="false">Label long tronqué</button>
+</div>
+
+<script>
+// Mockup-only interaction: toggle between normal blocks and long-short-label
+// truncation (ellipsis + tooltip) on Claire's lane.
+document.querySelectorAll('.mockup-switch button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.mockup-switch button').forEach(function (b) {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
+    var isTrunc = btn.dataset.state === 'trunc';
+    document.querySelectorAll('.state-normal').forEach(function (el) { el.style.display = isTrunc ? 'none' : ''; });
+    document.querySelectorAll('.state-trunc').forEach(function (el) { el.style.display = isTrunc ? '' : 'none'; });
+  });
+});
+</script>
+</body>
+</html>
