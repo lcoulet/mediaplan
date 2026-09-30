@@ -47,6 +47,7 @@ function seedStorage(offers: Offer[]): void {
     absences: [],
     cycles: [],
     quotas: [],
+    spaces: [],
   };
   localStorage.setItem('mediaplan_data_v1', JSON.stringify(data));
 }

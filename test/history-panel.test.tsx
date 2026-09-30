@@ -34,6 +34,7 @@ const mockData: AppData = {
   absences: [],
   cycles: [],
   quotas: [],
+  spaces: [],
 };
 
 // Full app harness: Header (button) + shortcuts hook + panel + probe —

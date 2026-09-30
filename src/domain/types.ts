@@ -38,6 +38,9 @@ export interface Offer {
   // reconcile imported reservations with the offer catalog. Optional:
   // offers never imported from Secutix have none.
   secutixLabel?: string;
+  // Optional short label ("label court") shown in day-view blocks and
+  // plan-accueil banners; falls back to the offer name when empty.
+  shortLabel?: string;
 }
 
 export type ScheduleStatus = 'draft' | 'published' | 'archived';
@@ -199,6 +202,19 @@ export interface ValorisationConfig {
   holidayOverrides: Record<string, string[]>;
 }
 
+/**
+ * Space (Espace) — a named, colored place where offers and slots take
+ * place (Salle Bronze, Auditorium, …). Referenced BY NAME from
+ * offer.location / slot.location. White (#FFFFFF) is reserved for spaces
+ * auto-created by the Secutix import (unmapped ESPACE values).
+ */
+export interface Space {
+  id: string;
+  name: string;
+  /** Hexadecimal color, e.g. #4A90D9. */
+  color: string;
+}
+
 export interface AppData {
   mediators: Mediator[];
   offers: Offer[];
@@ -211,6 +227,9 @@ export interface AppData {
   // Quarterly hour quotas (see QuarterlyQuota). Legacy data persisted
   // before the feature existed loads as [].
   quotas: QuarterlyQuota[];
+  // Spaces (see Space). Legacy data persisted before the feature existed
+  // is migrated from free-text locations on load.
+  spaces: Space[];
   // Valorisation settings (multipliers, holiday overrides). Legacy data
   // loads with defaults.
   valorisation?: ValorisationConfig;

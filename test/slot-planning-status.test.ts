@@ -35,7 +35,7 @@ const absence = (mediatorId: string): Absence => ({
 });
 
 const data = (slots: Slot[], absences: Absence[] = [], mediators: Mediator[] = []): AppData => ({
-  mediators, offers: [offer], schedules: [], slots, absences, cycles: [], quotas: [],
+  mediators, offers: [offer], schedules: [], slots, absences, cycles: [], quotas: [], spaces: [],
 });
 
 describe('getSlotPlanningStatus', () => {

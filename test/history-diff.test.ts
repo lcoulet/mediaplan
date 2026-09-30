@@ -81,6 +81,7 @@ function data(overrides: Partial<AppData> = {}): AppData {
     absences: [],
     cycles: [],
     quotas: [],
+    spaces: [],
     ...overrides,
   };
 }

@@ -25,6 +25,7 @@ const mockData: AppData = {
   absences: [],
   cycles: [],
   quotas: [],
+  spaces: [],
 };
 
 // Host component mounting the hook INSIDE DataProvider (useData rule)

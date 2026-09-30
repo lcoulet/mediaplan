@@ -38,6 +38,7 @@ function buildData(
     absences: [],
     cycles: [],
     quotas,
+    spaces: [],
     ...(valorisation ? { valorisation } : {}),
   };
 }

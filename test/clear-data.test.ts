@@ -26,6 +26,7 @@ function buildData(): AppData {
     ],
     cycles: [],
     quotas: [],
+    spaces: [],
   };
 }
 
@@ -62,6 +63,7 @@ describe('clearPlanningData', () => {
       absences: [],
       cycles: [],
       quotas: [],
+      spaces: [],
     });
   });
 

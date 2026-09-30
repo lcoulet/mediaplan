@@ -22,6 +22,7 @@ export function clearPlanningData(data: AppData, options: ClearOptions = {}): Ap
     absences: [],
     cycles: [...data.cycles],
     quotas: [...data.quotas],
+    spaces: [...data.spaces],
     ...(data.valorisation ? { valorisation: data.valorisation } : {}),
   };
 }

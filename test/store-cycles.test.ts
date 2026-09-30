@@ -46,6 +46,7 @@ function buildData(cycles: WorkCycle[]): AppData {
     absences: [],
     cycles,
     quotas: [],
+    spaces: [],
   };
 }
 

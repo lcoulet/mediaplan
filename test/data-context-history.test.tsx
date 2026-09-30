@@ -35,6 +35,7 @@ const mockData: AppData = {
   absences: [],
   cycles: [],
   quotas: [],
+  spaces: [],
 };
 
 // Probe exposing the context + CRUD to the assertions

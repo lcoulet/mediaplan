@@ -36,6 +36,7 @@ describe('store.load', () => {
       absences: [],
       cycles: [],
       quotas: [],
+      spaces: [],
     });
   });
 
@@ -75,6 +76,7 @@ describe('store.save', () => {
       absences: [],
       cycles: [],
       quotas: [],
+      spaces: [],
     };
     const result = save(data);
     expect(result).toBe(true);

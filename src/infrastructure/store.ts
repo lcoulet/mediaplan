@@ -16,6 +16,7 @@ const defaultData: AppData = {
   absences: [],
   cycles: [],
   quotas: [],
+  spaces: [],
 };
 
 export function load(): AppData {
@@ -54,6 +55,9 @@ export function load(): AppData {
       cycles: parsed.cycles || [],
       // Quarterly hour quotas — same migration as cycles.
       quotas: parsed.quotas || [],
+      // Spaces — legacy data persisted before the field existed simply
+      // has none; an explicit empty list is the migration baseline.
+      spaces: parsed.spaces || [],
       // Valorisation settings — legacy data loads with the defaults;
       // partially persisted configs are filled in with the defaults.
       valorisation: migrateValorisation(parsed.valorisation),

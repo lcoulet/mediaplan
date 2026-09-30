@@ -48,6 +48,7 @@ describe('store — offer color persistence', () => {
       absences: [],
       cycles: [],
       quotas: [],
+      spaces: [],
     };
     expect(save(data)).toBe(true);
     const loaded = load();

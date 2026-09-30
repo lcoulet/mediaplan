@@ -45,6 +45,7 @@ const data: AppData = {
   absences: [],
   cycles: [],
   quotas: [],
+  spaces: [],
   slots: [],
 };
 
