@@ -109,18 +109,19 @@ weeks 39–51, analyzed locally, never committed):**
       short offer label used for readability. Start-time behavior TBD
 
 **Open questions (spaces/print):**
-- [ ] Offer signal inside the space-colored block: colored DOT next to
-      the short label (recommended), or nothing (space + label only)?
-- [ ] Secutix import ESPACE values: auto-create spaces from unseen
-      values (recommended, default color), or leave unmapped slots as
-      free text?
-- [ ] Configuration view scope NOW: replace the "Import / Export" nav
-      entry (per the earlier header decision), containing: Espaces
-      section + the current Import/Export content (Secutix import,
-      JSON.gz export/import, delete, demo data) + half-day settings;
-      the OneDrive sync section comes later with sync slice 4?
-- [ ] Print start time: fixed 08:00, or dynamic (extend left if a slot
-      starts earlier — symmetric to the 19:00 clamp rule)?
+- [x] Offer signal in the space-colored block: colored DOT next to the
+      short label (decided 2026-09-29)
+- [x] Secutix import ESPACE values: AUTO-CREATE spaces from unseen
+      values, default color WHITE (blanc) (decided 2026-09-29)
+- [x] Configuration view scope NOW (decided 2026-09-29): replaces the
+      "Import / Export" nav entry; contains: Espaces section, JSON.gz
+      export/import, data delete, demo data, half-day settings. The
+      SECUTIX IMPORT IS **NOT** IN IT — it is a daily foreground
+      function and stays a HEADER button (per the earlier header
+      decision). OneDrive sync section comes with sync slice 4
+- [x] Print time axis: fixed START at 08:30, extends left if a slot
+      starts earlier; fixed END at 19:00, extends right if a slot ends
+      later (decided 2026-09-29)
 - [ ] Space color conflicts with mediator lane hatching/cycle colors —
       readability check needed during design review
 
