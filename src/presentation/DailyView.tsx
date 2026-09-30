@@ -547,7 +547,7 @@ export default function DailyView() {
   );
 
   return (
-    <div className="view active">
+    <div className="view active daily-view">
       <div className="toolbar">
         <div className="toolbar-left">
           <button className="btn btn-secondary" onClick={() => goToDay(-1)}>←</button>

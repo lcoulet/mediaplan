@@ -1621,12 +1621,58 @@ body.edit-mode .cal-day-col:hover {
   }
 
   /* Scale BOTH views to fit one page: calibrated for the worst case
-     (many rows), so the daily grid and the Plan Accueil bands fit A4. */
+     (many rows), so the Plan Accueil bands fit A4. The daily view is
+     EXCLUDED: it uses a fixed print width (see below) at full scale,
+     which keeps the axis deterministic (08:30-19:00 extended). */
   body.print-mode .view {
     zoom: 0.55;
   }
+  body.print-mode .view.daily-view {
+    zoom: 1;
+  }
 
-  /* Colors print faithfully (slot pills, mediator colors) */
+  /* Daily view: deterministic ONE-PAGE-WIDE print layout.
+     A4 landscape printable width = 297mm - 16mm margins = 281mm ≈ 1062
+     CSS px. The grid is pinned to that width; the responsive hour scale
+     (pxPerHourFromWidth) fills it exactly, so the whole time axis fits
+     the page width by construction — no horizontal page split. */
+  body.print-mode .view.daily-view .daily-grid {
+    width: 1062px;
+    max-width: 1062px;
+    overflow: hidden !important;
+  }
+  body.print-mode .view.daily-view .daily-time-axis {
+    position: static; /* sticky has no meaning on paper */
+  }
+
+  /* Never split a lane across pages vertically */
+  body.print-mode .daily-mediator-row,
+  body.print-mode .daily-unassigned-row {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Compact print blocks: the on-screen compact block (dot + short label,
+     slice 3) prints as-is; just tighten paddings for the paper scale. */
+  body.print-mode .daily-slot {
+    padding: 1px 3px;
+    border-radius: 2px;
+  }
+  body.print-mode .daily-slot .slot-time {
+    font-size: 7px;
+  }
+  body.print-mode .daily-slot .slot-label {
+    font-size: 8px;
+  }
+  body.print-mode .daily-mediator-label,
+  body.print-mode .daily-mediator-track {
+    height: auto;
+  }
+  body.print-mode .daily-hour-label {
+    font-size: 9px;
+  }
+
+  /* Colors print faithfully (slot pills, mediator colors, hatching) */
   * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
