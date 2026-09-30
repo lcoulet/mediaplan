@@ -14,6 +14,7 @@
 
 import { useState } from 'react';
 import { useData } from './DataContext';
+import type { AppData } from '../domain/types';
 import type { Space } from '../domain/types';
 import {
   createSpace,
@@ -32,7 +33,7 @@ const SPACE_LABELS = {
 };
 
 export default function SpacesSection() {
-  const { state, commit } = useData();
+  const { state, dispatch, commit } = useData();
   const { spaces, offers, slots } = state.data;
 
   // Add form
@@ -63,6 +64,13 @@ export default function SpacesSection() {
     });
   }
 
+  // commitData: dispatch the next data so the in-memory state updates AND
+  // commit it so localStorage + history capture the snapshot (undoable).
+  function commitData(next: AppData, label: string) {
+    dispatch({ type: 'SET_DATA', data: next });
+    commit(next, label);
+  }
+
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     const validation = validateSpace(spaces, { name: newName, color: newColor });
@@ -71,10 +79,7 @@ export default function SpacesSection() {
       return;
     }
     const space = createSpace(newName, newColor);
-    commit(
-      { ...state.data, spaces: [...spaces, space] },
-      SPACE_LABELS.add
-    );
+    commitData({ ...state.data, spaces: [...spaces, space] }, SPACE_LABELS.add);
     setAddError('');
     setNewName('');
     // Cycle the default color for the next space
@@ -87,7 +92,7 @@ export default function SpacesSection() {
     const validation = validateSpace(spaces, { name: space.name, color });
     if (!validation.ok) return;
     clearRowError(space.id);
-    commit(
+    commitData(
       {
         ...state.data,
         spaces: spaces.map((s) => (s.id === space.id ? { ...s, color } : s)),
@@ -110,7 +115,7 @@ export default function SpacesSection() {
     }
     setRenamingId(null);
     clearRowError(space.id);
-    commit(
+    commitData(
       {
         ...state.data,
         spaces: result.spaces,
@@ -139,7 +144,7 @@ export default function SpacesSection() {
 
   function confirmDelete() {
     if (!deletePending) return;
-    commit(
+    commitData(
       {
         ...state.data,
         spaces: spaces.filter((s) => s.id !== deletePending.id),

@@ -13,7 +13,7 @@ import { getDefaultHalfDayConfig, validateHalfDayConfig, migrateAbsencesToConfig
 import SpacesSection from './SpacesSection';
 
 export default function ConfigurationView() {
-  const { state, commit, resetData } = useData();
+  const { state, dispatch, commit, resetData } = useData();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [clearMediators, setClearMediators] = useState(false);
   const [clearOffers, setClearOffers] = useState(false);
@@ -104,6 +104,9 @@ export default function ConfigurationView() {
       halfDayConfig: config,
       absences: migrateAbsencesToConfig(state.data.absences, config),
     };
+    // dispatch so the in-memory state updates AND commit so localStorage +
+    // history capture the snapshot (undoable)
+    dispatch({ type: 'SET_DATA', data: next });
     commit(next, 'Configuration des demi-journées');
   }
 
