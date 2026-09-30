@@ -13,6 +13,8 @@ import {
   sortSlotsByBlockStart,
   isFreeVisitOffer,
 } from '../domain/models';
+import { spaceForSlot, blockTextColor } from '../domain/space-display';
+import { offerShortLabel } from '../domain/spaces';
 import { usePrint, printDateLine } from './usePrint';
 import SlotModal from './SlotModal';
 
@@ -62,21 +64,35 @@ export default function ReservationView() {
   }
 
   // One list row: left lane (mediators / "Non assigné" / "Libre") and the
-  // Secutix-style booking summary on the right.
+  // Secutix-style booking summary on the right. The summary band is
+  // colored by the slot's SPACE (spec: the mediator column is untouched);
+  // the offer short label appears as the band's first line.
   function renderRow(slot: Slot, lane: React.ReactNode) {
     const offer = data.offers.find(o => o.id === slot.offerId);
     const isImported = slot.origin === 'imported';
     const isFree = isFreeVisitOffer(offer);
+    // Free-visit rows keep their current look (spec decision); only the
+    // mediated offer bands take the space color.
+    const space = isFree ? undefined : spaceForSlot(data.spaces, slot, offer);
+    const textColor = space ? blockTextColor(space) : undefined;
     return (
       <div
         key={slot.id}
-        className={`res-row${isImported ? ' imported' : ''}${slot.mediatorIds.length === 0 && !isFree ? ' unassigned' : ''}`}
+        className={`res-row${isImported ? ' imported' : ''}${slot.mediatorIds.length === 0 && !isFree ? ' unassigned' : ''}${space ? ' has-space' : ''}`}
         onClick={() => {
           setSlotModal({ slot, mediatorOnly: locked && isImported, defaultDate: slot.date });
         }}
       >
         <div className="res-mediators">{lane}</div>
-        <div className="res-summary">{formatSlotBookingSummary(slot, offer)}</div>
+        <div
+          className="res-summary"
+          style={space ? { backgroundColor: space.color, color: textColor } : undefined}
+        >
+          <div className="res-band-label" title={offer ? offerShortLabel(offer) : undefined}>
+            {offer ? offerShortLabel(offer) : '—'}
+          </div>
+          {formatSlotBookingSummary(slot, offer)}
+        </div>
       </div>
     );
   }

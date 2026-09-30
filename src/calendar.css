@@ -1116,6 +1116,29 @@ body.edit-mode .cal-day-col:hover {
   line-height: 1.5;
 }
 
+/* Space-colored offer band (Plan Accueil): background = space color
+   (inline), short label as the band's first line */
+.res-band-label {
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+/* Keep the unassigned/orange state visible only on rows with NO space:
+   a space-colored band replaces the row background (space is the
+   primary signal) */
+.res-row.has-space.unassigned {
+  background: transparent;
+}
+
+/* White space bands keep a visible border (readability on the light list) */
+.res-row.has-space .res-summary {
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
+}
+
 .res-count {
   font-size: 13px;
   font-weight: 600;
