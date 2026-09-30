@@ -18,6 +18,7 @@
 //   via the import's one-click undo
 
 import { createSlot, createOffer } from './models';
+import { autoCreateSpaceForSecutix } from './spaces';
 import type { AppData, Offer, Slot } from './types';
 
 /** Theme of rows that are entry fees, not mediation bookings. */
@@ -542,6 +543,10 @@ export function buildSecutixImportPlan(
  * Merge the plan into the data in a single pass (offers first, then slot
  * replacements, removals and additions), so one undo step reverts the
  * whole import. Pure: the input data is not mutated.
+ *
+ * Every ESPACE value carried by the imported slots (slot.location) is
+ * auto-created as a space when no space matches its name: white spaces
+ * (#FFFFFF = auto-created, unmapped). Known spaces are reused as-is.
  */
 export function applySecutixImport(
   data: AppData,
@@ -552,9 +557,18 @@ export function applySecutixImport(
     ...plan.update.map((s) => s.id),
     ...plan.remove.map((s) => s.id),
   ]);
+
+  // One space per unknown ESPACE value across created + updated slots
+  let spaces = data.spaces;
+  for (const slot of [...plan.create, ...plan.update]) {
+    if (!slot.location) continue;
+    spaces = autoCreateSpaceForSecutix(spaces, slot.location).spaces;
+  }
+
   return {
     ...data,
     offers: [...data.offers, ...newOffers],
+    spaces,
     slots: [
       ...data.slots.filter((s) => !touchedIds.has(s.id)),
       ...plan.update,

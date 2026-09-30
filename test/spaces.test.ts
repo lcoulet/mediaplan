@@ -14,7 +14,8 @@ import {
   offerShortLabel,
 } from '../src/domain/spaces';
 import { createOffer, createSlot } from '../src/domain/models';
-import type { Offer, Slot } from '../src/domain/types';
+import { applySecutixImport, normalizeSecutixRows, reconcileOffers, buildSecutixImportPlan } from '../src/domain/secutix-import';
+import type { AppData, Offer, Slot } from '../src/domain/types';
 
 function offerAt(location: string): Offer {
   return createOffer({ id: 'off_1', name: 'Visite guidée', location });
@@ -329,5 +330,82 @@ describe('offerShortLabel', () => {
   it('falls back to the offer name when shortLabel is empty or blank', () => {
     expect(offerShortLabel({ ...offerAt('X'), shortLabel: '' })).toBe('Visite guidée');
     expect(offerShortLabel({ ...offerAt('X'), shortLabel: '   ' })).toBe('Visite guidée');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Secutix import integration (domain level)
+// ---------------------------------------------------------------------------
+
+describe('Secutix import — spaces auto-creation', () => {
+  function row(espace: string, overrides: Record<string, string> = {}) {
+    return {
+      productDateTime: '22.09.2026 10:45',
+      product: 'VISITE',
+      groupName: 'ECOLE PRIMAIRE',
+      guide: '',
+      theme: "G/ CP à CE2/ Découvrons le Muséum",
+      contractNumber: '2456008',
+      duration: '1:00',
+      site: 'DCSTI_MHN',
+      location: espace,
+      visitLanguage: '',
+      operationType: '',
+      groupNature: 'SCOLAIRES C2',
+      participantCount: '30',
+      contactName: 'DUPONT Jean',
+      contactPhone: '',
+      contactEmail: '',
+      remark: '',
+      visitState: '',
+      plannedArrivalTime: '',
+      ...overrides,
+    };
+  }
+
+  it('auto-creates an unknown ESPACE value as a white space on import', () => {
+    const offer = { ...createOffer({ id: 'off_1', name: 'Découvrons', secutixLabel: "G/ CP à CE2/ Découvrons le Muséum" }) };
+    const bookings = normalizeSecutixRows([row('Crypte')]).bookings;
+    const matched = reconcileOffers(bookings, [offer]).matched;
+    const plan = buildSecutixImportPlan(matched, [offer], [], new Date('2026-09-20T10:00:00Z'));
+    const data: AppData = {
+      mediators: [], offers: [offer], schedules: [], slots: [], absences: [],
+      cycles: [], quotas: [], spaces: [],
+    };
+    const result = applySecutixImport(data, plan, []);
+    expect(result.spaces).toHaveLength(1);
+    expect(result.spaces[0].name).toBe('Crypte');
+    expect(result.spaces[0].color).toBe('#FFFFFF');
+    // The imported slot references the space
+    expect(result.slots[0].location).toBe('Crypte');
+  });
+
+  it('reuses a known space without creating or recoloring it', () => {
+    const offer = { ...createOffer({ id: 'off_1', name: 'Découvrons', secutixLabel: "G/ CP à CE2/ Découvrons le Muséum" }) };
+    const spaces = [createSpace('Salle Bronze', '#4A90D9')];
+    const bookings = normalizeSecutixRows([row('Salle Bronze')]).bookings;
+    const matched = reconcileOffers(bookings, [offer]).matched;
+    const plan = buildSecutixImportPlan(matched, [offer], [], new Date('2026-09-20T10:00:00Z'));
+    const data: AppData = {
+      mediators: [], offers: [offer], schedules: [], slots: [], absences: [],
+      cycles: [], quotas: [], spaces,
+    };
+    const result = applySecutixImport(data, plan, []);
+    expect(result.spaces).toEqual(spaces); // still exactly 1, color kept
+    expect(result.slots[0].location).toBe('Salle Bronze');
+  });
+
+  it('reuses a known space case-insensitively', () => {
+    const offer = { ...createOffer({ id: 'off_1', name: 'Découvrons', secutixLabel: "G/ CP à CE2/ Découvrons le Muséum" }) };
+    const spaces = [createSpace('salle bronze', '#4A90D9')];
+    const bookings = normalizeSecutixRows([row('Salle Bronze')]).bookings;
+    const matched = reconcileOffers(bookings, [offer]).matched;
+    const plan = buildSecutixImportPlan(matched, [offer], [], new Date('2026-09-20T10:00:00Z'));
+    const data: AppData = {
+      mediators: [], offers: [offer], schedules: [], slots: [], absences: [],
+      cycles: [], quotas: [], spaces,
+    };
+    const result = applySecutixImport(data, plan, []);
+    expect(result.spaces).toEqual(spaces);
   });
 });

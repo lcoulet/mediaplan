@@ -3,7 +3,8 @@
 import { generateExportFilename, buildExportMetadata } from '../domain/export-utils';
 import { defaultOfferColor } from '../domain/models';
 import { defaultValorisationConfig } from '../domain/hours';
-import type { AppData, Offer, Slot, ValorisationConfig } from '../domain/types';
+import { migrateLocationsToSpaces } from '../domain/spaces';
+import type { AppData, Offer, Slot, ValorisationConfig, Space } from '../domain/types';
 
 export const STORAGE_KEY = 'mediaplan_data_v1';
 const LAST_MODIFIED_KEY = 'mediaplan_last_modified';
@@ -55,9 +56,11 @@ export function load(): AppData {
       cycles: parsed.cycles || [],
       // Quarterly hour quotas — same migration as cycles.
       quotas: parsed.quotas || [],
-      // Spaces — legacy data persisted before the field existed simply
-      // has none; an explicit empty list is the migration baseline.
-      spaces: parsed.spaces || [],
+      // Spaces — legacy data persisted before the field existed has free
+      // text locations only: each distinct non-empty location becomes a
+      // space (default palette, never white). Already-migrated data is
+      // idempotent: locations matching existing spaces reuse them.
+      spaces: migrateSpaces(parsed.spaces || [], offers, slots),
       // Valorisation settings — legacy data loads with the defaults;
       // partially persisted configs are filled in with the defaults.
       valorisation: migrateValorisation(parsed.valorisation),
@@ -66,6 +69,17 @@ export function load(): AppData {
     console.error('Failed to load data:', e);
     return { ...defaultData };
   }
+}
+
+/**
+ * Migrate free-text locations to spaces on load: every distinct
+ * non-empty offer/slot location missing from the persisted spaces gets
+ * one (palette color, never white). Pure; used by load() so legacy
+ * data gains its spaces automatically and already-migrated data is
+ * unchanged (migrateLocationsToSpaces is idempotent by name).
+ */
+function migrateSpaces(existing: Space[], offers: Offer[], slots: Slot[]): Space[] {
+  return migrateLocationsToSpaces(offers, slots, existing).spaces;
 }
 
 /** Fill in default valorisation values for a partially persisted config. */

@@ -244,11 +244,11 @@ export function migrateLocationsToSpaces(
   const spaces: Space[] = [...existingSpaces];
   const seen = new Set(spaces.map((s) => nameKey(s.name)));
 
-  const collect = (location: string): void => {
-    const key = nameKey(location);
+  const collect = (location: string | undefined): void => {
+    const key = nameKey(location || '');
     if (!key || seen.has(key)) return;
     seen.add(key);
-    spaces.push(createSpace(location.trim(), defaultSpacePalette(spaces.length - existingSpaces.length)));
+    spaces.push(createSpace((location || '').trim(), defaultSpacePalette(spaces.length - existingSpaces.length)));
   };
   offers.forEach((o) => collect(o.location));
   slots.forEach((s) => collect(s.location));
