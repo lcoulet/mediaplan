@@ -3,6 +3,7 @@
 import type { AppData } from '../domain/types';
 import { createMediator, createOffer, createSlot, createAbsence, getDefaultHalfDayConfig, generateId } from '../domain/models';
 import { createDefaultCycle, isoWeekKey } from '../domain/cycles';
+import { migrateLocationsToSpaces } from '../domain/spaces';
 import type { CycleWeek, WorkCycle } from '../domain/types';
 
 /** Build a work cycle for a mediator from worked-day ranges (Mon..Sun). */
@@ -464,6 +465,10 @@ export function seedDemoData(data: AppData): void {
   data.slots = slots;
   data.absences = absences;
   data.halfDayConfig = getDefaultHalfDayConfig();
+  // Spaces: one per distinct offer/slot location, same rule as the on-load
+  // migration (palette colors, never white). Seeding them explicitly keeps
+  // the demo set consistent immediately, without a reload.
+  data.spaces = migrateLocationsToSpaces(offers, slots, data.spaces).spaces;
 
   // --- Work cycles, contract types and arrangements (demo) ---
   // 4 mediators with cycles (incl. one weekend-worked cycle), 2 with a

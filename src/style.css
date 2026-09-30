@@ -966,6 +966,208 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
     margin-top: 2px;
 }
 
+/* ===== Espaces section (space list CRUD) ===== */
+.space-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.space-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 9px 12px;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    background: var(--color-surface);
+}
+
+.space-row:last-child {
+    margin-bottom: 0;
+}
+
+.space-swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    flex-shrink: 0;
+    /* #8a8a8a = 3.45:1 against white (WCAG 1.4.11) — white spaces stay visible */
+    border: 1px solid #8a8a8a;
+}
+
+.space-name {
+    font-weight: 600;
+    min-width: 120px;
+}
+
+.space-note {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.space-color-input {
+    width: 46px;
+    height: 26px;
+    padding: 1px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    cursor: pointer;
+}
+
+.space-color-hex {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.space-actions {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+/* Inline row errors (delete refused / rename duplicate) */
+.space-row-error {
+    width: 100%;
+    font-size: 12px;
+    color: var(--color-danger);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.space-row.refused {
+    border-color: var(--color-danger);
+    background: var(--color-danger-bg);
+}
+
+/* In-place rename input */
+.rename-input {
+    min-width: 120px;
+    width: 200px;
+    max-width: 100%;
+    padding: 5px 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+}
+
+.rename-input.invalid {
+    border-color: var(--color-danger);
+    background: var(--color-danger-bg);
+}
+
+/* Icon-only buttons in space rows */
+.btn.icon-only {
+    padding: 4px 8px;
+    font-size: 14px;
+}
+
+/* Add-space form */
+.add-space-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+    padding: 10px 12px;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius);
+    background: #fafafa;
+}
+
+.add-space-form .add-space-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.add-space-form input[type="text"] {
+    padding: 6px 10px;
+    font-size: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    font-family: inherit;
+    color: var(--color-text);
+    background: var(--color-surface);
+    width: 200px;
+    max-width: 100%;
+}
+
+.add-space-form input[type="text"].invalid {
+    border-color: var(--color-danger);
+    background: var(--color-danger-bg);
+}
+
+.add-space-form .color-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.add-space-form .color-wrap label {
+    font-weight: 400;
+    color: var(--color-text-muted);
+    font-size: 13px;
+}
+
+.form-error {
+    width: 100%;
+    font-size: 12px;
+    color: var(--color-danger);
+    font-weight: 600;
+}
+
+/* ===== Confirmation dialog (delete space) ===== */
+.confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.confirm-dialog {
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    padding: 20px;
+    width: 440px;
+    max-width: 100%;
+}
+
+.confirm-dialog h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.confirm-dialog p {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    margin-bottom: 16px;
+}
+
+.confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
     .app-subtitle { display: none; }

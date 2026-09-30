@@ -42,4 +42,17 @@ describe('demo seed distribution', () => {
     expect(total).toBeGreaterThan(3000);
     expect(data.absences.length).toBeGreaterThan(60);
   });
+
+  it('seeds spaces matching the distinct offer locations (consistent with the store migration)', () => {
+    const data: AppData = { mediators: [], offers: [], schedules: [], slots: [], absences: [], cycles: [], quotas: [], spaces: [] };
+    seedDemoData(data);
+
+    // One space per distinct non-empty offer location (same rule as the
+    // on-load migration), never white
+    const locations = [...new Set(data.offers.map((o) => o.location).filter(Boolean))].sort();
+    expect(data.spaces.map((s) => s.name).sort()).toEqual(locations);
+    expect(data.spaces.length).toBeGreaterThan(0);
+    expect(data.spaces.every((s) => s.color.toUpperCase() !== '#FFFFFF')).toBe(true);
+    expect(data.spaces.every((s) => s.id && s.color.startsWith('#'))).toBe(true);
+  });
 });

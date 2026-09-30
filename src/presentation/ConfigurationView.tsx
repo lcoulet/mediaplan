@@ -11,6 +11,7 @@ import { exportJSON, importJSON } from '../infrastructure/store';
 import { exportExcel, importExcel } from '../infrastructure/excel';
 import { clearPlanningData } from '../domain/clear-data';
 import { getDefaultHalfDayConfig, validateHalfDayConfig, migrateAbsencesToConfig } from '../domain/models';
+import SpacesSection from './SpacesSection';
 import SecutixImportPanel from './SecutixImportPanel';
 
 export default function ConfigurationView() {
@@ -120,6 +121,9 @@ export default function ConfigurationView() {
       </div>
 
       <div className="config-container">
+        {/* ============ Espaces ============ */}
+        <SpacesSection />
+
         {/* Secutix synchronization card — daily action, not a setting */}
         <SecutixImportPanel />
 
