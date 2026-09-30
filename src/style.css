@@ -880,6 +880,32 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
   font-size: 13px !important;
 }
 
+/* ===== Header actions (Secutix import button + icon actions) ===== */
+.header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Accent button for the daily Secutix import (visible from every view) */
+.btn-accent {
+    background: var(--color-accent);
+    color: #3a2408;
+    font-weight: 600;
+}
+
+.btn-accent:hover {
+    background: #c47a35;
+    color: #fff;
+}
+
+/* ===== Secutix import panel (inside the header modal) ===== */
+.secutix-panel .secutix-intro {
+    color: var(--color-text-muted);
+    margin-bottom: 12px;
+}
+
 /* ===== Configuration view (renamed from Import/Export) ===== */
 .config-container {
     display: flex;

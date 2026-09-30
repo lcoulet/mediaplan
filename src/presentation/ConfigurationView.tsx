@@ -1,9 +1,8 @@
-// ConfigurationView.tsx — Configuration view (renamed from Import/Export):
-// sections Données (JSON.gz export/import, data delete, demo data) and
-// Demi-journées (half-day boundaries with validation, moved from the header
-// settings popup). The Espaces section (space list management) is specified
-// in spaces.feature. The Secutix import is NOT a configuration concern:
-// it lives in the header (spec configuration-view.feature).
+// ConfigurationView.tsx — Configuration view: three sections — Espaces
+// (space list management, SpacesSection), Données (JSON.gz export/import,
+// data delete, demo data) and Demi-journées (half-day boundaries with
+// validation, moved from the header settings popup). The Secutix import is
+// NOT a configuration concern: it lives in the header (button + modal).
 
 import { useState } from 'react';
 import { useData, COMMIT_LABELS } from './DataContext';
@@ -12,7 +11,6 @@ import { exportExcel, importExcel } from '../infrastructure/excel';
 import { clearPlanningData } from '../domain/clear-data';
 import { getDefaultHalfDayConfig, validateHalfDayConfig, migrateAbsencesToConfig } from '../domain/models';
 import SpacesSection from './SpacesSection';
-import SecutixImportPanel from './SecutixImportPanel';
 
 export default function ConfigurationView() {
   const { state, commit, resetData } = useData();
@@ -123,9 +121,6 @@ export default function ConfigurationView() {
       <div className="config-container">
         {/* ============ Espaces ============ */}
         <SpacesSection />
-
-        {/* Secutix synchronization card — daily action, not a setting */}
-        <SecutixImportPanel />
 
         {/* ============ Données ============ */}
         <section className="config-section" aria-labelledby="config-data-title">

@@ -1,9 +1,12 @@
-// SecutixImportPanel.tsx — Secutix synchronization card (Import/Export view)
+// SecutixImportPanel.tsx — Secutix import flow (opened from the header button)
 //
 // Flow: pick the export file → read + normalize (domain) → decide for every
 // THÈME label that matches no offer (map it to an existing offer with a
 // searchable picker, create a suggested offer, or ignore the bookings) →
 // apply the plan in a single history entry → summary with one-click undo.
+//
+// Rendered inside a modal (Header button): the panel is mounted fresh on
+// every open (keyed), so no state leaks between sessions.
 
 import { useMemo, useState } from 'react';
 import { useData, COMMIT_LABELS } from './DataContext';
@@ -168,9 +171,8 @@ export default function SecutixImportPanel() {
   }
 
   return (
-    <div className="io-card">
-      <h2>Import Secutix (synchronisation)</h2>
-      <p>
+    <div className="secutix-panel">
+      <p className="secutix-intro">
         Synchronise le planning avec un export Secutix : ajoute les nouvelles réservations,
         met à jour les modifiées, supprime celles qui ont disparu du fichier (annulées
         côté Secutix). Les affectations de médiateurs sont conservées.

@@ -1,7 +1,10 @@
-// Header.tsx — App header with navigation + undo/redo/reset
+// Header.tsx — App header with navigation + Secutix import + undo/redo/reset
 
+import { useState } from 'react';
 import { useData } from './DataContext';
 import type { ViewName } from './types';
+import Modal from './Modal';
+import SecutixImportPanel from './SecutixImportPanel';
 
 const NAV_ITEMS: { view: ViewName; label: string; shortcut: string }[] = [
   { view: 'daily', label: 'Plan Jour', shortcut: '1' },
@@ -16,6 +19,12 @@ const NAV_ITEMS: { view: ViewName; label: string; shortcut: string }[] = [
 
 export default function Header({ onToggleHistory }: { onToggleHistory: () => void }) {
   const { state, dispatch, canUndo, canRedo, undo, redo } = useData();
+  // Secutix import modal — opened from the header button (daily foreground
+  // action, visible from every view; NOT part of the Configuration view).
+  // The panel is keyed by open-state epoch so every open mounts it FRESH:
+  // no file/error/choice state leaks between imports.
+  const [secutixEpoch, setSecutixEpoch] = useState(0);
+  const secutixOpen = secutixEpoch > 0;
 
   return (
     <header className="app-header">
@@ -36,43 +45,59 @@ export default function Header({ onToggleHistory }: { onToggleHistory: () => voi
             {item.label}
           </button>
         ))}
-        <button
-          className="icon-btn"
-          id="btn-undo"
-          title="Annuler (Ctrl+Z)"
-          disabled={!canUndo}
-          onClick={undo}
-        >
-          ↶
-        </button>
-        <button
-          className="icon-btn"
-          id="btn-redo"
-          title="Rétablir (Ctrl+Shift+Z)"
-          disabled={!canRedo}
-          onClick={redo}
-        >
-          ↷
-        </button>
-        <a
-          className="icon-btn"
-          id="btn-user-guide"
-          title="Documentation (?)"
-          href="guide/index.html"
-          target="_blank"
-          rel="noreferrer"
-        >
-          ?
-        </a>
-        <button
-          className="icon-btn"
-          id="btn-history"
-          title="Historique (H)"
-          onClick={onToggleHistory}
-        >
-          Historique
-        </button>
+        <div className="header-actions">
+          <button
+            className="btn btn-accent"
+            type="button"
+            id="btn-secutix-import"
+            title="Ouvrir le flux d'import Secutix"
+            onClick={() => setSecutixEpoch(Date.now())}
+          >
+            ⇩ Import Secutix
+          </button>
+          <button
+            className="icon-btn"
+            id="btn-undo"
+            title="Annuler (Ctrl+Z)"
+            disabled={!canUndo}
+            onClick={undo}
+          >
+            ↶
+          </button>
+          <button
+            className="icon-btn"
+            id="btn-redo"
+            title="Rétablir (Ctrl+Shift+Z)"
+            disabled={!canRedo}
+            onClick={redo}
+          >
+            ↷
+          </button>
+          <a
+            className="icon-btn"
+            id="btn-user-guide"
+            title="Documentation (?)"
+            href="guide/index.html"
+            target="_blank"
+            rel="noreferrer"
+          >
+            ?
+          </a>
+          <button
+            className="icon-btn"
+            id="btn-history"
+            title="Historique (H)"
+            onClick={onToggleHistory}
+          >
+            Historique
+          </button>
+        </div>
       </nav>
+      {secutixOpen && (
+        <Modal title="Import Secutix (synchronisation)" onClose={() => setSecutixEpoch(0)}>
+          <SecutixImportPanel key={secutixEpoch} />
+        </Modal>
+      )}
     </header>
   );
 }
