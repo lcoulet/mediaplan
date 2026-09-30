@@ -33,11 +33,15 @@ function toMinutes(time: string): number {
   return h * 60 + m;
 }
 
-/** Hour ticks (minutes from midnight) covered by an axis [startMin, endMin]. */
+/** Hour ticks (minutes from midnight) covered by an axis [startMin, endMin].
+    Whole hours, plus the axis start itself when it is not a whole hour
+    (e.g. the fixed 08:30 print start). An axis ending between whole hours
+    (e.g. a teardown extension to 19:50) keeps its last whole-hour label;
+    the remaining minutes extend the final column's width. */
 function hourTicksFor(startMin: number, endMin: number): number[] {
   const ticks: number[] = [];
   for (let t = Math.ceil(startMin / 60) * 60; t <= endMin; t += 60) ticks.push(t);
-  // Always include the axis start hour itself when it is not a whole hour
+  // Always include the axis start itself when it is not a whole hour
   if (ticks.length === 0 || ticks[0] > startMin) ticks.unshift(startMin);
   return ticks;
 }
