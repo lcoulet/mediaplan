@@ -110,7 +110,7 @@ describe('useKeyboardShortcuts', () => {
       ['5', 'offers'],
       ['6', 'absences'],
       ['7', 'stats'],
-      ['8', 'import-export'],
+      ['8', 'configuration'],
     ] as const)('key %s switches to %s view', (key, view) => {
       renderApp();
       // Initial view is daily
@@ -390,7 +390,7 @@ describe('useKeyboardShortcuts', () => {
         'offers',
         'absences',
         'stats',
-        'import-export',
+        'configuration',
       ]);
     });
   });

@@ -79,14 +79,14 @@ describe('JSON.gz Import/Export', () => {
   });
 });
 
-describe('ImportExportView', () => {
+describe('ConfigurationView', () => {
   it('should render import/export buttons', async () => {
-    const { default: ImportExportView } = await import('../src/presentation/ImportExportView');
-    expect(ImportExportView).toBeDefined();
+    const { default: ConfigurationView } = await import('../src/presentation/ConfigurationView');
+    expect(ConfigurationView).toBeDefined();
   });
 
   it('should accept .json and .gz files in file input', async () => {
-    const { default: ImportExportView } = await import('../src/presentation/ImportExportView');
-    expect(ImportExportView).toBeDefined();
+    const { default: ConfigurationView } = await import('../src/presentation/ConfigurationView');
+    expect(ConfigurationView).toBeDefined();
   });
 });

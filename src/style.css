@@ -880,6 +880,92 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
   font-size: 13px !important;
 }
 
+/* ===== Configuration view (renamed from Import/Export) ===== */
+.config-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.config-section {
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.config-section-head {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border);
+    background: #fafafa;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.config-section-head h3 {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.section-hint {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    flex: 1;
+    min-width: 200px;
+}
+
+.config-body {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.toolbar-note {
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+/* ===== Half-day settings (Demi-journées section) ===== */
+.halfday-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.halfday-row label {
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.time-input {
+    width: 90px;
+    padding: 6px 8px;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    font-family: inherit;
+    color: var(--color-text);
+    background: var(--color-surface);
+}
+
+.time-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(44,110,73,0.15);
+}
+
+.config-note {
+    flex: none;
+    margin-top: 2px;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
     .app-subtitle { display: none; }

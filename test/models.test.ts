@@ -1,6 +1,6 @@
 // test/models.test.ts — Tests for data models
 import { describe, it, expect } from 'vitest';
-import { generateId, createMediator, createOffer, createSchedule, createSlot, STATUS_LABELS } from '../src/domain/models';
+import { generateId, createMediator, createOffer, createSchedule, createSlot, STATUS_LABELS, getDefaultHalfDayConfig, validateHalfDayConfig } from '../src/domain/models';
 
 describe('generateId', () => {
   it('should generate a unique string with a prefix', () => {
@@ -152,5 +152,31 @@ describe('STATUS_LABELS', () => {
     expect(STATUS_LABELS.slot.confirmed).toBe('Confirmé');
     expect(STATUS_LABELS.slot.cancelled).toBe('Annulé');
     expect(STATUS_LABELS.slot.completed).toBe('Terminé');
+  });
+});
+
+// Half-day boundaries validation (configuration-view.feature: morning end
+// must precede afternoon start)
+describe('validateHalfDayConfig', () => {
+  it('accepts the default config', () => {
+    const result = validateHalfDayConfig(getDefaultHalfDayConfig());
+    expect(result.ok).toBe(true);
+  });
+
+  it('accepts valid boundaries', () => {
+    const result = validateHalfDayConfig({ morningEnd: '12:30', afternoonStart: '13:30' });
+    expect(result.ok).toBe(true);
+  });
+
+  it('accepts identical boundaries (morningEnd == afternoonStart)', () => {
+    // The default is 13:00/13:00: no gap between morning and afternoon
+    const result = validateHalfDayConfig({ morningEnd: '13:00', afternoonStart: '13:00' });
+    expect(result.ok).toBe(true);
+  });
+
+  it('refuses reversed boundaries with the spec message', () => {
+    const result = validateHalfDayConfig({ morningEnd: '13:00', afternoonStart: '12:00' });
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error).toBe("L'heure de début doit précéder l'heure de fin");
   });
 });

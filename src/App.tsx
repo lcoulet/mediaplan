@@ -12,7 +12,7 @@ import MediatorsView from './presentation/MediatorsView';
 import OffersView from './presentation/OffersView';
 import AbsencesView from './presentation/AbsencesView';
 import StatsView from './presentation/StatsView';
-import ImportExportView from './presentation/ImportExportView';
+import ConfigurationView from './presentation/ConfigurationView';
 import StatusBar from './presentation/StatusBar';
 
 function ViewRouter() {
@@ -35,8 +35,8 @@ function ViewRouter() {
       return <AbsencesView />;
     case 'stats':
       return <StatsView />;
-    case 'import-export':
-      return <ImportExportView />;
+    case 'configuration':
+      return <ConfigurationView />;
     default:
       return <DailyView />;
   }

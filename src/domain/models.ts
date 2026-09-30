@@ -586,6 +586,32 @@ export function getDefaultHalfDayConfig() {
   };
 }
 
+export interface HalfDayConfig {
+  morningEnd: string;
+  afternoonStart: string;
+}
+
+export type HalfDayValidation =
+  | { ok: true; error: null }
+  | { ok: false; error: string };
+
+/**
+ * Validate the half-day boundaries: the afternoon must start ON OR AFTER
+ * the morning ends. Reversed boundaries (afternoonStart < morningEnd) are
+ * refused with the spec message. Identical boundaries are valid (the
+ * default 13:00/13:00 has no gap between morning and afternoon).
+ */
+export function validateHalfDayConfig(config: HalfDayConfig): HalfDayValidation {
+  const toMinutes = (time: string): number => {
+    const [h, m] = time.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+  if (toMinutes(config.afternoonStart) < toMinutes(config.morningEnd)) {
+    return { ok: false, error: "L'heure de début doit précéder l'heure de fin" };
+  }
+  return { ok: true, error: null };
+}
+
 // Get time range for an absence based on halfDay and config
 export function getAbsenceTimeRange(
   absence: Absence,

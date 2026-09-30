@@ -28,7 +28,7 @@ export const SHORTCUT_VIEWS: ViewName[] = [
   'offers',
   'absences',
   'stats',
-  'import-export',
+  'configuration',
 ];
 
 // True when a keydown event must NOT trigger a shortcut: the event target is

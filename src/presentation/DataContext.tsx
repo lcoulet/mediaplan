@@ -77,7 +77,9 @@ function getInitialState(): AppState {
       'offres': 'offers',
       'absences': 'absences',
       'statistiques': 'stats',
-      'import-export': 'import-export',
+      'configuration': 'configuration',
+      // Legacy URL param of the former Import / Export view
+      'import-export': 'configuration',
     };
 
     if (viewParam && viewMap[viewParam]) {
@@ -308,7 +310,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       'offers': 'offres',
       'absences': 'absences',
       'stats': 'statistiques',
-      'import-export': 'import-export',
+      'configuration': 'configuration',
     };
     urlParams.set('display', displayMap[state.currentView]);
     urlParams.set('date', toLocalDateString(state.currentDate));
