@@ -761,6 +761,83 @@ body.edit-mode .cal-day-col:hover {
   text-overflow: ellipsis;
 }
 
+/* Space-colored blocks: offer dot + short label row (spec spaces.feature:
+   block background = SPACE color, the dot carries the OFFER color). */
+.slot-label-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.daily-slot .offer-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  /* White ring keeps the offer dot perceivable on any space color (WCAG 1.4.11) */
+  box-shadow: 0 0 0 1.5px #ffffff;
+}
+
+.daily-slot .slot-label {
+  font-size: 10px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* White space block (Secutix auto-created): border + readable text are set
+   inline by the view; keep the dot's ring visible on the white background */
+.daily-slot.space-white .offer-dot {
+  box-shadow: 0 0 0 1.5px #ffffff;
+}
+
+/* Space legend (row under the lanes, per the validated mockup) */
+.daily-space-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 10px 12px 4px 12px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.daily-space-legend-title {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.daily-space-legend-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.daily-space-swatch {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  margin-right: 5px;
+  /* #8a8a8a = 3.45:1 against white (WCAG 1.4.11) — same as the white space block */
+  border: 1px solid #8a8a8a;
+}
+
+.daily-space-legend-hint .offer-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0 0 1.5px #ffffff;
+  margin-right: 4px;
+}
+
 .daily-slot .slot-mediator {
   font-size: 10px;
   color: var(--color-text-secondary);

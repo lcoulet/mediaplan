@@ -3,7 +3,7 @@
 // unassigned lane, standard offers lane.
 import { useState, useMemo } from 'react';
 import { useData, useCRUD } from './DataContext';
-import type { Slot, Mediator, Absence, AbsenceType } from '../domain/types';
+import type { Slot, Mediator, Absence, AbsenceType, Offer } from '../domain/types';
 import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString, getSlotTotalRange, formatSlotBookingSummary, getISOWeekNumber, isFreeVisitOffer } from '../domain/models';
 import { ABSENCE_TYPE_LABELS } from '../domain/models';
 import { useElementWidth, pxPerHourFromWidth } from './useElementWidth';
@@ -12,6 +12,9 @@ import { getDynamicMasking, setDynamicMasking } from '../infrastructure/ui-setti
 import { mediatorsForPrint } from '../domain/print-selection';
 import { getPillsForMediator, hatchingForDate } from '../domain/cycle-display';
 import { getWorkedHoursForDate } from '../domain/cycles';
+import { spaceForSlot, blockTextColor, legendSpacesForDay } from '../domain/space-display';
+import { offerShortLabel } from '../domain/spaces';
+import { SECUTIX_SPACE_COLOR } from '../domain/spaces';
 import { usePrint, printDateLine } from './usePrint';
 import SlotModal from './SlotModal';
 
@@ -241,6 +244,44 @@ export default function DailyView() {
     return formatTime(hour, minute);
   }
 
+  // Space-colored blocks (spec: the SPACE color is the block background,
+  // the primary signal; the OFFRE color moves to the dot). Resolved per
+  // slot; a slot with no space keeps the neutral lane styling.
+  function spaceStyleFor(slot: Slot, offer: { location: string } | undefined): {
+    spaceClass: string;
+    style: React.CSSProperties;
+  } {
+    const space = spaceForSlot(data.spaces, slot, offer as Offer | undefined);
+    if (!space) return { spaceClass: '', style: {} };
+    const isWhite = space.color.toUpperCase() === SECUTIX_SPACE_COLOR;
+    return {
+      spaceClass: ` has-space${isWhite ? ' space-white' : ''}`,
+      style: {
+        backgroundColor: space.color,
+        color: blockTextColor(space),
+        ...(isWhite ? { border: '1.5px solid #8a8a8a' } : {}),
+      },
+    };
+  }
+
+  // Offer dot + short label row inside a block (dot color = offer color,
+  // white ring for contrast per the validated mockup; label carries the
+  // text info, the dot is aria-hidden).
+  function renderBlockLabel(offer: typeof data.offers[number] | undefined): React.ReactNode {
+    return (
+      <div className="slot-label-row">
+        <span
+          className="offer-dot"
+          style={{ backgroundColor: offer?.color || '#ccc' }}
+          aria-hidden="true"
+        ></span>
+        <span className="slot-label" title={offer ? offerShortLabel(offer) : undefined}>
+          {offer ? offerShortLabel(offer) : '—'}
+        </span>
+      </div>
+    );
+  }
+
   // Handle drop on mediator track
   function handleDropOnMediator(e: React.DragEvent, mediatorId: string) {
     e.preventDefault();
@@ -452,6 +493,13 @@ export default function DailyView() {
     return dayAbsences.filter(a => a.mediatorId === mediatorId);
   }
 
+  // Legend: distinct spaces used by the day's slots (first-use order),
+  // rendered under the lanes per the validated mockup.
+  const legendSpaces = useMemo(
+    () => legendSpacesForDay(data.spaces, daySlots, data.offers),
+    [data.spaces, daySlots, data.offers]
+  );
+
   return (
     <div className="view active">
       <div className="toolbar">
@@ -598,13 +646,15 @@ export default function DailyView() {
                     const offer = data.offers.find(o => o.id === slot.offerId);
                     const isSelected = selectedSlot?.id === slot.id;
                     const isImported = slot.origin === 'imported';
+                    const space = spaceStyleFor(slot, offer);
                     return (
                       <div
                         key={slot.id}
-                        className={`daily-slot unassigned${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}`}
+                        className={`daily-slot unassigned${space.spaceClass}${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}`}
                         style={{
                           left: `${getSlotTop(slot)}px`,
                           width: `${getSlotHeight(slot)}px`,
+                          ...space.style,
                         }}
                         onClick={() => {
                           setSelectedSlot(slot);
@@ -616,7 +666,7 @@ export default function DailyView() {
                         title={`${formatSlotBookingSummary(slot, offer)}\nMédiateur : non assigné`}
                       >
                         <div className="slot-time">{slot.startTime} – {slot.endTime}</div>
-                        <div className="slot-title">{offer?.name || '—'}</div>
+                        {renderBlockLabel(offer)}
                         <div className="slot-mediator">Non assigné</div>
                       </div>
                     );
@@ -790,6 +840,7 @@ export default function DailyView() {
                     const mediatorColor = mediator.color || '#ccc';
                     const isSelected = selectedSlot?.id === slot.id;
                     const isImported = slot.origin === 'imported';
+                    const space = spaceStyleFor(slot, offer);
 
                     // Total block = setup + booking + teardown.
                     // Durations: slot values override offer values (per-slot editable)
@@ -811,11 +862,12 @@ export default function DailyView() {
                     return (
                       <div
                         key={slot.id}
-                        className={`daily-slot assigned${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}`}
+                        className={`daily-slot assigned${space.spaceClass}${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}`}
                         style={{
                           left: `${totalLeft}px`,
                           width: `${totalWidth}px`,
                           borderLeftColor: mediatorColor,
+                          ...space.style,
                         }}
                         onClick={() => {
                           setSelectedSlot(slot);
@@ -833,7 +885,7 @@ export default function DailyView() {
                           ></div>
                         )}
                         <div className="slot-time">{slot.startTime} – {slot.endTime}</div>
-                        <div className="slot-title">{offer?.name || '—'}</div>
+                        {renderBlockLabel(offer)}
                         {hasTeardown && (
                           <div
                             className="slot-boundary teardown-boundary"
@@ -885,13 +937,15 @@ export default function DailyView() {
                     const offer = data.offers.find(o => o.id === slot.offerId);
                     const isSelected = selectedSlot?.id === slot.id;
                     const isImported = slot.origin === 'imported';
+                    const space = spaceStyleFor(slot, offer);
                     return (
                       <div
                         key={slot.id}
-                        className={`daily-slot free${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}`}
+                        className={`daily-slot free${space.spaceClass}${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}`}
                         style={{
                           left: `${getSlotTop(slot)}px`,
                           width: `${getSlotHeight(slot)}px`,
+                          ...space.style,
                         }}
                         onClick={() => {
                           setSelectedSlot(slot);
@@ -900,7 +954,7 @@ export default function DailyView() {
                         title={`${formatSlotBookingSummary(slot, offer)}\nVisite libre : aucun médiateur requis`}
                       >
                         <div className="slot-time">{slot.startTime} – {slot.endTime}</div>
-                        <div className="slot-title">{offer?.name || '—'}</div>
+                        {renderBlockLabel(offer)}
                         <div className="slot-mediator">Libre</div>
                       </div>
                     );
@@ -908,6 +962,28 @@ export default function DailyView() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Space legend: swatches + names under the lanes (per mockup).
+            Only rendered when the day uses at least one space. */}
+        {legendSpaces.length > 0 && (
+          <div className="daily-space-legend" aria-label="Légende des couleurs d'espace">
+            <span className="daily-space-legend-title">Espaces :</span>
+            {legendSpaces.map((space) => (
+              <span key={space.id} className="daily-space-legend-item">
+                <span
+                  className="daily-space-swatch"
+                  style={{ backgroundColor: space.color }}
+                  aria-hidden="true"
+                ></span>
+                {space.name}
+              </span>
+            ))}
+            <span className="daily-space-legend-item daily-space-legend-hint">
+              <span className="offer-dot" aria-hidden="true"></span>
+              pastille = couleur de l'offre
+            </span>
           </div>
         )}
 
