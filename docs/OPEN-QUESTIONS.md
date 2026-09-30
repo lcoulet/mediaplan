@@ -87,6 +87,43 @@ weeks 39–51, analyzed locally, never committed):**
   cycle), not a stored state
 - "maraudage/accompagnement libre" ≈ Accueil Libre (welcomeType)
 
+## Spaces (Espaces) — colored spaces + short offer label + day-view print
+
+**Established (decided 2026-09-29):**
+- [x] SPACE ENTITY: manageable list of spaces (list of espaces), each
+      with a NAME and a COLOR. Existing `location` free-text values
+      (offers + slots) are AUTO-MIGRATED into the list (one space per
+      distinct value)
+- [x] SPACE LIST MANAGEMENT: in the CONFIGURATION view — the view must
+      be BUILT TOGETHER with this feature (it does not exist yet)
+- [x] DAY VIEW: space color is the PRIMARY signal — it colors the
+      block BACKGROUND. Offer keeps a color signal as a small colored
+      dot (dot) next to the short label — NOT a pill (to confirm)
+- [x] ACCUEIL VIEW: space color on the offer's BAND background; the
+      mediator column stays untouched
+- [x] SHORT OFFER LABEL (shortLabel field on Offer, to spec): editable
+      in OfferModal, displayed in the day view; falls back to the
+      offer's full name when empty
+- [x] PRINT (day view): readable A4 LANDSCAPE — time axis stops at
+      19:00 (a slot exceeding 19:00 extends the axis to its end);
+      short offer label used for readability. Start-time behavior TBD
+
+**Open questions (spaces/print):**
+- [ ] Offer signal inside the space-colored block: colored DOT next to
+      the short label (recommended), or nothing (space + label only)?
+- [ ] Secutix import ESPACE values: auto-create spaces from unseen
+      values (recommended, default color), or leave unmapped slots as
+      free text?
+- [ ] Configuration view scope NOW: replace the "Import / Export" nav
+      entry (per the earlier header decision), containing: Espaces
+      section + the current Import/Export content (Secutix import,
+      JSON.gz export/import, delete, demo data) + half-day settings;
+      the OneDrive sync section comes later with sync slice 4?
+- [ ] Print start time: fixed 08:00, or dynamic (extend left if a slot
+      starts earlier — symmetric to the 19:00 clamp rule)?
+- [ ] Space color conflicts with mediator lane hatching/cycle colors —
+      readability check needed during design review
+
 ## Mediator Annual Planning View (vue planning médiateurs)
 
 **Established so far:**
