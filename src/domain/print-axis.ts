@@ -30,7 +30,6 @@ function timeToMinutes(t: string): number {
   if (!Number.isFinite(h) || !Number.isFinite(m)) return NaN;
   return (h || 0) * 60 + (m || 0);
 }
-
 /**
  * Bounds of the printed time axis for a day's slots.
  *
@@ -55,6 +54,10 @@ export function printAxisBounds(
   for (const slot of slots) {
     const offer = offersBySlot.get(slot.offerId);
     const total = getSlotTotalRange(slot, offer);
+    // A slot with missing/empty hours yields the degenerate '00:00-00:00'
+    // block (getSlotTotalRange's fallback) — ignore it, it must not extend
+    // the axis to midnight.
+    if (!slot.startTime || !slot.endTime) continue;
     const blockStart = timeToMinutes(total.start);
     const blockEnd = timeToMinutes(total.end);
     if (Number.isNaN(blockStart) || Number.isNaN(blockEnd)) continue;

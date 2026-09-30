@@ -118,6 +118,14 @@ describe('printAxisBounds', () => {
     const slot = createSlot({ offerId: 'off_1', startTime: '', endTime: '' });
     expect(printAxisBounds([slot], offersById(offers))).toEqual({ start: 510, end: 1140 });
   });
+
+  it('ignores a corrupted persisted slot with empty hours (bypassing createSlot defaults)', () => {
+    // Legacy/corrupt localStorage can hold a slot with empty hours; the
+    // degenerate 00:00-00:00 block must NOT extend the axis to midnight.
+    const corrupted = { offerId: 'off_1', startTime: '', endTime: '' } as unknown as Slot;
+    const offers = [createOffer({ id: 'off_1' })];
+    expect(printAxisBounds([corrupted], offersById(offers))).toEqual({ start: 510, end: 1140 });
+  });
 });
 
 describe('printAxisBounds — label generation for the extended axis', () => {
