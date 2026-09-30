@@ -41,6 +41,52 @@ weeks 39–51, analyzed locally, never committed):**
       Visite Libre / Pause Repas / Mallette / Mise à disposition /
       ANNIVERSAIRE → `Accueil Libre` (ANNIVERSAIRE confirmed by Loic)
 
+## Legacy Spec Reconciliation (old project brief, reviewed 2026-09-29)
+
+**Established (decided 2026-09-29, from the old project brief audit):**
+- [x] AUTOMATIC ASSIGNMENT: OUT OF SCOPE — assignment stays MANUAL,
+      assisted (competence highlighting, statuses, warnings) + statistics.
+      An optimizer is deemed risky at this stage. Possible future
+      ASSISTANCE improvements (noted, not specced): list potential
+      problems in the day view and jump to the next one
+- [x] LOAD BALANCING / ROTATION: a per-mediator LOAD INDICATOR is wanted
+      (weeks/quarter — the hourly quota machinery from slice 2 provides
+      the data); no auto-rotation. To spec as its own feature
+- [x] CHRONOTIME: dead — no HR-system cross-reference, considered moot
+- [x] ACTIVITY TYPES (from the old brief: animations hors les murs,
+      réunions, travail hors face public, maraudage/accompagnement
+      libre): modeled as "AUTRES ACTIVITÉS" — NOT catalog offers.
+      Freely draggable onto the planning, mediators assignable. To
+      model and spec
+- [x] SPACE (ESPACE) COLORS: CONFIRMED real need, not yet specced —
+      a MANAGEABLE LIST OF SPACES (list of espaces) each with a color
+      code, used in the day view and accueil view. Offers already
+      carry a default space, but the space must be OVERRIDABLE per slot;
+      autres activités also carry a space. To spec
+
+**Open questions (from the old brief, to resolve before the next spec phase):**
+- [ ] AUTRES ACTIVITÉS modeling: how do they differ from a manual slot
+      on a generic offer? Proposed: a distinct entity (name, color,
+      default duration?) with its own draggable lane, distinct from the
+      offer catalog; reusable like offers. Which activities does the
+      team need at start (réunions, travail hors face public, hors les
+      murs, marauding)? Free-created or predefined?
+- [ ] SPACES: is the space an entity on offers AND slots (offer default +
+      per-slot override — slot.location already exists, needs a
+      manageable list + colors)? Where is the space list managed?
+      Does the offer color stay, or is the space color the primary
+      display signal in the day view?
+- [ ] LOAD INDICATOR: display form (per-mediator counter in day view?
+      stats view?) and granularity (day/week/quarter — quarter reuses
+      the quota balance)
+
+**Legacy terminology mapping (for the record):**
+- "maîtrise des animations" → Competence (confirmed/learning)
+- "cheffes d'équipes" → Coordinator
+- "présentes non disponibles" → computed availability (absence/overlap/
+  cycle), not a stored state
+- "maraudage/accompagnement libre" ≈ Accueil Libre (welcomeType)
+
 ## Mediator Annual Planning View (vue planning médiateurs)
 
 **Established so far:**
