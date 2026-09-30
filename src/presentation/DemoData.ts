@@ -48,7 +48,7 @@ export function seedDemoData(data: AppData): void {
   // dominant durations). welcomeType: "Accueil Libre" = no mediator needed. ---
   const offerDefs = [
     // Visites encadrées — exposition permanente (90 min)
-    { name: 'Découvrons le Muséum (CP à CE2)', description: 'Visite guidée de première découverte', duration: 90, capacity: 30, location: 'Exposition permanente', setupTime: 10, teardownTime: 0, secutixLabel: 'G/ CP à CE2/ Découvrons le Muséum' },
+    { name: 'Découvrons le Muséum (CP à CE2)', description: 'Visite guidée de première découverte', duration: 90, capacity: 30, location: 'Exposition permanente', setupTime: 10, teardownTime: 0, secutixLabel: 'G/ CP à CE2/ Découvrons le Muséum', shortLabel: 'Découvrons' },
     { name: "L'Arbre à Clés (CM1 à 6e)", description: 'Parcours-jeu dans les galeries', duration: 90, capacity: 30, location: 'Exposition permanente', setupTime: 10, teardownTime: 5, secutixLabel: "G/ CM1 à 6e/ L'Arbre à Clés" },
     { name: 'Minéraux (CP à CE2)', description: 'Visite guidée sur les roches et minéraux', duration: 90, capacity: 30, location: 'Exposition permanente', setupTime: 0, teardownTime: 5, secutixLabel: 'G/ CP à CE2/ Minéraux' },
     { name: 'Minéraux (CM1 à 6e)', description: 'Visite guidée sur les roches et minéraux', duration: 90, capacity: 30, location: 'Exposition permanente', setupTime: 0, teardownTime: 5, secutixLabel: 'G/ CM1 à 6e/ Minéraux' },
@@ -355,6 +355,13 @@ export function seedDemoData(data: AppData): void {
         slotData.groupName = DEMO_GROUP_NAMES[(day + p) % DEMO_GROUP_NAMES.length];
         slotData.groupNature = DEMO_GROUP_NATURES[(day * 3 + p) % DEMO_GROUP_NATURES.length];
         slotData.location = slotOffer.location;
+        // One deterministic pattern overrides its space per day (Secutix
+        // ESPACE override demo): Monday's first unassigned slot (offer 38,
+        // Pause Repas in R&C) moves to the Auditorium — a plausible catering
+        // relocation that exercises the per-slot space override in the UI.
+        if (dow === 1 && p === 5) {
+          slotData.location = 'Auditorium';
+        }
         slotData.contractNumber = String(3100000 + ((day * 14 + p) % 700));
         slotData.contactName = contact.name;
         slotData.contactPhone = contact.phone;

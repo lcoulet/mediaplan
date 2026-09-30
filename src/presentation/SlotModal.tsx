@@ -319,16 +319,17 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
             </div>
             <div className="form-group">
               <label>Espace</label>
-              <input
-                type="text"
+              <select
                 value={form.location}
                 onChange={(e) => setField('location', e.target.value)}
                 disabled={restricted}
-                placeholder={offer?.location || 'Espace'}
-              />
-              {offer?.location && !form.location && (
-                <div className="form-hint">Par défaut : {offer.location} (offre)</div>
-              )}
+                title="Surcharge d'espace pour ce créneau ; vide = l'espace de l'offre"
+              >
+                <option value="">{offer?.location ? `Espace de l'offre (${offer.location})` : "Espace de l'offre"}</option>
+                {state.data.spaces.map((space) => (
+                  <option key={space.id} value={space.name}>{space.name}</option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
               <label>Notes / Remarques</label>

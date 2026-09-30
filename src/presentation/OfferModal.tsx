@@ -1,7 +1,7 @@
 // OfferModal.tsx — Add/edit offer form
 
 import { useState } from 'react';
-import { useCRUD } from './DataContext';
+import { useData, useCRUD } from './DataContext';
 import { createOffer } from '../domain/models';
 import type { Offer } from '../domain/types';
 import Modal from './Modal';
@@ -19,6 +19,7 @@ export const WELCOME_TYPE_LABELS: Record<Offer['welcomeType'], string> = {
 
 export default function OfferModal({ offer, onClose }: Props) {
   const crud = useCRUD();
+  const { state } = useData();
   const isEdit = !!offer;
 
   const [form, setForm] = useState<Offer>(() => offer || createOffer());
@@ -37,6 +38,7 @@ export default function OfferModal({ offer, onClose }: Props) {
       capacity: parseInt(String(form.capacity)) || 30,
       location: form.location.trim(),
       secutixLabel: form.secutixLabel?.trim(),
+      shortLabel: form.shortLabel?.trim() || undefined,
       setupTime: form.setupTime ? parseInt(String(form.setupTime)) || 0 : 0,
       teardownTime: form.teardownTime ? parseInt(String(form.teardownTime)) || 0 : 0,
     };
@@ -121,6 +123,16 @@ export default function OfferModal({ offer, onClose }: Props) {
               placeholder="ex. G/ CP à CE2/ Minéraux"
             />
           </div>
+          <div className="form-group">
+            <label>Label court</label>
+            <input
+              type="text"
+              value={form.shortLabel ?? ''}
+              onChange={(e) => setField('shortLabel', e.target.value)}
+              title="Label optionnel affiché dans les blocs de la vue quotidienne et les bandeaux du plan accueil ; à vide, le nom complet est utilisé"
+              placeholder="ex. VG"
+            />
+          </div>
         </div>
         <div className="form-group">
           <label>Type d'accueil</label>
@@ -136,12 +148,17 @@ export default function OfferModal({ offer, onClose }: Props) {
         </div>
         <div className="form-row">
           <div className="form-group">
-            <label>Lieu</label>
-            <input
-              type="text"
+            <label>Espace</label>
+            <select
               value={form.location}
               onChange={(e) => setField('location', e.target.value)}
-            />
+              title="Espace où se déroule l'offre, choisi depuis la liste des espaces (géré dans la vue Configuration)"
+            >
+              <option value="">— Aucun espace —</option>
+              {state.data.spaces.map((space) => (
+                <option key={space.id} value={space.name}>{space.name}</option>
+              ))}
+            </select>
           </div>
           <div className="form-group">
             <label>Couleur</label>

@@ -176,6 +176,7 @@ interface OfferInput {
   color?: string;
   welcomeType?: 'Accueil Libre' | 'Réservable encadrée par médiateur' | 'Animation par médiateur';
   secutixLabel?: string;
+  shortLabel?: string;
 }
 
 export function createOffer(data: OfferInput = {}): Offer {
@@ -192,6 +193,7 @@ export function createOffer(data: OfferInput = {}): Offer {
     color: data.color || OFFER_COLORS[offerColorIndex++ % OFFER_COLORS.length],
     welcomeType: data.welcomeType ?? 'Réservable encadrée par médiateur',
     ...(data.secutixLabel !== undefined ? { secutixLabel: data.secutixLabel } : {}),
+    ...(data.shortLabel !== undefined ? { shortLabel: data.shortLabel } : {}),
   };
 }
 

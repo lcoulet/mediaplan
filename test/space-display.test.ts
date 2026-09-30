@@ -1,6 +1,6 @@
 // space-display.test.ts — Space display resolution for day/accueil blocks:
 // effective space (slot override, else offer default), readable block text
-// color, legend entries (spaces used by a day's slots).
+// color, legend entries (spaces used by a day's slots), demo seeding.
 // Spec: test/features/spaces/spaces.feature (day + accueil rendering part)
 import { describe, it, expect } from 'vitest';
 import {
@@ -10,7 +10,7 @@ import {
 } from '../src/domain/space-display';
 import { spaceByName } from '../src/domain/spaces';
 import { createOffer, createSlot } from '../src/domain/models';
-import type { Offer, Slot, Space } from '../src/domain/types';
+import type { Offer, Slot, Space, AppData } from '../src/domain/types';
 
 const spaces: Space[] = [
   { id: 'spc_1', name: 'Salle Bronze', color: '#4A90D9' },
@@ -104,5 +104,47 @@ describe('legendSpacesForDay', () => {
     const daySlots = [slotAt(''), slotB];
     const legend = legendSpacesForDay(spaces, daySlots, [offer, offerB]);
     expect(legend.map((s) => s.name)).toEqual(['Salle Bronze', 'Crypte']);
+  });
+});
+
+describe('demo data — spaces and short labels', () => {
+  function emptyData(): AppData {
+    return {
+      mediators: [], offers: [], schedules: [], slots: [],
+      absences: [], cycles: [], quotas: [], spaces: [],
+    };
+  }
+
+  it('seeds offers whose locations all map to a seeded space', async () => {
+    const { seedDemoData } = await import('../src/presentation/DemoData');
+    const data = emptyData();
+    seedDemoData(data);
+    for (const offer of data.offers) {
+      if (!offer.location) continue;
+      expect(
+        spaceByName(data.spaces, offer.location),
+        `offer "${offer.name}" location "${offer.location}"`
+      ).toBeTruthy();
+    }
+  });
+
+  it('seeds at least one offer with a short label', async () => {
+    const { seedDemoData } = await import('../src/presentation/DemoData');
+    const data = emptyData();
+    seedDemoData(data);
+    expect(data.offers.some((o) => (o.shortLabel || '').trim().length > 0)).toBe(true);
+  });
+
+  it('seeds at least one slot overriding its offer space', async () => {
+    const { seedDemoData } = await import('../src/presentation/DemoData');
+    const data = emptyData();
+    seedDemoData(data);
+    const offerById = new Map(data.offers.map((o) => [o.id, o]));
+    const overriding = data.slots.filter(
+      (s) => s.location && s.location !== offerById.get(s.offerId)?.location
+    );
+    expect(overriding.length).toBeGreaterThan(0);
+    // The override must also map to a seeded space
+    expect(spaceByName(data.spaces, overriding[0].location)).toBeTruthy();
   });
 });
