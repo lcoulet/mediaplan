@@ -16,17 +16,38 @@ import { spaceForSlot, blockTextColor, legendSpacesForDay } from '../domain/spac
 import { offerShortLabel } from '../domain/spaces';
 import { SECUTIX_SPACE_COLOR } from '../domain/spaces';
 import { usePrint, printDateLine } from './usePrint';
+import { usePrintMode } from './usePrintMode';
+import { printAxisBounds } from '../domain/print-axis';
 import SlotModal from './SlotModal';
 
 const START_HOUR = 8;
 const END_HOUR = 19;
-const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + START_HOUR);
+// Screen axis in minutes from midnight (unchanged on-screen behavior)
+const AXIS_START_MIN = START_HOUR * 60;
+const AXIS_END_MIN = END_HOUR * 60;
 const FALLBACK_PX_PER_HOUR = 60; // used until the container is measured
 const TRACK_HEIGHT = 32; // Fixed height for mediator tracks
 
 function toMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
   return h * 60 + m;
+}
+
+/** Hour ticks (minutes from midnight) covered by an axis [startMin, endMin]. */
+function hourTicksFor(startMin: number, endMin: number): number[] {
+  const ticks: number[] = [];
+  for (let t = Math.ceil(startMin / 60) * 60; t <= endMin; t += 60) ticks.push(t);
+  // Always include the axis start hour itself when it is not a whole hour
+  if (ticks.length === 0 || ticks[0] > startMin) ticks.unshift(startMin);
+  return ticks;
+}
+
+/** 510 -> "8:30" — matches the previous on-screen label format (no
+    zero-padding on the hour). */
+function minutesToLabel(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${h}:${String(m).padStart(2, '0')}`;
 }
 
 export default function DailyView() {
@@ -136,17 +157,34 @@ export default function DailyView() {
     );
   }, [data.offers, offerSearch]);
 
+  // Time axis bounds (minutes from midnight). On screen the axis is the
+  // fixed 08:00-19:00 grid; WHILE PRINTING it follows the spec (feature
+  // day-view-print): fixed 08:30-19:00, extended left/right to cover any
+  // slot's total block (setup/teardown included), rounded outward to
+  // 10-minute ticks. Screen geometry is untouched outside print mode.
+  const printing = usePrintMode();
+  const printBounds = useMemo(
+    () => printAxisBounds(daySlots, new Map(data.offers.map((o) => [o.id, o]))),
+    [daySlots, data.offers]
+  );
+  const axisStartMin = printing ? printBounds.start : AXIS_START_MIN;
+  const axisEndMin = printing ? printBounds.end : AXIS_END_MIN;
+  const axisHours = hourTicksFor(axisStartMin, axisEndMin);
+  const axisSpanHours = (axisEndMin - axisStartMin) / 60;
+
   // Responsive scale: measure the grid container and fill the width.
   // The 200px mediator-label column is subtracted from the available width.
+  // The span follows the ACTIVE axis (screen: 08:00-19:00; print: the
+  // extended print axis) so every hour column keeps the same width.
   const { ref: gridRef, width: gridWidth } = useElementWidth();
   const MEDIATOR_LABEL_WIDTH = 200;
   const pxPerHour = gridWidth > 0
-    ? pxPerHourFromWidth(gridWidth - MEDIATOR_LABEL_WIDTH, END_HOUR - START_HOUR)
+    ? pxPerHourFromWidth(gridWidth - MEDIATOR_LABEL_WIDTH, axisSpanHours)
     : FALLBACK_PX_PER_HOUR;
   const pxPerMin = pxPerHour / 60;
 
   // Calculate minutes per pixel for the grid
-  const totalGridWidth = (END_HOUR - START_HOUR) * pxPerHour;
+  const totalGridWidth = axisSpanHours * pxPerHour;
 
   // Highlight offer: from selected slot (click) OR dragged item (drag)
   const highlightOfferId = useMemo(() => {
@@ -473,7 +511,7 @@ export default function DailyView() {
   }
 
   function getSlotTop(slot: Slot): number {
-    return (toMinutes(slot.startTime) - START_HOUR * 60) * pxPerMin;
+    return (toMinutes(slot.startTime) - axisStartMin) * pxPerMin;
   }
 
   function getSlotHeight(slot: Slot): number {
@@ -481,11 +519,19 @@ export default function DailyView() {
   }
 
   function getAbsenceTop(absence: Absence): number {
-    return (toMinutes(absence.startTime || '00:00') - START_HOUR * 60) * pxPerMin;
+    return (toMinutes(absence.startTime || '00:00') - axisStartMin) * pxPerMin;
   }
 
   function getAbsenceWidth(absence: Absence): number {
     return (toMinutes(absence.endTime || '23:59') - toMinutes(absence.startTime || '00:00')) * pxPerMin;
+  }
+
+  /** Width of one axis tick column: full hour, or the shorter partial hour
+      at the axis start (e.g. an 08:30 axis start: the first column is
+      08:30-09:00, half an hour wide). */
+  function tickWidth(tick: number): number {
+    const next = Math.min(tick + 60, axisEndMin);
+    return (next - tick) * pxPerMin;
   }
 
   // Filter absences for a specific mediator on the selected day
@@ -599,16 +645,16 @@ export default function DailyView() {
       </div>
 
       <div className="daily-grid" ref={gridRef}>
-        {/* Time axis — horizontal, hours as columns */}
+        {/* Time axis — horizontal header with hour labels */}
         <div className="daily-time-axis">
         <div className="daily-time-spacer" style={{ minWidth: `${MEDIATOR_LABEL_WIDTH}px`, width: `${MEDIATOR_LABEL_WIDTH}px` }}></div>
-        {HOURS.map(hour => (
+        {axisHours.map(tick => (
           <div
-            key={hour}
+            key={tick}
             className="daily-hour-label"
-            style={{ width: `${pxPerHour}px` }}
+            style={{ width: `${tickWidth(tick)}px` }}
           >
-            {hour}:00
+            {minutesToLabel(tick)}
           </div>
         ))}
         </div>
@@ -635,11 +681,11 @@ export default function DailyView() {
                 className="daily-mediator-track"
                 style={{ width: `${totalGridWidth}px`, height: `${TRACK_HEIGHT}px`, position: 'relative' }}
               >
-                {HOURS.map((hour, i) => (
+                {axisHours.map(tick => (
                   <div
-                    key={hour}
+                    key={tick}
                     className="daily-hour-line"
-                    style={{ left: `${i * pxPerHour}px`, width: `${pxPerHour}px` }}
+                    style={{ left: `${(tick - axisStartMin) * pxPerMin}px`, width: `${tickWidth(tick)}px` }}
                   />
                 ))}
                 {laneSlots.map(slot => {
@@ -702,7 +748,7 @@ export default function DailyView() {
               ? data.cycles.find(c => c.id === mediator.activeCycleId)
               : undefined;
             const pills = getPillsForMediator(mediator, data.cycles, selectedDate);
-            const hatching = hatchingForDate(activeCycle, selectedDate, START_HOUR * 60, END_HOUR * 60);
+            const hatching = hatchingForDate(activeCycle, selectedDate, axisStartMin, axisEndMin);
             const workedHours = activeCycle
               ? getWorkedHoursForDate(activeCycle, selectedDate)
               : undefined;
@@ -743,11 +789,11 @@ export default function DailyView() {
                   onDragLeave={handleDragLeave}
                 >
                   {/* Hour grid lines */}
-                  {HOURS.map((hour, i) => (
+                  {axisHours.map(tick => (
                     <div
-                      key={hour}
+                      key={tick}
                       className="daily-hour-line"
-                      style={{ left: `${i * pxPerHour}px`, width: `${pxPerHour}px` }}
+                      style={{ left: `${(tick - axisStartMin) * pxPerMin}px`, width: `${tickWidth(tick)}px` }}
                     />
                   ))}
 
@@ -759,7 +805,7 @@ export default function DailyView() {
                       key={`hatch_${i}`}
                       className="daily-work-hatch"
                       style={{
-                        left: `${(seg.startMin - START_HOUR * 60) * pxPerMin}px`,
+                        left: `${(seg.startMin - axisStartMin) * pxPerMin}px`,
                         width: `${(seg.endMin - seg.startMin) * pxPerMin}px`,
                       }}
                       aria-hidden="true"
@@ -774,7 +820,7 @@ export default function DailyView() {
                     <>
                       <span
                         className="daily-work-hours-tag"
-                        style={{ left: `${(toMinutes(workedHours.startTime) - START_HOUR * 60) * pxPerMin + 2}px` }}
+                        style={{ left: `${(toMinutes(workedHours.startTime) - axisStartMin) * pxPerMin + 2}px` }}
                         aria-hidden="true"
                       >
                         {workedHours.startTime}
@@ -782,7 +828,7 @@ export default function DailyView() {
                       <span
                         className="daily-work-hours-tag"
                         style={{
-                          left: `${(toMinutes(workedHours.endTime) - START_HOUR * 60) * pxPerMin - 30}px`,
+                          left: `${(toMinutes(workedHours.endTime) - axisStartMin) * pxPerMin - 30}px`,
                         }}
                         aria-hidden="true"
                       >
@@ -849,7 +895,7 @@ export default function DailyView() {
                     const effTeardown = slot.teardownTime ?? offer?.teardownTime ?? 0;
                     const hasSetup = effSetup > 0;
                     const hasTeardown = effTeardown > 0;
-                    const totalLeft = (toMinutes(total.start) - START_HOUR * 60) * pxPerMin;
+                    const totalLeft = (toMinutes(total.start) - axisStartMin) * pxPerMin;
                     const totalWidth = (toMinutes(total.end) - toMinutes(total.start)) * pxPerMin;
                     // Absolute children are positioned from the PADDING edge,
                     // i.e. after the left border (3px, 4px for imported).
@@ -926,11 +972,11 @@ export default function DailyView() {
                     position: 'relative',
                   }}
                 >
-                  {HOURS.map((hour, i) => (
+                  {axisHours.map(tick => (
                     <div
-                      key={hour}
+                      key={tick}
                       className="daily-hour-line"
-                      style={{ left: `${i * pxPerHour}px`, width: `${pxPerHour}px` }}
+                      style={{ left: `${(tick - axisStartMin) * pxPerMin}px`, width: `${tickWidth(tick)}px` }}
                     />
                   ))}
                   {laneSlots.map(slot => {
