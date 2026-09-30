@@ -34,6 +34,19 @@ body {
   line-height: 1.5;
 }
 button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+/* On the green header the green outline is invisible (1:1) — use white there (WCAG 2.4.11) */
+.app-header button:focus-visible { outline-color: #ffffff; }
+
+/* ===== Header actions (Secutix import — visible from every view) ===== */
+.header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: 1px solid transparent; border-radius: var(--radius);
+  font-size: 14px; cursor: pointer; white-space: nowrap; font-family: inherit;
+}
+/* Accent button for the daily Secutix import (visible from every view) */
+.btn-accent { background: var(--color-accent); color: #3a2408; font-weight: 600; }
+.btn-accent:hover { background: #c47a35; color: #fff; }
 
 /* ===== Header ===== */
 .app-header {
@@ -87,7 +100,7 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
 .time-axis .axis-hour:first-child { border-left: none; }
 
 /* Mediator rows */
-.daily-mediator-row { display: flex; align-items: stretch; border-bottom: 1px solid var(--color-border-light); min-height: 32px; }
+.daily-mediator-row { display: flex; align-items: stretch; border-bottom: 1px solid var(--color-border-light); min-height: 32px; position: relative; }
 .daily-mediator-row:last-child { border-bottom: none; }
 .daily-mediator-label {
   width: 200px; flex-shrink: 0;
@@ -206,17 +219,28 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
   box-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 
-/* Truncation state: tooltip bubble shown next to the truncated block */
+/* Truncation state: tooltip bubble shown above the truncated block.
+   It lives on the MEDIATOR ROW (not the track) because the track is
+   overflow:hidden and would clip it; the row is the positioning context. */
 .tooltip-bubble {
   position: absolute; z-index: 40;
   background: #2b2b2b; color: #fff;
   font-size: 11px; padding: 5px 9px; border-radius: 4px;
   box-shadow: var(--shadow-md);
   white-space: nowrap; pointer-events: none;
+  bottom: calc(100% + 5px);
 }
 .tooltip-bubble::after {
   content: ""; position: absolute; left: 14px; bottom: -5px;
   border: 5px solid transparent; border-top-color: #2b2b2b; border-bottom: none;
+}
+/* At narrow viewports keep the tooltip inside the viewport (no horizontal
+   overflow): wrap long labels and cap the bubble to the remaining room. */
+@media (max-width: 560px) {
+  .tooltip-bubble {
+    white-space: normal;
+    max-width: min(160px, calc(100vw - 16px - var(--tip-anchor, 298px)));
+  }
 }
 
 /* ===== Legend (space colors) ===== */
@@ -227,7 +251,8 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
 .legend .swatch {
   display: inline-block; width: 16px; height: 16px; border-radius: 3px;
   vertical-align: middle; margin-right: 5px;
-  border: 1px solid rgba(0,0,0,0.18);
+  /* #8a8a8a = 3.45:1 against white (WCAG 1.4.11) — same as the white space block */
+  border: 1px solid #8a8a8a;
 }
 
 /* ===== Mockup annotations ===== */
@@ -284,6 +309,9 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
     <button class="nav-btn" type="button">Statistiques</button>
     <button class="nav-btn" type="button">Configuration</button>
   </nav>
+  <div class="header-actions">
+    <button class="btn btn-accent" type="button" title="Ouvrir le flux d'import Secutix">⇩ Import Secutix</button>
+  </div>
 </header>
 
 <main class="app-main">
@@ -372,10 +400,11 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
         <span class="work-hours-tag" style="right: 14.2%;">17:30</span>
         <!-- Fallback: offer WITHOUT short label → full name shown, slightly smaller.
              Space Jardin #7B1FA2 (dark purple → white text), offer Parcours ludique « découverte du
-             musée en famille » (no short label) color #00838F. -->
+             musée en famille » (no short label) color #E65100 — one color per offer everywhere,
+             distinct from any space color (incl. Hors les murs #00838F). -->
         <div class="daily-slot slot-light-text" style="left: 18.18%; width: 13.64%; background: #7B1FA2;" title="Parcours ludique « découverte du musée en famille » · Jardin · 10:00-11:30">
           <span class="slot-time">10:00-11:30</span>
-          <span class="slot-label-row"><span class="offer-dot" style="background:#00838F;" aria-hidden="true"></span><span class="slot-label full-name">Parcours ludique « découverte du musée en famille »</span></span>
+          <span class="slot-label-row"><span class="offer-dot" style="background:#E65100;" aria-hidden="true"></span><span class="slot-label full-name">Parcours ludique « découverte du musée en famille »</span></span>
         </div>
         <!-- White space block (Crypte, auto Secutix): border + dark text, offer dot stays readable -->
         <div class="daily-slot space-white slot-dark-text" style="left: 40.91%; width: 13.64%;" title="Visite guidée · Crypte (auto Secutix) · 12:30-14:00">
@@ -396,7 +425,7 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
       </div>
       <div class="daily-mediator-track">
         <div class="hour-grid"></div>
-        <!-- Normal-state block: short label « Parcours » (offer Parcours ludique #00838F),
+        <!-- Normal-state block: short label « Parcours » (offer Parcours ludique #E65100),
              space Hors les murs #00838F (dark teal → white text) -->
         <div class="daily-slot state-normal slot-light-text" style="left: 4.55%; width: 9.09%; background: #00838F;" title="Accueil · Hors les murs · 08:30-09:30">
           <span class="slot-time">08:30-09:30</span>
@@ -418,9 +447,11 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
           <span class="slot-time">08:30-09:30</span>
           <span class="slot-label-row"><span class="offer-dot" style="background:#5C6BC0;" aria-hidden="true"></span><span class="slot-label">Accueil renforcé…</span></span>
         </div>
-        <!-- Tooltip bubble (truncation state only) -->
-        <div class="tooltip-bubble state-trunc" style="left: 64.4%; bottom: 34px; display: none;">Parcours exceptionnel des collections permanentes</div>
       </div>
+      <!-- Tooltip bubble (truncation state only) — lives on the ROW, not the
+           overflow:hidden track, so it is never clipped (left is offset by the
+           200px label column, then 64.4% across the remaining track width). -->
+      <div class="tooltip-bubble state-trunc" style="left: calc(200px + (100% - 200px) * 0.644); display: none;">Parcours exceptionnel des collections permanentes</div>
     </div>
   </div>
 

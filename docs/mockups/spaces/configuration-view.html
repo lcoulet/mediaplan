@@ -35,6 +35,8 @@ body {
   line-height: 1.5;
 }
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+/* On the green header the green outline is invisible (1:1) — use white there (WCAG 2.4.11) */
+.app-header button:focus-visible { outline-color: #ffffff; }
 
 /* ===== Header ===== */
 .app-header {
@@ -110,7 +112,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .space-row:last-child { margin-bottom: 0; }
 .space-swatch {
   width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0;
-  border: 1px solid rgba(0,0,0,0.18);
+  /* #8a8a8a = 3.45:1 against white (WCAG 1.4.11) — same as the daily white block */
+  border: 1px solid #8a8a8a;
 }
 .space-name { font-weight: 600; min-width: 120px; }
 .space-note { font-size: 12px; color: var(--color-text-muted); font-style: italic; }
@@ -128,6 +131,14 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
   display: flex; align-items: center; gap: 6px;
 }
 .space-row.refused { border-color: var(--color-danger); background: var(--color-danger-bg); }
+/* In-place rename input (rename editing state) */
+.rename-input {
+  min-width: 120px; width: 200px; max-width: 100%;
+  padding: 5px 8px; font-size: 14px; font-weight: 600; font-family: inherit;
+  color: var(--color-text); background: var(--color-surface);
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+}
+.rename-input.invalid { border-color: var(--color-danger); background: var(--color-danger-bg); }
 
 /* ===== Add-space form ===== */
 .add-space-form {
@@ -261,7 +272,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
     <div class="config-body">
       <div class="space-list" id="spaces-list">
         <!-- Normal rows (always visible) -->
-        <div class="space-row">
+        <div class="space-row" id="row-exposition">
           <span class="space-swatch" style="background:#1F5FA8;" aria-hidden="true"></span>
           <span class="space-name">Exposition permanente</span>
           <input class="space-color-input" type="color" value="#1F5FA8" aria-label="Couleur de l'espace Exposition permanente">
@@ -271,7 +282,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
             <button class="btn btn-danger icon-only" type="button" title="Supprimer l'espace">🗑</button>
           </div>
         </div>
-        <div class="space-row">
+        <div class="space-row" id="row-jardin">
           <span class="space-swatch" style="background:#7B1FA2;" aria-hidden="true"></span>
           <span class="space-name">Jardin</span>
           <input class="space-color-input" type="color" value="#7B1FA2" aria-label="Couleur de l'espace Jardin">
@@ -334,7 +345,33 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
             <button class="btn btn-secondary icon-only" type="button" title="Renommer l'espace">✎</button>
             <button class="btn btn-danger icon-only" type="button" title="Supprimer l'espace">🗑</button>
           </div>
-          <span class="space-row-error" role="alert">⚠ Espace référencé par des offres — suppression impossible. <span class="space-note" style="font-style: normal;">Détail : « Cet espace est utilisé par une offre ou un créneau ».</span></span>
+          <!-- Spec string first (primary message); generic context second -->
+          <span class="space-row-error" role="alert">⚠ « Cet espace est utilisé par une offre ou un créneau ». <span class="space-note" style="font-style: normal;">Espace référencé par des offres — suppression impossible.</span></span>
+        </div>
+
+        <!-- State: rename editing — the "Jardin" row becomes an in-place rename input -->
+        <div class="space-row refused state-box" id="state-rename-edit" hidden>
+          <span class="space-swatch" style="background:#7B1FA2;" aria-hidden="true"></span>
+          <input class="rename-input" type="text" value="Jardin botanique" aria-label="Nouveau nom de l'espace">
+          <input class="space-color-input" type="color" value="#7B1FA2" aria-label="Couleur de l'espace Jardin">
+          <span class="space-color-hex">#7B1FA2</span>
+          <div class="space-actions">
+            <button class="btn btn-primary icon-only" type="button" title="Valider le renommage">✓</button>
+            <button class="btn btn-secondary icon-only" type="button" title="Annuler le renommage">✕</button>
+          </div>
+        </div>
+
+        <!-- State: rename to duplicate — same input, invalid + spec error message -->
+        <div class="space-row refused state-box" id="state-rename-duplicate" hidden>
+          <span class="space-swatch" style="background:#7B1FA2;" aria-hidden="true"></span>
+          <input class="rename-input invalid" type="text" value="Auditorium" aria-label="Nouveau nom de l'espace">
+          <input class="space-color-input" type="color" value="#7B1FA2" aria-label="Couleur de l'espace Jardin">
+          <span class="space-color-hex">#7B1FA2</span>
+          <div class="space-actions">
+            <button class="btn btn-primary icon-only" type="button" title="Valider le renommage">✓</button>
+            <button class="btn btn-secondary icon-only" type="button" title="Annuler le renommage">✕</button>
+          </div>
+          <span class="space-row-error" role="alert">⚠ Un espace porte déjà ce nom</span>
         </div>
       </div>
 
@@ -348,6 +385,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
           <input id="new-space-color" class="space-color-input" type="color" value="#5C6BC0" aria-label="Couleur du nouvel espace">
         </span>
         <button class="btn btn-primary" type="submit">+ Ajouter</button>
+        <!-- State: empty-name error (spaces.feature scenario 2) -->
+        <span class="form-error state-box" id="state-name-empty" role="alert" hidden>⚠ Le nom de l'espace est obligatoire</span>
         <!-- State: duplicate-name error -->
         <span class="form-error state-box" id="state-duplicate" role="alert" hidden>⚠ Un espace porte déjà ce nom</span>
       </form>
@@ -390,9 +429,9 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
     <div class="config-body">
       <div class="halfday-row">
         <label for="morning-end">Fin de matinée</label>
-        <input id="morning-end" class="time-input state-dependent" type="time" value="13:00" aria-label="Heure de fin de matinée">
+        <input id="morning-end" class="time-input state-dependent" type="time" value="12:30" aria-label="Heure de fin de matinée">
         <label for="afternoon-start">Début d'après-midi</label>
-        <input id="afternoon-start" class="time-input state-dependent" type="time" value="12:00" aria-label="Heure de début d'après-midi">
+        <input id="afternoon-start" class="time-input state-dependent" type="time" value="13:30" aria-label="Heure de début d'après-midi">
         <button class="btn btn-primary" type="button">Enregistrer</button>
         <!-- State: validation error -->
         <span class="halfday-error state-box" id="state-halfday-error" role="alert" hidden>⚠ L'heure de début doit précéder l'heure de fin</span>
@@ -424,56 +463,90 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 <div class="mockup-switch" role="group" aria-label="États de maquette de la vue Configuration">
   <span>États :</span>
   <button type="button" data-state="normal" class="active" aria-pressed="true">Normal</button>
+  <button type="button" data-state="name-empty" aria-pressed="false">Nom vide</button>
   <button type="button" data-state="duplicate" aria-pressed="false">Doublon de nom</button>
   <button type="button" data-state="delete-refused" aria-pressed="false">Suppression refusée</button>
   <button type="button" data-state="delete-confirm" aria-pressed="false">Confirmation suppression</button>
   <button type="button" data-state="halfday-error" aria-pressed="false">Erreur demi-journées</button>
+  <button type="button" data-state="rename-edit" aria-pressed="false">Renommage</button>
+  <button type="button" data-state="rename-duplicate" aria-pressed="false">Renommage doublon</button>
 </div>
 
 <script>
 // Mockup-only interaction: switch between the configuration view states.
 var boxes = {
+  'name-empty': document.getElementById('state-name-empty'),
   'duplicate': document.getElementById('state-duplicate'),
   'delete-refused': document.getElementById('state-delete-refused'),
   'delete-confirm': document.getElementById('state-delete-confirm'),
-  'halfday-error': document.getElementById('state-halfday-error')
+  'halfday-error': document.getElementById('state-halfday-error'),
+  'rename-edit': document.getElementById('state-rename-edit'),
+  'rename-duplicate': document.getElementById('state-rename-duplicate')
 };
 // Per-state tweaks on dependent controls (static mockup: presentation only).
 var extras = {
   normal: function () {
     setInvalid('#new-space-name', false);
-    setTimeInvalid(false);
-    document.getElementById('row-crypte').hidden = false;
+    setTimeInvalid(false, '12:30', '13:30');
+    document.getElementById('row-exposition').hidden = false;
+    document.getElementById('row-jardin').hidden = false;
+  },
+  'name-empty': function () {
+    setInvalid('#new-space-name', true);
+    setTimeInvalid(false, '12:30', '13:30');
+    document.getElementById('row-exposition').hidden = false;
+    document.getElementById('row-jardin').hidden = false;
   },
   duplicate: function () {
     setInvalid('#new-space-name', true);
-    setTimeInvalid(false);
-    document.getElementById('row-crypte').hidden = false;
+    setTimeInvalid(false, '12:30', '13:30');
+    document.getElementById('row-exposition').hidden = false;
+    document.getElementById('row-jardin').hidden = false;
   },
   'delete-refused': function () {
     setInvalid('#new-space-name', false);
-    setTimeInvalid(false);
+    setTimeInvalid(false, '12:30', '13:30');
     // The refused row replaces the normal "Exposition permanente" row.
-    document.getElementById('row-crypte').hidden = false;
+    document.getElementById('row-exposition').hidden = true;
+    document.getElementById('row-jardin').hidden = false;
   },
   'delete-confirm': function () {
     setInvalid('#new-space-name', false);
-    setTimeInvalid(false);
-    document.getElementById('row-crypte').hidden = false;
+    setTimeInvalid(false, '12:30', '13:30');
+    document.getElementById('row-exposition').hidden = false;
+    document.getElementById('row-jardin').hidden = false;
   },
   'halfday-error': function () {
     setInvalid('#new-space-name', false);
-    setTimeInvalid(true);
-    document.getElementById('row-crypte').hidden = false;
+    // Invalid pair: afternoon start does not follow morning end.
+    setTimeInvalid(true, '13:00', '12:00');
+    document.getElementById('row-exposition').hidden = false;
+    document.getElementById('row-jardin').hidden = false;
+  },
+  'rename-edit': function () {
+    setInvalid('#new-space-name', false);
+    setTimeInvalid(false, '12:30', '13:30');
+    document.getElementById('row-exposition').hidden = false;
+    // The rename row replaces the normal "Jardin" row in place.
+    document.getElementById('row-jardin').hidden = true;
+  },
+  'rename-duplicate': function () {
+    setInvalid('#new-space-name', false);
+    setTimeInvalid(false, '12:30', '13:30');
+    document.getElementById('row-exposition').hidden = false;
+    // The rename row replaces the normal "Jardin" row in place.
+    document.getElementById('row-jardin').hidden = true;
   }
 };
 function setInvalid(sel, on) {
   var el = document.querySelector(sel);
   if (el) el.classList.toggle('invalid', on);
 }
-function setTimeInvalid(on) {
-  ['morning-end', 'afternoon-start'].forEach(function (id) {
-    document.getElementById(id).classList.toggle('invalid', on);
+function setTimeInvalid(on, morningEnd, afternoonStart) {
+  ['morning-end', 'afternoon-start'].forEach(function (id, i) {
+    var el = document.getElementById(id);
+    el.classList.toggle('invalid', on);
+    el.value = i === 0 ? morningEnd : afternoonStart;
   });
 }
 document.querySelectorAll('.mockup-switch button').forEach(function (btn) {
