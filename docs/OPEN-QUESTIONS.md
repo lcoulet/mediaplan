@@ -144,6 +144,20 @@ import/export mode (shared JSON.gz files) until tenant access is sorted.
       (« ce fichier est plus ancien que vos données ») — confirm to
       proceed anyway. NOTE: TODO.md claimed this was done; it is NOT
       in the code — the checkmark was premature
+- [x] HIGHLIGHT BASIS (decided 2026-10-03): persist a `lastExportedAt`
+      stamp (also updated on import — "after connection"); highlight
+      when data.lastModified > lastExportedAt
+- [x] BUTTONS (decided 2026-10-03): two separate header buttons next
+      to « ⇩ Import Secutix » — Export one-click (timestamped JSON.gz),
+      Import opens the file picker directly
+- [x] IMPORT CONFIRMATION TONE (decided 2026-10-03): warning-style
+      confirmation, NOT a categorical "replaces everything" gate —
+      imports flow through commit() and are UNDOABLE (↶), so the
+      dialogs inform rather than block: "⚠ Vos données seront
+      remplacées — vous pourrez annuler avec ↶" and the old-file
+      warning is also non-blocking (confirm to proceed)
+- [x] HIGHLIGHT STYLE (decided 2026-10-03): amber dot badge on the
+      Export button + title attribute, no button color change
 
 **Open questions (before spec):**
 - [ ] Highlight detection basis: compare lastModified of the data
