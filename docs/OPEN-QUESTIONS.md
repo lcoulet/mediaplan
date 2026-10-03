@@ -316,6 +316,26 @@ import/export mode (shared JSON.gz files) until tenant access is sorted.
       - amgt = Aménagement (exceptional change of one or more worked days)
       - CEX = Congé Exceptionnel
       - TPT = Temps Partiel Thérapeutique
+- [x] GREEN CELLS: not blocking — free text + decoded codes as
+      suggestions for now; green-cell meaning to add later (2026-10-03)
+- [x] COUNT COLUMNS (ratio, per-day presence totals): NOT reproduced
+      (2026-10-03) — day/accueil views cover it; the Saturday counter
+      is computed automatically
+- [x] GRID EDITING (2026-10-03): click on a half-day cell opens a
+      CONTEXT MENU with all the codes (CA, RHS, AM, TELE, amgt, Réf. WE,
+      CEX, TPT, free text, clear/back-to-derived). PLUS a PAINT MODE:
+      pick a value once, then every click on a cell duplicates the
+      value into it (click-by-click, no drag); each cell must be
+      clicked individually to start
+- [x] PRESENCE MODEL (confirmed 2026-10-03): orange "presence per
+      cycle" cells are DERIVED from the mediator's cycle (computed,
+      never stored); absences/arrangements placed on top REPLACE the
+      derived presence visually; clearing reverts to the derived state
+- [x] EXPORT (decided 2026-10-03): Excel export at the EXACT format of
+      the reference table (rows = days with weekday + ISO week label,
+      one column group per mediator with Matin/Après-midi cells, codes
+      in cells, cell fill colors matching the app's legend) — v1 has
+      NO print/PDF for this view
 - [ ] Which absence/mission types should the app model natively vs. free
       text? (current AbsenceType: leave, mission, training, sick, other,
       leave_request — the decoded codes map onto these: CA/RHS/CEX → leave,
