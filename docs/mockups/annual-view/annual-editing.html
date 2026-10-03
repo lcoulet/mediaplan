@@ -93,7 +93,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .chip button { background: none; border: none; cursor: pointer; color: var(--color-danger); font-size: 12px; padding: 0 4px; border-radius: 50%; }
 .chip button:hover { background: var(--color-danger-bg); }
 .chip.added { border-style: dashed; border-color: var(--color-primary-light); color: var(--color-primary-dark); }
-.chip.removed { text-decoration: line-through; opacity: 0.6; }
+.chip.removed { text-decoration: line-through; color: #5f5f5f; } /* #5f5f5f/#fafafa = 6.12 (WCAG 1.4.3, sans opacity) */
 .ferie-form { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 8px; border-top: 1px dashed var(--color-border); }
 .ferie-form label { font-size: 12px; font-weight: 600; }
 .date-input { padding: 5px 8px; font-size: 13px; border: 1px solid var(--color-border); border-radius: var(--radius); font-family: inherit; color: var(--color-text); background: var(--color-surface); }
@@ -126,13 +126,13 @@ tr.thead-row .date { z-index: 4; background: #fafafa; border-bottom: 1px solid v
 tr.ferie .date { background: #fef5e7; }
 tr.closed .date { background: #fdecea; }
 .c { width: 30px; min-width: 30px; max-width: 30px; height: 28px; padding: 1px 2px; border-left: 1px solid var(--color-border-light); font-size: 10px; font-weight: 700; text-align: center; vertical-align: middle; position: relative; overflow: hidden; white-space: nowrap; }
-.c.p { background: #F0A860; }
+.c.p { background: #C67A33; }
 .c.y { background: #F9A825; color: #2b2b2b; }
 .c.g { background: #6b6b6b; color: #fff; }
 .c.m { background: #d68c45; color: #3a2408; font-size: 9px; }
 .c.r { background: #c0392b; color: #fff; }
 .c.n { background: #fff; }
-.c.cl { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #e3e3e3 5px 7px); }
+.c.cl { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #8a8a8a 5px 7px); }
 .cycp { display: inline-block; padding: 0 4px; border-radius: 8px; background: #fff; color: #2b2b2b; border: 1px solid var(--color-border); font-size: 9px; font-weight: 700; line-height: 1.5; }
 .ct { position: absolute; top: 0; right: 0; padding: 0 3px; border-radius: 0 0 0 6px; background: #e3efe8; color: #1e5536; font-size: 9px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .extrait td { text-align: center; color: var(--color-text-muted); font-size: 11px; padding: 2px 0; background: #fafafa; }
@@ -228,7 +228,7 @@ body.paintmode .c.y { background: #F9A825; }
     <span aria-hidden="true">🖌</span>
     <span>Peinture : <strong>CA</strong> — cliquez les cellules à remplir, Échap pour quitter.</span>
     <span class="bp-spacer"></span>
-    <button class="btn-exit" type="button" title="Quitter le mode peinture (Échap)">✕ Quitter</button>
+    <button class="btn-exit" type="button" title="Quitter le mode peinture (Échap ou clic hors de la grille)">✕ Quitter</button>
   </div>
 
   <!-- ===== State: férié management panel (toolbar zone) ===== -->
@@ -288,7 +288,7 @@ body.paintmode .c.y { background: #F9A825; }
         <tbody>
           <tr>
             <th class="date" scope="row"><span class="d-day">lun. 08/06</span><span class="wk">S 24</span></th>
-            <td class="c y">CA</td><td class="c p"></td>
+            <td class="c y" title="Congé annuel (CA)">CA</td><td class="c p"></td>
             <td class="c p"><span class="cycp">S1</span></td><td class="c p"></td>
             <td class="c p"><span class="cycp">S2</span></td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
@@ -302,14 +302,14 @@ body.paintmode .c.y { background: #F9A825; }
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">mer. 10/06</span></th>
-            <td class="c y">CA</td><td class="c y">CA</td>
+            <td class="c y" title="Congé annuel (CA)">CA</td><td class="c y" title="Congé annuel (CA)">CA</td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">jeu. 11/06</span></th>
-            <td class="c g">TELE</td><td class="c p"></td>
+            <td class="c g" title="Télétravail (TELE)">TELE</td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
@@ -317,16 +317,16 @@ body.paintmode .c.y { background: #F9A825; }
           <tr>
             <th class="date" scope="row"><span class="d-day">ven. 12/06</span></th>
             <td class="c p"></td><td class="c p"></td>
-            <td class="c y">RHS</td><td class="c p"></td>
+            <td class="c y" title="Récupération heures supplémentaires (RHS)">RHS</td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">sam. 13/06</span></th>
-            <td class="c m"><span class="ct" title="3e samedi avec créneaux">×3</span>Réf. WE</td><td class="c n"></td>
-            <td class="c n"><span class="ct">×1</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct">×2</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct">×0</span></td><td class="c n"></td>
+            <td class="c m" title="Référent week-end (Réf. WE)"><span class="ct" title="3ᵉ samedi travaillé — valorisé à partir du 10ᵉ">×3</span><span title="Référent week-end (Réf. WE)">Réf. WE</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct" title="1ᵉʳ samedi travaillé — valorisé à partir du 10ᵉ">×1</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct" title="2ᵉ samedi travaillé — valorisé à partir du 10ᵉ">×2</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct" title="Aucun samedi travaillé — compteur 0">×0</span></td><td class="c n"></td>
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">dim. 14/06</span></th>
@@ -375,7 +375,7 @@ body.paintmode .c.y { background: #F9A825; }
         </div>
         <div class="menu-foot">
           <button class="menu-item" type="button" role="menuitem"><span class="mi">🖌</span><span>Peindre ce code</span></button>
-          <button class="menu-item" type="button" role="menuitem"><span class="mi">⌫</span><span>Effacer <span style="color: var(--color-text-muted); font-weight: 400;">(retour au cycle)</span></span></button>
+          <button class="menu-item" type="button" role="menuitem"><span class="mi">⌫</span><span>Effacer <span style="color: var(--color-text-muted); font-weight: 400;">(retour au dérivé)</span></span></button>
         </div>
       </div>
 
@@ -397,7 +397,7 @@ body.paintmode .c.y { background: #F9A825; }
         </div>
         <div class="menu-foot">
           <button class="menu-item" type="button" role="menuitem"><span class="mi">🖌</span><span>Peindre ce code</span></button>
-          <button class="menu-item" type="button" role="menuitem"><span class="mi">⌫</span><span>Effacer <span style="color: var(--color-text-muted); font-weight: 400;">(retour au cycle)</span></span></button>
+          <button class="menu-item" type="button" role="menuitem"><span class="mi">⌫</span><span>Effacer <span style="color: var(--color-text-muted); font-weight: 400;">(retour au dérivé)</span></span></button>
         </div>
       </div>
     </div>
@@ -405,12 +405,12 @@ body.paintmode .c.y { background: #F9A825; }
 
   <!-- Paint-mode annotation context -->
   <div class="mockup-caption" aria-hidden="true">
-    <div class="annotation"><strong>(1) Menu contextuel :</strong> un clic sur une cellule de demi-journée ouvre le menu — tous les codes (CA, RHS, AM, TELE, amgt, Réf. WE, CEX, TPT), texte libre avec codes décodés en suggestions (« Stop Motion » s'afficherait en orange de mission), « Effacer (retour au cycle) » rétablit la présence dérivée, « Peindre ce code » active le mode peinture. Items focalisables (Tab / Maj+Tab), Échap ferme le menu.</div>
-    <div class="annotation"><strong>(2) Mode peinture :</strong> bannière « Peinture : CA — cliquez les cellules à remplir, Échap pour quitter » ; curseur pinceau sur les cellules, menu contextuel désactivé. Chaque clic peint UNE cellule, sans glisser-déposer ; le 09/06 et le 10/06 matins + après-midi d'Alice sont peints CA. Peindre fonctionne aussi sur les autres médiateurs (Bob sans cycle inclus) ; chaque cellule peinte = UNE opération annulable.</div>
+    <div class="annotation"><strong>(1) Menu contextuel :</strong> un clic sur une cellule de demi-journée ouvre le menu — tous les codes (CA, RHS, AM, TELE, amgt, Réf. WE, CEX, TPT), texte libre avec codes décodés en suggestions (« Stop Motion » s'afficherait en orange de mission), « Effacer (retour au dérivé) » rétablit la présence dérivée, « Peindre ce code » active le mode peinture. Items focalisables (Tab / Maj+Tab), Échap ferme le menu (ou un clic hors du menu). Abréviations dans les cellules — le survol (title) affiche le texte complet.</div>
+    <div class="annotation"><strong>(2) Mode peinture :</strong> bannière « Peinture : CA — cliquez les cellules à remplir, Échap pour quitter » ; curseur pinceau sur les cellules, menu contextuel désactivé. Chaque clic peint UNE cellule, sans glisser-déposer ; le 09/06 et le 10/06 matins + après-midi d'Alice sont peints CA. Peindre fonctionne aussi sur les autres médiateurs (Bob sans cycle inclus) ; chaque cellule peinte = UNE opération annulable. Un clic hors de la grille quitte aussi le mode peinture.</div>
     <div class="annotation"><strong>(3) Jour de fermeture :</strong> alerte ambre NON BLOQUANTE « Le musée est fermé ce jour-là » dans le menu (25/12, 01/01, 01/05) — la saisie reste possible.</div>
     <div class="annotation"><strong>(4) Fériés :</strong> panneau « Fériés 2026 » — liste française par défaut en puces ; + Ajouter une date (ex. 10/08), ✕ retire (ex. 14 juillet barré), dérogations propres à l'année sélectionnée.</div>
     <div class="annotation"><strong>(5) Annuler / rétablir :</strong> ↶ actif après chaque saisie ou cellule peinte (une opération par cellule), ↷ rétablit ; le changement d'année ne touche jamais les données des autres années (absences stockées par date et par demi-journée).</div>
-    <div class="annotation"><strong>Contrastes (WCAG 1.4.3) :</strong> bannière peinture #d68c45/#3a2408 = 5,36 ; alerte ambre #fef5e7/#8a4d10 = 6,17 ; jaune #F9A825/#2b2b2b = 7,18 ; gris #6b6b6b/blanc = 5,33 ; rouge #c0392b/blanc = 5,44.</div>
+    <div class="annotation"><strong>Contrastes (WCAG 1.4.3 / 1.4.11) :</strong> bannière peinture #d68c45/#3a2408 = 5,36 ; alerte ambre #fef5e7/#8a4d10 = 6,17 ; jaune #F9A825/#2b2b2b = 7,18 ; gris #6b6b6b/blanc = 5,33 ; rouge #c0392b/blanc = 5,44 ; orange dérivée #C67A33/blanc = 3,37 (1.4.11) ; hachures #8a8a8a/#f5f5f5 = 3,17 (1.4.11) ; férié retiré #5f5f5f/#fafafa = 6,12.</div>
   </div>
 </main>
 
@@ -466,11 +466,24 @@ document.querySelectorAll('.mockup-switch button').forEach(function (btn) {
   });
 });
 // Échap quits paint mode (mockup behavior mirroring the spec).
+// Échap also closes any open context menu (or a click outside of it).
 document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') {
     setPaint(false);
     boxes['paint-banner'].hidden = true;
+    boxes.menu.hidden = true;
+    boxes.closed.hidden = true;
+    targetCell.classList.remove('menu-target');
   }
+});
+document.addEventListener('click', function (e) {
+  if (e.target.closest && e.target.closest('.mockup-switch')) return; // mockup plumbing: state buttons reopen the menus
+  ['menu', 'closed'].forEach(function (k) {
+    if (!boxes[k].hidden && !boxes[k].contains(e.target)) {
+      boxes[k].hidden = true;
+      targetCell.classList.remove('menu-target');
+    }
+  });
 });
 </script>
 </body>

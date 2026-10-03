@@ -26,8 +26,9 @@
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
   --header-h: 56px;
-  /* Cell palette (contrast computed WCAG 1.4.3):
-     orange derived #F0A860 / #2b2b2b = 7.06 — border-only cell, no text
+  /* Cell palette (contrast computed WCAG 1.4.3 / 1.4.11):
+     orange derived #C67A33 / #ffffff = 3.37 (≥3:1, WCAG 1.4.11 vs cellule neutre #ffffff et #fafafa = 3.23) — border-only cell, no text
+     hatch stripe    #8a8a8a / #f5f5f5 = 3.17 (≥3:1, WCAG 1.4.11) — musée fermé
      yellow absence  #F9A825 / #2b2b2b = 7.18
      gray TELE       #6b6b6b / #ffffff = 5.33
      orange mission  #d68c45 / #3a2408 = 5.36
@@ -82,13 +83,13 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .legend-body { padding: 4px 14px 12px; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--color-text-muted); }
 .legend-body .lg { display: inline-flex; align-items: center; gap: 6px; }
 .sw { display: inline-block; width: 26px; height: 14px; border-radius: 3px; border: 1px solid var(--color-border-light); flex-shrink: 0; }
-.sw.p { background: #F0A860; }
+.sw.p { background: #C67A33; }
 .sw.y { background: #F9A825; }
 .sw.g { background: #6b6b6b; }
 .sw.m { background: #d68c45; }
 .sw.r { background: #c0392b; }
 .sw.n { background: #fff; }
-.sw.cl { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #e3e3e3 5px 7px); }
+.sw.cl { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #8a8a8a 5px 7px); }
 .sw.ferie { background: #fef5e7; border-color: #d68c45; }
 .ct-sw { display: inline-block; padding: 0 5px; border-radius: 8px; background: #e3efe8; color: #1e5536; font-size: 10px; font-weight: 700; }
 
@@ -139,13 +140,13 @@ tr.closed .date { background: #fdecea; }
   font-size: 10px; font-weight: 700; text-align: center; vertical-align: middle;
   position: relative; overflow: hidden; white-space: nowrap;
 }
-.c.p { background: #F0A860; }               /* présence dérivée du cycle — vide */
+.c.p { background: #C67A33; }               /* présence dérivée du cycle — vide (3.37 vs blanc, WCAG 1.4.11) */
 .c.y { background: #F9A825; color: #2b2b2b; } /* absence + code (7.18) */
 .c.g { background: #6b6b6b; color: #fff; }    /* télétravail TELE (5.33) */
 .c.m { background: #d68c45; color: #3a2408; font-size: 9px; } /* mission / spécial (5.36) */
 .c.r { background: #c0392b; color: #fff; }    /* grève / syndicat / formation (5.44) */
 .c.n { background: #fff; }                   /* neutre : sans cycle ou jour non travaillé */
-.c.cl { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #e3e3e3 5px 7px); } /* musée fermé */
+.c.cl { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #8a8a8a 5px 7px); } /* musée fermé (3.17, WCAG 1.4.11) */
 /* Cycle week pill — once per ISO week, in the Monday row area */
 .cycp {
   display: inline-block; padding: 0 4px; border-radius: 8px;
@@ -240,8 +241,10 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
       <span class="lg"><span class="sw n"></span>Blanc = neutre (jour non travaillé ou médiateur sans cycle)</span>
       <span class="lg"><span class="sw cl"></span>Hachures = musée fermé (25/12, 01/01, 01/05) — édition en alerte non bloquante</span>
       <span class="lg"><span class="sw ferie"></span>Fond ambre = jour férié (liste française par défaut, modifiable par dérogation et par année)</span>
+      <span class="lg"><span class="ct-sw">S1</span>Pilule de semaine de cycle (S1, S2…) — affichée une fois par semaine ISO, sur la cellule du lundi, valable pour toute la semaine</span>
       <span class="lg"><span class="ct-sw">×N</span>Compteur de samedis travaillés (calculé, alimente la valorisation à partir du seuil — vert : samedi valorisé)</span>
       <span class="lg"><span class="pill quota-ok">reliquat</span>/<span class="pill quota-ko">déficit</span>Solde trimestriel (médiateurs avec aménagement)</span>
+      <span class="lg" style="width: 100%;">Abréviations dans les cellules — le survol (title) affiche le texte complet (FORM = formation, SYND = syndicat, etc.)</span>
     </div>
   </details>
 
@@ -289,17 +292,17 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">mar. 29/09</span></th>
-            <td class="c y">CA</td><td class="c p"></td>
+            <td class="c y" title="Congé annuel (CA)">CA</td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
-            <td class="c y">AM</td><td class="c p"></td>
+            <td class="c y" title="Arrêt maladie (AM)">AM</td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">mer. 30/09</span></th>
-            <td class="c g">TELE</td><td class="c p"></td>
-            <td class="c y">RHS</td><td class="c p"></td>
+            <td class="c g" title="Télétravail (TELE)">TELE</td><td class="c p"></td>
+            <td class="c y" title="Récupération heures supplémentaires (RHS)">RHS</td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
             <td class="c p"></td><td class="c p"></td>
@@ -307,30 +310,30 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">jeu. 01/10</span></th>
-            <td class="c r">formation</td><td class="c p"></td>
+            <td class="c r" title="formation">FORM</td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
-            <td class="c y">CEX</td><td class="c p"></td>
+            <td class="c y" title="Congé exceptionnel (CEX)">CEX</td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
-            <td class="c r">syndicat</td><td class="c p"></td>
+            <td class="c r" title="syndicat">SYND</td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">ven. 02/10</span></th>
             <td class="c p"></td><td class="c p"></td>
-            <td class="c m">amgt 02/10</td><td class="c p"></td>
+            <td class="c m" title="Aménagement 02/10">amgt 02/10</td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
             <td class="c p"></td><td class="c p"></td>
-            <td class="c y">CEX</td><td class="c p"></td>
+            <td class="c y" title="Congé exceptionnel (CEX)">CEX</td><td class="c p"></td>
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">sam. 03/10</span></th>
-            <td class="c m"><span class="ct" title="7e samedi avec créneaux — valorisé à partir du seuil (10)">×7</span>Réf. WE</td><td class="c n"></td>
-            <td class="c n"><span class="ct zero" title="Aucun créneau le samedi — compteur 0">×0</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct" title="2e samedi avec créneaux">×2</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
-            <td class="c p"><span class="ct" title="9e samedi avec créneaux — prochain samedi valorisé (seuil 10)">×9</span></td><td class="c p"></td>
-            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
+            <td class="c m" title="Référent week-end (Réf. WE)"><span class="ct" title="7ᵉ samedi travaillé — valorisé à partir du 10ᵉ">×7</span><span title="Référent week-end (Réf. WE)">Réf. WE</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero" title="Aucun samedi travaillé — compteur 0">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct" title="2ᵉ samedi travaillé — valorisé à partir du 10ᵉ">×2</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero" title="Aucun samedi travaillé — compteur 0">×0</span></td><td class="c n"></td>
+            <td class="c p"><span class="ct" title="9ᵉ samedi travaillé — prochain samedi valorisé (seuil 10)">×9</span></td><td class="c p"></td>
+            <td class="c n"><span class="ct zero" title="Aucun samedi travaillé — compteur 0">×0</span></td><td class="c n"></td>
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">dim. 04/10</span></th>
@@ -363,7 +366,7 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
           </tr>
           <tr class="ferie">
             <th class="date" scope="row"><span class="d-day">mer. 11/11</span><span class="dchip dchip-ferie">Férié</span></th>
-            <td class="c y">CA</td><td class="c p"></td>
+            <td class="c y" title="Congé annuel (CA)">CA</td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
@@ -381,12 +384,12 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">sam. 26/12</span></th>
-            <td class="c n"><span class="ct zero">×7</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct">×2</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct valued" title="10e samedi avec créneaux — valorisé (seuil 10, valuedSaturdayThreshold)">×10</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero" title="7 samedis travaillés — aucun valorisé (seuil 10)">×7</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero" title="Aucun samedi travaillé — compteur 0">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct" title="2ᵉ samedi travaillé — valorisé à partir du 10ᵉ">×2</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero" title="Aucun samedi travaillé — compteur 0">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct valued" title="10ᵉ samedi travaillé — valorisé (seuil 10, valuedSaturdayThreshold)">×10</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero" title="Aucun samedi travaillé — compteur 0">×0</span></td><td class="c n"></td>
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">dim. 27/12</span></th>
@@ -458,21 +461,21 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
             <td class="c p"></td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
             <td class="c p"></td><td class="c p"></td>
-            <td class="c y">RHS</td><td class="c p"></td>
+            <td class="c y" title="Récupération heures supplémentaires (RHS)">RHS</td><td class="c p"></td>
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">mer. 06/01/27</span></th>
-            <td class="c y">CA</td><td class="c p"></td>
+            <td class="c y" title="Congé annuel (CA)">CA</td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
-            <td class="c g">TELE</td><td class="c p"></td>
+            <td class="c g" title="Télétravail (TELE)">TELE</td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">jeu. 07/01/27</span></th>
             <td class="c p"></td><td class="c p"></td>
-            <td class="c m">amgt 07/01</td><td class="c p"></td>
+            <td class="c m" title="Aménagement 07/01">amgt 07/01</td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
             <td class="c p"></td><td class="c p"></td>
@@ -482,7 +485,7 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
             <th class="date" scope="row"><span class="d-day">ven. 08/01/27</span></th>
             <td class="c p"></td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
-            <td class="c r">formation</td><td class="c p"></td>
+            <td class="c r" title="formation">FORM</td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
@@ -490,11 +493,11 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
           <tr>
             <th class="date" scope="row"><span class="d-day">sam. 09/01/27</span></th>
             <td class="c n"><span class="ct zero" title="Compteur remis à zéro au changement d'année">×0</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
-            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero" title="Compteur remis à zéro au changement d'année">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero" title="Compteur remis à zéro au changement d'année">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero" title="Compteur remis à zéro au changement d'année">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero" title="Compteur remis à zéro au changement d'année">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero" title="Compteur remis à zéro au changement d'année">×0</span></td><td class="c n"></td>
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">dim. 10/01/27</span></th>
@@ -529,7 +532,7 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
     <div class="annotation"><strong>Présence dérivée :</strong> l'orange vide est CALCULÉ depuis le cycle (jamais stocké) ; effacer une cellule revient à l'état dérivé. Bob (sans cycle) : cellules neutres, aucune pilule de cycle. La semaine de cycle (S1, S2…) est affichée une fois par semaine ISO, dans la zone de la cellule du lundi, valable pour toute la semaine.</div>
     <div class="annotation"><strong>Compteur de samedis :</strong> calculé automatiquement (samedis de l'année avec créneaux), affiché sur les lignes de samedi, remis à zéro chaque année ; il alimente le seuil des samedis valorisés (ex. ×10 vert = 10e samedi valorisé, valuedSaturdayThreshold). Aucune colonne de comptage (ratio, totaux) — décision du 2026-10-03.</div>
     <div class="annotation"><strong>Solde trimestriel :</strong> badge « reliquat / déficit » pour les médiateurs avec un aménagement (Karim, temps partiel) ; aucun solde pour les autres. Fériés : liste française par défaut, modifiable par dérogation et par année (voir la maquette d'édition). Export Excel au format exact de la table de référence ; pas d'impression/PDF en v1.</div>
-    <div class="annotation"><strong>Contrastes (WCAG 1.4.3) :</strong> jaune #F9A825/#2b2b2b = 7,18 ; orange mission #d68c45/#3a2408 = 5,36 ; gris #6b6b6b/blanc = 5,33 ; rouge #c0392b/blanc = 5,44 ; badges #e3efe8/#1e5536 = 7,38 et #fdecea/#c0392b = 4,76 ; alerte ambre #fef5e7/#8a4d10 = 6,17.</div>
+    <div class="annotation"><strong>Contrastes (WCAG 1.4.3 / 1.4.11) :</strong> jaune #F9A825/#2b2b2b = 7,18 ; orange mission #d68c45/#3a2408 = 5,36 ; gris #6b6b6b/blanc = 5,33 ; rouge #c0392b/blanc = 5,44 ; badges #e3efe8/#1e5536 = 7,38 et #fdecea/#c0392b = 4,76 ; alerte ambre #fef5e7/#8a4d10 = 6,17 ; orange dérivée #C67A33/blanc = 3,37 (1.4.11 vs cellule neutre) ; hachures #8a8a8a/#f5f5f5 = 3,17 (1.4.11).</div>
   </div>
 </main>
 
@@ -568,21 +571,28 @@ var extras = {
   'y2027': function () { setYear(2027); document.body.classList.remove('nocycle'); },
   'empty': function () { setYear(2026); document.body.classList.remove('nocycle'); }
 };
+// Wire the 2026/2027 toolbar year buttons: they drive the same states as the
+// mockup switch (grid-2026 / grid-2027 visibility + year segment styling).
+function switchToState(s) {
+  document.querySelectorAll('.mockup-switch button').forEach(function (b) {
+    var on = b.dataset.state === s;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  boxes.closed.hidden = s !== 'closed';
+  boxes.nocycle.hidden = s !== 'nocycle';
+  boxes.empty.hidden = s !== 'empty';
+  boxes.g2026.hidden = s === 'y2027' || s === 'empty';
+  boxes.g2027.hidden = s !== 'y2027';
+  extras[s]();
+}
 document.querySelectorAll('.mockup-switch button').forEach(function (btn) {
   btn.addEventListener('click', function () {
-    document.querySelectorAll('.mockup-switch button').forEach(function (b) {
-      b.classList.remove('active'); b.setAttribute('aria-pressed', 'false');
-    });
-    btn.classList.add('active'); btn.setAttribute('aria-pressed', 'true');
-    var s = btn.dataset.state;
-    boxes.closed.hidden = s !== 'closed';
-    boxes.nocycle.hidden = s !== 'nocycle';
-    boxes.empty.hidden = s !== 'empty';
-    boxes.g2026.hidden = s === 'y2027' || s === 'empty';
-    boxes.g2027.hidden = s !== 'y2027';
-    extras[s]();
+    switchToState(btn.dataset.state);
   });
 });
+year2026.addEventListener('click', function () { switchToState('normal'); });
+year2027.addEventListener('click', function () { switchToState('y2027'); });
 </script>
 </body>
 </html>
