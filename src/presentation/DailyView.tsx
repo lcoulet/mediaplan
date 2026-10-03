@@ -182,8 +182,15 @@ export default function DailyView() {
   // extended print axis) so every hour column keeps the same width.
   const { ref: gridRef, width: gridWidth } = useElementWidth();
   const MEDIATOR_LABEL_WIDTH = 200;
-  const pxPerHour = gridWidth > 0
-    ? pxPerHourFromWidth(gridWidth - MEDIATOR_LABEL_WIDTH, axisSpanHours)
+  // WHILE PRINTING, the grid is pinned by the print CSS (@media print)
+  // to 1062 CSS px (A4 landscape printable width). useElementWidth keeps
+  // measuring the SCREEN window, so the scale must be derived from the
+  // pinned print width instead — otherwise a narrow screen window
+  // shrinks the printed grid and wastes the page width.
+  const PRINT_GRID_WIDTH = 1062;
+  const effectiveGridWidth = printing ? PRINT_GRID_WIDTH : gridWidth;
+  const pxPerHour = effectiveGridWidth > 0
+    ? pxPerHourFromWidth(effectiveGridWidth - MEDIATOR_LABEL_WIDTH, axisSpanHours)
     : FALLBACK_PX_PER_HOUR;
   const pxPerMin = pxPerHour / 60;
 
