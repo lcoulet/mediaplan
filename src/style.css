@@ -900,6 +900,41 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
     color: #fff;
 }
 
+/* ===== Manual JSON.gz export/import (header) ===== */
+/* Wrapper positions the amber "unexported changes" dot on the Export button */
+.btn-export-wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+/* Amber dot — decorative (aria-hidden): the Export button's title attribute
+   carries the "Modifications non exportées" information for mouse-over and
+   assistive tech. Button colors NEVER change (spec decision #2). */
+.export-pending-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-warning);
+    border: 1px solid var(--color-surface);
+    pointer-events: none;
+}
+
+/* Visually hidden file input driven by the ⇩ Import button */
+.visually-hidden-file {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 /* ===== Secutix import panel (inside the header modal) ===== */
 .secutix-panel .secutix-intro {
     color: var(--color-text-muted);
