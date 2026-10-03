@@ -14,12 +14,18 @@ export interface HistoryEntryMeta {
   label: string;
   // Commit time, epoch ms (Date.now())
   at: number;
+  // Data lastModified stamp (ISO 8601) captured when the entry was pushed.
+  // Distinct from `at`: an import pushes the FILE's embedded timestamp while
+  // `at` stays the wall-clock commit instant.
+  lastModified?: string;
 }
 
 export interface HistoryEntry<T = unknown> {
   data: T;
   label: string;
   at: number;
+  // Data lastModified stamp captured when the entry was pushed (ISO 8601)
+  lastModified?: string;
 }
 
 function deepClone<T>(obj: T): T {
@@ -39,6 +45,8 @@ export interface History<T = unknown> {
   getEntries: () => HistoryEntry<T>[];
   // Index of the current state within the ring (-1 before init)
   getPointer: () => number;
+  // Metadata (label/at/lastModified) of the current entry
+  getCurrentMeta: () => HistoryEntryMeta | null;
 }
 
 export function createHistory<T = unknown>(maxSize: number = DEFAULT_HISTORY_SIZE): History<T> {
@@ -66,6 +74,7 @@ export function createHistory<T = unknown>(maxSize: number = DEFAULT_HISTORY_SIZ
     metas.push({
       label: meta?.label ?? DEFAULT_HISTORY_LABEL,
       at: meta?.at ?? Date.now(),
+      lastModified: meta?.lastModified,
     });
     // Enforce max size: remove oldest entries
     while (states.length > maxSize) {
@@ -109,7 +118,15 @@ export function createHistory<T = unknown>(maxSize: number = DEFAULT_HISTORY_SIZ
       data: deepClone(data),
       label: metas[i].label,
       at: metas[i].at,
+      lastModified: metas[i].lastModified,
     }));
+  }
+
+  // Metadata (label/at/lastModified) of the current entry — so callers can
+  // restore the state's own lastModified stamp after undo/redo/jump.
+  function getCurrentMeta(): HistoryEntryMeta | null {
+    if (pointer < 0 || pointer >= metas.length) return null;
+    return { ...metas[pointer] };
   }
 
   function getPointer(): number {
@@ -127,5 +144,6 @@ export function createHistory<T = unknown>(maxSize: number = DEFAULT_HISTORY_SIZ
     getSize,
     getEntries,
     getPointer,
+    getCurrentMeta,
   };
 }

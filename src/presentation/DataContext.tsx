@@ -12,8 +12,8 @@ import {
 import type { AppData, Mediator } from '../domain/types';
 import type { ViewName } from './types';
 import { createMediator, normalizeCompetences, parseLocalDate, toLocalDateString } from '../domain/models';
-import { createHistory, DEFAULT_HISTORY_SIZE, type HistoryEntry } from '../domain/history';
-import { load, save, STORAGE_KEY } from '../infrastructure/store';
+import { createHistory, DEFAULT_HISTORY_SIZE, DEFAULT_HISTORY_LABEL, type HistoryEntry } from '../domain/history';
+import { load, save, setLastModified, getLastModified, STORAGE_KEY } from '../infrastructure/store';
 import type { AppState, Action } from './types';
 import { seedDemoData } from './DemoData';
 
@@ -276,8 +276,10 @@ export interface DataContextValue {
   redo: () => void;
   resetData: () => void;
   // commit: saves to localStorage + pushes to history. The optional label
-  // is the French action name stored in the history entry metadata.
-  commit: (data?: AppData, label?: string) => void;
+  // is the French action name stored in the history entry metadata; the
+  // optional lastModified is the data's OWN stamp (imports pass the file's
+  // embedded timestamp instead of the wall clock).
+  commit: (data?: AppData, label?: string, lastModified?: string) => void;
   // Full history ring, oldest first — for the history panel. The provider
   // re-reads it whenever the undo/redo capability state updates.
   getHistoryEntries: () => HistoryEntry<AppData>[];
@@ -337,31 +339,44 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // commit: save to localStorage + push to history (with a French label)
+  // commit: save to localStorage + push to history (with a French label).
+  // The optional third argument carries the data's OWN lastModified stamp
+  // (imports pass the file's embedded timestamp — the import instant is not
+  // a data modification).
   const commit = useCallback(
-    (data?: AppData, label?: string) => {
+    (data?: AppData, label?: string, lastModified?: string) => {
       const d = data ?? state.data;
-      save(d);
-      history.push(d, label ? { label, at: Date.now() } : undefined);
+      save(d, lastModified);
+      history.push(d, {
+        label: label ?? DEFAULT_HISTORY_LABEL,
+        at: Date.now(),
+        lastModified: lastModified ?? getLastModified() ?? undefined,
+      });
       updateUndoRedo();
     },
     [state.data, history, updateUndoRedo]
   );
 
-  // Undo
+  // Undo — restores the previous state AND its own lastModified stamp so the
+  // export badge reflects the restored state (spec: undoing to a pre-export
+  // state clears the badge).
   const undo = useCallback(() => {
     const prev = history.undo();
     if (!prev) return;
-    save(prev);
+    const meta = history.getCurrentMeta();
+    save(prev, meta?.lastModified ?? undefined);
+    if (meta?.lastModified) setLastModified(meta.lastModified);
     dispatch({ type: 'UNDO', data: prev });
     updateUndoRedo();
   }, [history, updateUndoRedo]);
 
-  // Redo
+  // Redo — same stamp restoration as undo
   const redo = useCallback(() => {
     const next = history.redo();
     if (!next) return;
-    save(next);
+    const meta = history.getCurrentMeta();
+    save(next, meta?.lastModified ?? undefined);
+    if (meta?.lastModified) setLastModified(meta.lastModified);
     dispatch({ type: 'REDO', data: next });
     updateUndoRedo();
   }, [history, updateUndoRedo]);
@@ -379,7 +394,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       const current = history.getCurrent();
       if (!current) return;
-      save(current);
+      const meta = history.getCurrentMeta();
+      save(current, meta?.lastModified ?? undefined);
+      if (meta?.lastModified) setLastModified(meta.lastModified);
       dispatch({ type: 'SET_DATA', data: current });
       updateUndoRedo();
     },
