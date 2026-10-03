@@ -295,8 +295,20 @@ import/export mode (shared JSON.gz files) until tenant access is sorted.
 - [x] Museum CLOSED on 25/12, 01/01 and 01/05
 
 **Open questions:**
-- [ ] Exact meaning of remaining numeric cells (1-19) and "Réf. WE" —
-      Loic to provide. Main codes DECODED (2026-09-26):
+- [x] NUMERIC CELLS (1-19 and beyond, RESOLVED 2026-10-03): they are
+      WORKED-SATURDAY COUNTERS — one per mediator, on Saturday rows only,
+      incrementing week after week through the year (observed 1..27,
+      outliers 41/47 = probably mid-year hires with carry-over counts or
+      manual corrections), resetting to 1 on year change. They feed the
+      VALUED-SATURDAY rule (10th/12th onwards ×1.5): the Excel counts by
+      hand. THE APP WILL COMPUTE THE COUNTER AUTOMATICALLY (count the
+      mediator's Saturdays with slots) instead of manual entry — feeding
+      the existing valuedSaturdayThreshold valorisation.
+- [x] "Réf. WE" (RESOLVED 2026-10-03): RÉFÉRENT WEEK-END — the mediator
+      who is the referent for weekend activities that day. Not a code to
+      model as an absence: candidate for a per-day/per-mediator marker
+      (to spec with the annual view).
+- Main codes DECODED (2026-09-26):
       - TP = Temps Partiel (1696×, 2nd most common)
       - CA = Congé Annuel
       - RHS = Récupération Heures Supplémentaires
