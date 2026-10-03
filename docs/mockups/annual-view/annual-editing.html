@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediaPlan — Tableau de fonctionnement : édition de la grille (maquette)</title>
+<style>
+/* ===== Base (tokens copied from src/style.css) ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --color-primary: #2c6e49;
+  --color-primary-dark: #1e5536;
+  --color-primary-light: #4c956c;
+  --color-accent: #d68c45;
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-text: #2b2b2b;
+  --color-text-muted: #6b6b6b;
+  --color-border: #d9d9d9;
+  --color-border-light: #eaeaea;
+  --color-danger: #c0392b;
+  --color-danger-bg: #fdecea;
+  --color-warning: #d68c45;
+  --color-warning-bg: #fef5e7;
+  --radius: 6px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --header-h: 56px;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px; color: var(--color-text); background: var(--color-bg); line-height: 1.5;
+  padding-bottom: 64px;
+}
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.app-header button:focus-visible { outline-color: #ffffff; }
+
+/* ===== Header ===== */
+.app-header {
+  min-height: var(--header-h); background: var(--color-primary); color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; row-gap: 4px; padding: 8px 20px; box-shadow: var(--shadow-sm);
+}
+.header-left { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; flex-shrink: 1; min-width: 0; }
+.app-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.app-subtitle { font-size: 12px; opacity: 0.8; white-space: normal; }
+.header-nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.nav-btn { background: transparent; border: none; color: rgba(255,255,255,0.8); padding: 8px 12px; border-radius: var(--radius); font-size: 14px; cursor: pointer; }
+.nav-btn.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
+
+/* ===== Page ===== */
+.app-main { max-width: 1040px; margin: 0 auto; padding: 16px; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.toolbar h2 { font-size: 18px; font-weight: 600; }
+.toolbar-note { font-size: 13px; color: var(--color-text-muted); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1px solid transparent; border-radius: var(--radius); font-size: 14px; cursor: pointer; white-space: nowrap; font-family: inherit; }
+.btn-secondary { background: var(--color-surface); color: var(--color-text); border-color: var(--color-border); }
+.btn-secondary:hover { background: #f0f0f0; }
+.btn-secondary:disabled { color: #a8a8a8; cursor: not-allowed; background: var(--color-surface); }
+.btn-ghost { background: transparent; color: var(--color-text); border-color: transparent; padding: 6px 10px; font-size: 13px; }
+.btn-ghost:hover { background: #f0f0f0; }
+.btn-ghost:disabled { color: #a8a8a8; cursor: not-allowed; }
+.year-seg { display: inline-flex; border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; background: var(--color-surface); }
+.year-seg span { padding: 8px 16px; font-size: 14px; color: #fff; background: var(--color-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ===== Banners ===== */
+.state-box[hidden] { display: none; }
+/* Paint-mode banner */
+.banner-paint {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--color-accent); color: #3a2408; padding: 9px 14px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 600; box-shadow: var(--shadow-sm); margin-bottom: 12px;
+}
+.banner-paint .bp-spacer { flex: 1; }
+.btn-exit { background: transparent; border: 1px solid #3a2408; color: #3a2408; padding: 3px 12px; border-radius: var(--radius); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-exit:hover { background: rgba(58,36,8,0.12); }
+/* Amber non-blocking alert */
+.alert-amber {
+  display: flex; align-items: flex-start; gap: 8px;
+  background: var(--color-warning-bg); border: 1px solid var(--color-warning); border-left: 4px solid var(--color-warning);
+  color: #8a4d10; padding: 8px 12px; border-radius: var(--radius); font-size: 13px; margin: 10px auto 0; max-width: 560px;
+}
+
+/* ===== Férié management panel ===== */
+.ferie-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 12px; overflow: hidden; }
+.ferie-box summary { cursor: pointer; padding: 10px 14px; font-size: 13px; font-weight: 600; list-style: none; }
+.ferie-box summary::before { content: "▸ "; color: var(--color-text-muted); }
+.ferie-box[open] summary::before { content: "▾ "; }
+.ferie-body { padding: 0 14px 12px; }
+.ferie-body .ferie-line { font-size: 12px; color: var(--color-text-muted); margin-bottom: 8px; }
+.chiplist { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; background: #fafafa; border: 1px solid var(--color-border); border-radius: 14px; padding: 2px 4px 2px 10px; font-size: 12px; }
+.chip button { background: none; border: none; cursor: pointer; color: var(--color-danger); font-size: 12px; padding: 0 4px; border-radius: 50%; }
+.chip button:hover { background: var(--color-danger-bg); }
+.chip.added { border-style: dashed; border-color: var(--color-primary-light); color: var(--color-primary-dark); }
+.chip.removed { text-decoration: line-through; opacity: 0.6; }
+.ferie-form { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 8px; border-top: 1px dashed var(--color-border); }
+.ferie-form label { font-size: 12px; font-weight: 600; }
+.date-input { padding: 5px 8px; font-size: 13px; border: 1px solid var(--color-border); border-radius: var(--radius); font-family: inherit; color: var(--color-text); background: var(--color-surface); }
+.btn-primary-sm { background: var(--color-primary); color: #fff; padding: 6px 12px; font-size: 13px; }
+.btn-primary-sm:hover { background: var(--color-primary-dark); }
+
+/* ===== Annual grid (same structure as annual-grid.html) ===== */
+.annual-card { background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; position: relative; }
+.grid-wrap { overflow-x: auto; position: relative; }
+/* Content-sized table: no stretching — cells keep their ~30px width.
+   table-layout:fixed needs an explicit width (108 + 8 × 30 = 348px);
+   narrow viewports scroll horizontally inside .grid-wrap. */
+.agrid { border-collapse: separate; border-spacing: 0; table-layout: fixed; width: 348px; }
+.agrid th, .agrid td { border-bottom: 1px solid var(--color-border-light); }
+.mh { text-align: left; padding: 6px 6px 6px 8px; vertical-align: top; min-width: 60px; border-bottom: 1px solid var(--color-border); border-left: 1px solid var(--color-border-light); background: #fafafa; font-weight: 400; overflow-wrap: break-word; }
+.mh .mname { display: block; font-size: 11px; font-weight: 700; white-space: normal; }
+.pill { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 700; line-height: 1.6; }
+.pill-contract { background: #f0f0f0; color: #5a5a5a; }
+.date {
+  position: sticky; left: 0; z-index: 2; width: 108px; min-width: 108px; max-width: 108px;
+  text-align: left; padding: 3px 8px; background: var(--color-surface);
+  border-right: 1px solid var(--color-border); font-weight: 400; vertical-align: middle;
+}
+tr.thead-row .date { z-index: 4; background: #fafafa; border-bottom: 1px solid var(--color-border); }
+.d-day { display: block; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.wk { display: inline-block; margin-top: 1px; padding: 0 5px; border-radius: 8px; background: #f0f0f0; color: #6b6b6b; font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dchip { display: inline-block; margin-top: 1px; padding: 0 5px; border-radius: 8px; font-size: 9px; font-weight: 700; }
+.dchip-ferie { background: var(--color-warning-bg); color: #8a4d10; border: 1px solid var(--color-warning); }
+.dchip-closed { background: var(--color-danger-bg); color: var(--color-danger); border: 1px solid var(--color-danger); }
+tr.ferie .date { background: #fef5e7; }
+tr.closed .date { background: #fdecea; }
+.c { width: 30px; min-width: 30px; max-width: 30px; height: 28px; padding: 1px 2px; border-left: 1px solid var(--color-border-light); font-size: 10px; font-weight: 700; text-align: center; vertical-align: middle; position: relative; overflow: hidden; white-space: nowrap; }
+.c.p { background: #F0A860; }
+.c.y { background: #F9A825; color: #2b2b2b; }
+.c.g { background: #6b6b6b; color: #fff; }
+.c.m { background: #d68c45; color: #3a2408; font-size: 9px; }
+.c.r { background: #c0392b; color: #fff; }
+.c.n { background: #fff; }
+.c.cl { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #e3e3e3 5px 7px); }
+.cycp { display: inline-block; padding: 0 4px; border-radius: 8px; background: #fff; color: #2b2b2b; border: 1px solid var(--color-border); font-size: 9px; font-weight: 700; line-height: 1.5; }
+.ct { position: absolute; top: 0; right: 0; padding: 0 3px; border-radius: 0 0 0 6px; background: #e3efe8; color: #1e5536; font-size: 9px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.extrait td { text-align: center; color: var(--color-text-muted); font-size: 11px; padding: 2px 0; background: #fafafa; }
+/* Paint-mode cursor on paintable cells */
+body.paintmode .c { cursor: crosshair; }
+body.paintmode .c.y { background: #F9A825; }
+/* Menu target highlight */
+.c.menu-target { outline: 2px solid var(--color-primary-dark); outline-offset: -2px; }
+
+/* ===== Context menu ===== */
+.menu {
+  position: absolute; z-index: 50; width: 250px; max-width: 100%;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius); box-shadow: var(--shadow-md); overflow: hidden;
+}
+.menu-head { padding: 7px 12px; font-size: 12px; font-weight: 700; border-bottom: 1px solid var(--color-border-light); background: #fafafa; }
+.menu-list { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 10px; border-bottom: 1px solid var(--color-border-light); }
+.code-chip {
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text);
+  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px; cursor: pointer; font-family: inherit;
+}
+.code-chip:hover, .code-chip:focus-visible { border-color: var(--color-primary); background: #eef5f1; }
+.menu-free { padding: 8px 10px; border-bottom: 1px solid var(--color-border-light); }
+.menu-free label { display: block; font-size: 11px; color: var(--color-text-muted); margin-bottom: 3px; }
+.free-input { display: flex; gap: 5px; }
+.free-input input { flex: 1; min-width: 0; padding: 5px 8px; font-size: 13px; border: 1px solid var(--color-border); border-radius: var(--radius); font-family: inherit; color: var(--color-text); }
+.sugg { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.sugg .code-chip { font-size: 10px; padding: 1px 7px; color: var(--color-text-muted); }
+.menu-foot { padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; }
+.menu-item {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  background: none; border: none; padding: 6px 8px; font-size: 13px; color: var(--color-text);
+  border-radius: var(--radius); cursor: pointer; font-family: inherit;
+}
+.menu-item:hover, .menu-item:focus-visible { background: #f0f0f0; }
+.menu-item .mi-code { font-weight: 700; }
+.mi { display: inline-block; width: 16px; text-align: center; flex-shrink: 0; }
+
+/* ===== Undo / redo toolbar ===== */
+.edit-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; font-size: 12px; color: var(--color-text-muted); }
+.edit-bar .sep { color: var(--color-border); }
+
+/* ===== Mockup annotations ===== */
+.mockup-caption { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; color: var(--color-text-muted); margin: 14px 2px 0; flex-wrap: wrap; }
+.annotation { border-left: 3px solid var(--color-primary-light); background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 8px 12px; flex: 1; min-width: 220px; }
+.annotation strong { color: var(--color-text); }
+
+/* ===== Mockup state switch ===== */
+.mockup-switch {
+  position: fixed; bottom: 12px; left: 12px; z-index: 300; display: flex; gap: 6px;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 16px;
+  padding: 4px 6px; box-shadow: var(--shadow-md); flex-wrap: wrap; max-width: calc(100vw - 24px);
+}
+.mockup-switch span { font-size: 11px; color: var(--color-text-muted); align-self: center; padding: 0 4px; }
+.mockup-switch button { font-size: 11px; padding: 3px 10px; border-radius: 12px; cursor: pointer; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted); }
+.mockup-switch button.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+
+@media (max-width: 560px) {
+  .date { width: 96px; min-width: 96px; max-width: 96px; }
+  .mh { min-width: 56px; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-left">
+    <h1 class="app-title">MediaPlan</h1>
+    <span class="app-subtitle">Gestion des plannings de médiation — Museum</span>
+  </div>
+  <nav class="header-nav" aria-label="Navigation principale">
+    <button class="nav-btn" type="button">Plan Jour</button>
+    <button class="nav-btn" type="button">Plan Hebdo</button>
+    <button class="nav-btn" type="button">Plan Accueil</button>
+    <button class="nav-btn" type="button">Médiateurs</button>
+    <button class="nav-btn" type="button">Offres</button>
+    <button class="nav-btn" type="button">Absences</button>
+    <button class="nav-btn" type="button">Statistiques</button>
+    <button class="nav-btn active" aria-current="page" type="button">Tableau</button>
+    <button class="nav-btn" type="button">Configuration</button>
+  </nav>
+</header>
+
+<main class="app-main">
+  <div class="toolbar">
+    <h2>Tableau de fonctionnement — édition</h2>
+    <span class="year-seg" aria-label="Année affichée"><span>2026</span></span>
+  </div>
+  <p class="toolbar-note" style="margin: -6px 0 12px;">Clic sur une demi-journée → menu contextuel des codes. Texte libre avec codes décodés en suggestions ; « Effacer » rétablit la présence dérivée du cycle (jamais stockée).</p>
+
+  <!-- ===== State: paint-mode banner ===== -->
+  <div class="banner-paint state-box" id="banner-paint" role="status" hidden>
+    <span aria-hidden="true">🖌</span>
+    <span>Peinture : <strong>CA</strong> — cliquez les cellules à remplir, Échap pour quitter.</span>
+    <span class="bp-spacer"></span>
+    <button class="btn-exit" type="button" title="Quitter le mode peinture (Échap)">✕ Quitter</button>
+  </div>
+
+  <!-- ===== State: férié management panel (toolbar zone) ===== -->
+  <details class="ferie-box state-box" id="state-feries" hidden>
+    <summary>Fériés 2026 — dérogations par année</summary>
+    <div class="ferie-body">
+      <p class="ferie-line">Liste française par défaut, calculée pour 2026. Ajout / retrait en dérogation, propre à cette année (2027 suivra sa liste par défaut).</p>
+      <div class="chiplist">
+        <span class="chip">1er janvier <button type="button" title="Retirer 1er janvier des fériés de 2026">✕</button></span>
+        <span class="chip">Lundi de Pâques (06/04) <button type="button" title="Retirer de la liste">✕</button></span>
+        <span class="chip">1er mai <button type="button" title="Retirer de la liste">✕</button></span>
+        <span class="chip">8 mai <button type="button" title="Retirer de la liste">✕</button></span>
+        <span class="chip">Ascension (14/05) <button type="button" title="Retirer de la liste">✕</button></span>
+        <span class="chip">Lundi de Pentecôte (25/05) <button type="button" title="Retirer de la liste">✕</button></span>
+        <span class="chip removed" title="Retiré par dérogation pour 2026">14 juillet <button type="button" title="Rétablir 14 juillet">↺</button></span>
+        <span class="chip">15 août <button type="button" title="Retirer de la liste">✕</button></span>
+        <span class="chip added" title="Ajouté par dérogation pour 2026">10 août <button type="button" title="Retirer la dérogation">✕</button></span>
+        <span class="chip">1er novembre <button type="button" title="Retirer de la liste">✕</button></span>
+        <span class="chip">11 novembre <button type="button" title="Retirer de la liste">✕</button></span>
+        <span class="chip">25 décembre <button type="button" title="Retirer de la liste">✕</button></span>
+      </div>
+      <div class="ferie-form">
+        <label for="new-ferie">Férié 2026 :</label>
+        <input class="date-input" id="new-ferie" type="date" value="2026-08-10" aria-label="Date du nouveau férié 2026">
+        <button class="btn btn-primary-sm" type="button">+ Ajouter la date</button>
+        <span class="ferie-line" style="margin: 0;">— le marquage par défaut des autres jours fériés est inchangé</span>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===== Undo / redo bar (state 5) ===== -->
+  <div class="edit-bar state-box" id="state-undo" role="group" aria-label="Annuler / rétablir" hidden>
+    <button class="btn btn-ghost" type="button" title="Annuler la dernière saisie (une opération par cellule peinte)">↶ Annuler</button>
+    <button class="btn btn-ghost" type="button" disabled title="Rien à rétablir pour l'instant">↷ Rétablir</button>
+    <span class="sep">|</span>
+    <span>2 modifications · cellule matin du mar. 10/06 Alice : CA → présence dérivée (annulé)</span>
+  </div>
+
+  <!-- ===== Grid card (position: relative anchors the context menus) ===== -->
+  <div class="annual-card">
+    <div class="grid-wrap">
+      <table class="agrid" aria-label="Tableau de fonctionnement 2026 — édition (extrait de la semaine du 8 juin)">
+        <colgroup>
+          <col style="width:108px">
+          <col style="width:30px"><col style="width:30px"><col style="width:30px"><col style="width:30px">
+          <col style="width:30px"><col style="width:30px"><col style="width:30px"><col style="width:30px">
+        </colgroup>
+        <thead>
+          <tr class="thead-row">
+            <th class="date" scope="col"><span class="d-day" style="color: var(--color-text-muted); font-weight: 400;">Date</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Alice Dupont</span><span class="pill pill-contract">temps plein</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Karim Benali</span><span class="pill pill-contract">temps partiel</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Marie Lambert</span><span class="pill pill-contract">stagiaire</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Bob Fontaine</span><span class="pill pill-contract">mi-temps</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">lun. 08/06</span><span class="wk">S 24</span></th>
+            <td class="c y">CA</td><td class="c p"></td>
+            <td class="c p"><span class="cycp">S1</span></td><td class="c p"></td>
+            <td class="c p"><span class="cycp">S2</span></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">mar. 09/06</span></th>
+            <td class="c p menu-target" id="cell-menu"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">mer. 10/06</span></th>
+            <td class="c y">CA</td><td class="c y">CA</td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">jeu. 11/06</span></th>
+            <td class="c g">TELE</td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">ven. 12/06</span></th>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c y">RHS</td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">sam. 13/06</span></th>
+            <td class="c m"><span class="ct" title="3e samedi avec créneaux">×3</span>Réf. WE</td><td class="c n"></td>
+            <td class="c n"><span class="ct">×1</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct">×2</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct">×0</span></td><td class="c n"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">dim. 14/06</span></th>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+          </tr>
+          <tr class="extrait"><td colspan="9">⋯ ⋯</td></tr>
+          <tr class="closed">
+            <th class="date" scope="row"><span class="d-day">ven. 25/12</span><span class="dchip dchip-ferie">Férié</span> <span class="dchip dchip-closed">Fermé</span></th>
+            <td class="c cl menu-target" id="cell-closed"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ===== (1) Context menu OPEN on Alice mar. 09/06 matin ===== -->
+      <div class="menu state-box" id="state-menu" role="menu" aria-label="Modifier la demi-journée : Alice Dupont, mardi 9 juin 2026, matin" style="top: 62px; left: 130px;" hidden>
+        <div class="menu-head">Alice Dupont — mar. 09/06/2026 · Matin</div>
+        <div class="menu-list">
+          <button class="code-chip" type="button" role="menuitem">CA</button>
+          <button class="code-chip" type="button" role="menuitem">RHS</button>
+          <button class="code-chip" type="button" role="menuitem">AM</button>
+          <button class="code-chip" type="button" role="menuitem">TELE</button>
+          <button class="code-chip" type="button" role="menuitem">amgt</button>
+          <button class="code-chip" type="button" role="menuitem">Réf. WE</button>
+          <button class="code-chip" type="button" role="menuitem">CEX</button>
+          <button class="code-chip" type="button" role="menuitem">TPT</button>
+        </div>
+        <div class="menu-free">
+          <label for="free-text">Texte libre (vert non bloquant)</label>
+          <div class="free-input">
+            <input id="free-text" type="text" value="Stop Motion" aria-label="Saisie de texte libre pour la demi-journée">
+            <button class="btn btn-primary-sm" type="button">OK</button>
+          </div>
+          <div class="sugg" id="free-suggestions">
+            <button class="code-chip" type="button" title="Congé annuel">CA</button>
+            <button class="code-chip" type="button" title="Récupération heures supplémentaires">RHS</button>
+            <button class="code-chip" type="button" title="Arrêt maladie">AM</button>
+            <button class="code-chip" type="button" title="Congé exceptionnel">CEX</button>
+            <button class="code-chip" type="button" title="Aménagement">amgt</button>
+          </div>
+        </div>
+        <div class="menu-foot">
+          <button class="menu-item" type="button" role="menuitem"><span class="mi">🖌</span><span>Peindre ce code</span></button>
+          <button class="menu-item" type="button" role="menuitem"><span class="mi">⌫</span><span>Effacer <span style="color: var(--color-text-muted); font-weight: 400;">(retour au cycle)</span></span></button>
+        </div>
+      </div>
+
+      <!-- ===== (3) Museum-closed alert — menu still open and usable ===== -->
+      <div class="menu state-box" id="state-closed-menu" role="menu" aria-label="Modifier la demi-journée : Alice Dupont, vendredi 25 décembre 2026, matin" style="bottom: 40px; left: 150px;" hidden>
+        <div class="menu-head">Alice Dupont — ven. 25/12/2026 · Matin</div>
+        <div role="alert" style="margin: 8px 10px 0;">
+          <div class="alert-amber" style="margin: 0; max-width: none;">⚠ <span><strong>Le musée est fermé ce jour-là.</strong> L'édition reste possible — exceptions légitimes (décision du 2026-10-03, diffère du refus de la vue quotidienne).</span></div>
+        </div>
+        <div class="menu-list" style="border-top: none;">
+          <button class="code-chip" type="button" role="menuitem">CA</button>
+          <button class="code-chip" type="button" role="menuitem">RHS</button>
+          <button class="code-chip" type="button" role="menuitem">AM</button>
+          <button class="code-chip" type="button" role="menuitem">TELE</button>
+          <button class="code-chip" type="button" role="menuitem">amgt</button>
+          <button class="code-chip" type="button" role="menuitem">Réf. WE</button>
+          <button class="code-chip" type="button" role="menuitem">CEX</button>
+          <button class="code-chip" type="button" role="menuitem">TPT</button>
+        </div>
+        <div class="menu-foot">
+          <button class="menu-item" type="button" role="menuitem"><span class="mi">🖌</span><span>Peindre ce code</span></button>
+          <button class="menu-item" type="button" role="menuitem"><span class="mi">⌫</span><span>Effacer <span style="color: var(--color-text-muted); font-weight: 400;">(retour au cycle)</span></span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Paint-mode annotation context -->
+  <div class="mockup-caption" aria-hidden="true">
+    <div class="annotation"><strong>(1) Menu contextuel :</strong> un clic sur une cellule de demi-journée ouvre le menu — tous les codes (CA, RHS, AM, TELE, amgt, Réf. WE, CEX, TPT), texte libre avec codes décodés en suggestions (« Stop Motion » s'afficherait en orange de mission), « Effacer (retour au cycle) » rétablit la présence dérivée, « Peindre ce code » active le mode peinture. Items focalisables (Tab / Maj+Tab), Échap ferme le menu.</div>
+    <div class="annotation"><strong>(2) Mode peinture :</strong> bannière « Peinture : CA — cliquez les cellules à remplir, Échap pour quitter » ; curseur pinceau sur les cellules, menu contextuel désactivé. Chaque clic peint UNE cellule, sans glisser-déposer ; le 09/06 et le 10/06 matins + après-midi d'Alice sont peints CA. Peindre fonctionne aussi sur les autres médiateurs (Bob sans cycle inclus) ; chaque cellule peinte = UNE opération annulable.</div>
+    <div class="annotation"><strong>(3) Jour de fermeture :</strong> alerte ambre NON BLOQUANTE « Le musée est fermé ce jour-là » dans le menu (25/12, 01/01, 01/05) — la saisie reste possible.</div>
+    <div class="annotation"><strong>(4) Fériés :</strong> panneau « Fériés 2026 » — liste française par défaut en puces ; + Ajouter une date (ex. 10/08), ✕ retire (ex. 14 juillet barré), dérogations propres à l'année sélectionnée.</div>
+    <div class="annotation"><strong>(5) Annuler / rétablir :</strong> ↶ actif après chaque saisie ou cellule peinte (une opération par cellule), ↷ rétablit ; le changement d'année ne touche jamais les données des autres années (absences stockées par date et par demi-journée).</div>
+    <div class="annotation"><strong>Contrastes (WCAG 1.4.3) :</strong> bannière peinture #d68c45/#3a2408 = 5,36 ; alerte ambre #fef5e7/#8a4d10 = 6,17 ; jaune #F9A825/#2b2b2b = 7,18 ; gris #6b6b6b/blanc = 5,33 ; rouge #c0392b/blanc = 5,44.</div>
+  </div>
+</main>
+
+<!-- Mockup state switch -->
+<div class="mockup-switch" role="group" aria-label="États de maquette de l'édition annuelle">
+  <span>États :</span>
+  <button type="button" data-state="menu" class="active" aria-pressed="true">Menu contextuel</button>
+  <button type="button" data-state="paint" aria-pressed="false">Mode peinture</button>
+  <button type="button" data-state="closed" aria-pressed="false">Jour de fermeture</button>
+  <button type="button" data-state="feries" aria-pressed="false">Fériés 2026</button>
+  <button type="button" data-state="undo" aria-pressed="false">Annuler / rétablir</button>
+</div>
+
+<script>
+// Mockup-only interaction: switch between the editing states.
+var boxes = {
+  'menu': document.getElementById('state-menu'),
+  'paint-banner': document.getElementById('banner-paint'),
+  'closed': document.getElementById('state-closed-menu'),
+  'feries': document.getElementById('state-feries'),
+  'undo': document.getElementById('state-undo')
+};
+var targetCell = document.getElementById('cell-menu');
+function setPaint(on) { document.body.classList.toggle('paintmode', on); }
+// In paint mode the menu cell was chosen first (« CA » puis « Peindre ce code »)
+// — it shows the painted value; in the menu state it is still derived presence.
+function paintTarget(on) {
+  targetCell.classList.toggle('p', !on);
+  targetCell.classList.toggle('y', on);
+  targetCell.textContent = on ? 'CA' : '';
+}
+var extras = {
+  'menu': function () { setPaint(false); paintTarget(false); },
+  'paint': function () { setPaint(true); paintTarget(true); },
+  'closed': function () { setPaint(false); paintTarget(false); },
+  'feries': function () { setPaint(false); paintTarget(false); boxes.feries.open = true; },
+  'undo': function () { setPaint(false); paintTarget(false); }
+};
+document.querySelectorAll('.mockup-switch button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.mockup-switch button').forEach(function (b) {
+      b.classList.remove('active'); b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('active'); btn.setAttribute('aria-pressed', 'true');
+    var s = btn.dataset.state;
+    boxes.menu.hidden = s !== 'menu';
+    boxes['paint-banner'].hidden = s !== 'paint';
+    boxes.closed.hidden = s !== 'closed';
+    boxes.feries.hidden = s !== 'feries';
+    boxes.undo.hidden = s !== 'undo';
+    targetCell.classList.toggle('menu-target', s === 'menu');
+    extras[s]();
+  });
+});
+// Échap quits paint mode (mockup behavior mirroring the spec).
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    setPaint(false);
+    boxes['paint-banner'].hidden = true;
+  }
+});
+</script>
+</body>
+</html>

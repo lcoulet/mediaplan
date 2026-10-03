@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediaPlan — Tableau de fonctionnement : grille annuelle (maquette)</title>
+<style>
+/* ===== Base (tokens copied from src/style.css) ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --color-primary: #2c6e49;
+  --color-primary-dark: #1e5536;
+  --color-primary-light: #4c956c;
+  --color-accent: #d68c45;
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-text: #2b2b2b;
+  --color-text-muted: #6b6b6b;
+  --color-border: #d9d9d9;
+  --color-border-light: #eaeaea;
+  --color-danger: #c0392b;
+  --color-danger-bg: #fdecea;
+  --color-warning: #d68c45;
+  --color-warning-bg: #fef5e7;
+  --radius: 6px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --header-h: 56px;
+  /* Cell palette (contrast computed WCAG 1.4.3):
+     orange derived #F0A860 / #2b2b2b = 7.06 — border-only cell, no text
+     yellow absence  #F9A825 / #2b2b2b = 7.18
+     gray TELE       #6b6b6b / #ffffff = 5.33
+     orange mission  #d68c45 / #3a2408 = 5.36
+     red work-abs.   #c0392b / #ffffff = 5.44
+     sat badge       #e3efe8 / #1e5536 = 7.38 ; valued #2c6e49 / #fff = 6.12
+     reliquat badge  #e3efe8 / #1e5536 = 7.38 ; deficit #fdecea / #c0392b = 4.76
+     amber alert     #fef5e7 / #8a4d10 = 6.17 */
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px; color: var(--color-text); background: var(--color-bg); line-height: 1.5;
+  padding-bottom: 64px;
+}
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.app-header button:focus-visible { outline-color: #ffffff; }
+
+/* ===== Header ===== */
+.app-header {
+  min-height: var(--header-h); background: var(--color-primary); color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; row-gap: 4px; padding: 8px 20px; box-shadow: var(--shadow-sm);
+}
+.header-left { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; flex-shrink: 1; min-width: 0; }
+.app-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.app-subtitle { font-size: 12px; opacity: 0.8; white-space: normal; }
+.header-nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.nav-btn { background: transparent; border: none; color: rgba(255,255,255,0.8); padding: 8px 12px; border-radius: var(--radius); font-size: 14px; cursor: pointer; }
+.nav-btn.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
+
+/* ===== Page ===== */
+.app-main { max-width: 1040px; margin: 0 auto; padding: 16px; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.toolbar h2 { font-size: 18px; font-weight: 600; }
+.toolbar-note { font-size: 13px; color: var(--color-text-muted); }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+  border: 1px solid transparent; border-radius: var(--radius); font-size: 14px;
+  cursor: pointer; white-space: nowrap; font-family: inherit;
+}
+.btn-secondary { background: var(--color-surface); color: var(--color-text); border-color: var(--color-border); }
+.btn-secondary:hover { background: #f0f0f0; }
+.year-seg { display: inline-flex; border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; background: var(--color-surface); }
+.year-seg button { border: none; background: var(--color-surface); padding: 8px 16px; font-size: 14px; cursor: pointer; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.year-seg button + button { border-left: 1px solid var(--color-border); }
+.year-seg button.active { background: var(--color-primary); color: #fff; font-weight: 600; }
+
+/* ===== Collapsible legend ===== */
+.legend-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); margin-bottom: 12px; box-shadow: var(--shadow-sm); }
+.legend-box summary { cursor: pointer; padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--color-text); list-style: none; }
+.legend-box summary::before { content: "▸ "; color: var(--color-text-muted); }
+.legend-box[open] summary::before { content: "▾ "; }
+.legend-body { padding: 4px 14px 12px; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--color-text-muted); }
+.legend-body .lg { display: inline-flex; align-items: center; gap: 6px; }
+.sw { display: inline-block; width: 26px; height: 14px; border-radius: 3px; border: 1px solid var(--color-border-light); flex-shrink: 0; }
+.sw.p { background: #F0A860; }
+.sw.y { background: #F9A825; }
+.sw.g { background: #6b6b6b; }
+.sw.m { background: #d68c45; }
+.sw.r { background: #c0392b; }
+.sw.n { background: #fff; }
+.sw.cl { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #e3e3e3 5px 7px); }
+.sw.ferie { background: #fef5e7; border-color: #d68c45; }
+.ct-sw { display: inline-block; padding: 0 5px; border-radius: 8px; background: #e3efe8; color: #1e5536; font-size: 10px; font-weight: 700; }
+
+/* ===== Banners ===== */
+.banner { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius); font-size: 13px; margin-bottom: 12px; box-shadow: var(--shadow-sm); }
+.banner-warn { background: var(--color-warning-bg); border: 1px solid var(--color-warning); border-left: 4px solid var(--color-warning); color: #8a4d10; }
+.banner-info { background: var(--color-surface); border: 1px solid var(--color-border); border-left: 4px solid var(--color-primary-light); color: var(--color-text); }
+.state-box[hidden] { display: none; }
+
+/* ===== Annual grid card ===== */
+.annual-card { background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
+.grid-wrap { overflow-x: auto; position: relative; }
+/* Content-sized table: no stretching — cells keep their ~30px width.
+   table-layout:fixed needs an explicit width (108 + 12 × 30 = 468px);
+   narrow viewports scroll horizontally inside .grid-wrap. */
+.agrid { border-collapse: separate; border-spacing: 0; table-layout: fixed; width: 468px; }
+.agrid th, .agrid td { border-bottom: 1px solid var(--color-border-light); }
+/* Mediator header */
+.mh {
+  text-align: left; padding: 6px 6px 6px 8px; vertical-align: top; min-width: 60px;
+  border-bottom: 1px solid var(--color-border); border-left: 1px solid var(--color-border-light);
+  background: #fafafa; font-weight: 400; overflow-wrap: break-word;
+}
+.mh .mname { display: block; font-size: 11px; font-weight: 700; white-space: normal; }
+.mh .mquota { display: block; margin-top: 2px; }
+.pill { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 700; line-height: 1.6; }
+.pill-contract { background: #f0f0f0; color: #5a5a5a; } /* #5a5a5a/#f0f0f0 = 6.05 */
+.quota-ok { background: #e3efe8; color: #1e5536; }   /* 7.38 */
+.quota-ko { background: #fdecea; color: #c0392b; }   /* 4.76 */
+/* Date column (sticky) */
+.date {
+  position: sticky; left: 0; z-index: 2; width: 108px; min-width: 108px; max-width: 108px;
+  text-align: left; padding: 3px 8px; background: var(--color-surface);
+  border-right: 1px solid var(--color-border); font-weight: 400; vertical-align: middle;
+}
+tr.thead-row .date { z-index: 4; background: #fafafa; border-bottom: 1px solid var(--color-border); }
+.d-day { display: block; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.wk { display: inline-block; margin-top: 1px; padding: 0 5px; border-radius: 8px; background: #f0f0f0; color: #6b6b6b; font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; } /* 4.68 */
+.dchip { display: inline-block; margin-top: 1px; padding: 0 5px; border-radius: 8px; font-size: 9px; font-weight: 700; }
+.dchip-ferie { background: var(--color-warning-bg); color: #8a4d10; border: 1px solid var(--color-warning); } /* 6.17 */
+.dchip-closed { background: var(--color-danger-bg); color: var(--color-danger); border: 1px solid var(--color-danger); } /* 4.76 */
+tr.ferie .date { background: #fef5e7; }
+tr.closed .date { background: #fdecea; }
+/* Cells: ONE per half-day (Matin / Après-midi), ~30px wide */
+.c {
+  width: 30px; min-width: 30px; max-width: 30px; height: 28px; padding: 1px 2px;
+  border-left: 1px solid var(--color-border-light);
+  font-size: 10px; font-weight: 700; text-align: center; vertical-align: middle;
+  position: relative; overflow: hidden; white-space: nowrap;
+}
+.c.p { background: #F0A860; }               /* présence dérivée du cycle — vide */
+.c.y { background: #F9A825; color: #2b2b2b; } /* absence + code (7.18) */
+.c.g { background: #6b6b6b; color: #fff; }    /* télétravail TELE (5.33) */
+.c.m { background: #d68c45; color: #3a2408; font-size: 9px; } /* mission / spécial (5.36) */
+.c.r { background: #c0392b; color: #fff; }    /* grève / syndicat / formation (5.44) */
+.c.n { background: #fff; }                   /* neutre : sans cycle ou jour non travaillé */
+.c.cl { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #e3e3e3 5px 7px); } /* musée fermé */
+/* Cycle week pill — once per ISO week, in the Monday row area */
+.cycp {
+  display: inline-block; padding: 0 4px; border-radius: 8px;
+  background: #fff; color: #2b2b2b; border: 1px solid var(--color-border);
+  font-size: 9px; font-weight: 700; line-height: 1.5;
+}
+/* Worked-Saturday counter — computed (Saturdays with slots), shown on Saturday rows */
+.ct {
+  position: absolute; top: 0; right: 0; padding: 0 3px; border-radius: 0 0 0 6px;
+  background: #e3efe8; color: #1e5536; font-size: 9px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.ct.valued { background: #2c6e49; color: #fff; }  /* seuil de valorisation atteint (6.12) */
+.ct.zero { background: #f0f0f0; color: #6b6b6b; }
+/* Extrait (ellipsis) row */
+.extrait td { text-align: center; color: var(--color-text-muted); font-size: 11px; padding: 2px 0; background: #fafafa; }
+/* No-cycle state: ring around Bob's column (4th mediator = cells 8,9 of each row) */
+body.nocycle .agrid td:nth-child(8), body.nocycle .agrid td:nth-child(9) { box-shadow: inset 0 0 0 2px var(--color-primary-light); }
+body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-primary-light); }
+
+/* ===== Empty state ===== */
+.empty-state { padding: 40px 20px; text-align: center; }
+.empty-state .es-icon { font-size: 34px; display: block; margin-bottom: 8px; }
+.empty-state h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.empty-state p { font-size: 13px; color: var(--color-text-muted); margin-bottom: 14px; }
+.empty-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover { background: var(--color-primary-dark); }
+
+/* ===== Mockup annotations ===== */
+.mockup-caption { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; color: var(--color-text-muted); margin: 14px 2px 0; flex-wrap: wrap; }
+.annotation { border-left: 3px solid var(--color-primary-light); background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 8px 12px; flex: 1; min-width: 220px; }
+.annotation strong { color: var(--color-text); }
+
+/* ===== Mockup state switch ===== */
+.mockup-switch {
+  position: fixed; bottom: 12px; left: 12px; z-index: 300; display: flex; gap: 6px;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 16px;
+  padding: 4px 6px; box-shadow: var(--shadow-md); flex-wrap: wrap; max-width: calc(100vw - 24px);
+}
+.mockup-switch span { font-size: 11px; color: var(--color-text-muted); align-self: center; padding: 0 4px; }
+.mockup-switch button { font-size: 11px; padding: 3px 10px; border-radius: 12px; cursor: pointer; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted); }
+.mockup-switch button.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+
+@media (max-width: 560px) {
+  .date { width: 96px; min-width: 96px; max-width: 96px; }
+  .mh { min-width: 56px; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-left">
+    <h1 class="app-title">MediaPlan</h1>
+    <span class="app-subtitle">Gestion des plannings de médiation — Museum</span>
+  </div>
+  <nav class="header-nav" aria-label="Navigation principale">
+    <button class="nav-btn" type="button">Plan Jour</button>
+    <button class="nav-btn" type="button">Plan Hebdo</button>
+    <button class="nav-btn" type="button">Plan Accueil</button>
+    <button class="nav-btn" type="button">Médiateurs</button>
+    <button class="nav-btn" type="button">Offres</button>
+    <button class="nav-btn" type="button">Absences</button>
+    <button class="nav-btn" type="button">Statistiques</button>
+    <button class="nav-btn active" aria-current="page" type="button">Tableau</button>
+    <button class="nav-btn" type="button">Configuration</button>
+  </nav>
+</header>
+
+<main class="app-main">
+  <div class="toolbar">
+    <h2>Tableau de fonctionnement</h2>
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <span class="year-seg" role="group" aria-label="Année affichée">
+        <button type="button" id="year-2026" class="active" aria-pressed="true">2026</button>
+        <button type="button" id="year-2027" aria-pressed="false">2027</button>
+      </span>
+      <button class="btn btn-secondary" type="button" title="Export Excel au format exact de la table de référence — pas d'impression/PDF en v1">⇩ Exporter Excel</button>
+    </div>
+  </div>
+  <p class="toolbar-note" style="margin: -6px 0 12px;">Année 2026 — 6 médiateurs affichés sur 12 (défilement horizontal pour les autres). Lignes = tous les jours de l'année, week-ends compris ; une cellule par demi-journée (Matin · Après-midi).</p>
+
+  <!-- Collapsible legend -->
+  <details class="legend-box">
+    <summary>Légende (couleurs et codes)</summary>
+    <div class="legend-body">
+      <span class="lg"><span class="sw p"></span>Orange vide = présence dérivée du cycle (calculée, jamais stockée)</span>
+      <span class="lg"><span class="sw y"></span>Jaune + code = absence (CA, RHS, RTT, AM, CET, CEX, TPT, congé parental / maternité / naissance, dispo)</span>
+      <span class="lg"><span class="sw g"></span>Gris + TELE = télétravail</span>
+      <span class="lg"><span class="sw m"></span>Orange + texte = mission / spécial (Réf. WE, amgt JJ/MM, événements)</span>
+      <span class="lg"><span class="sw r"></span>Rouge + code = absence liée au travail (grève, syndicat, formation)</span>
+      <span class="lg"><span class="sw n"></span>Blanc = neutre (jour non travaillé ou médiateur sans cycle)</span>
+      <span class="lg"><span class="sw cl"></span>Hachures = musée fermé (25/12, 01/01, 01/05) — édition en alerte non bloquante</span>
+      <span class="lg"><span class="sw ferie"></span>Fond ambre = jour férié (liste française par défaut, modifiable par dérogation et par année)</span>
+      <span class="lg"><span class="ct-sw">×N</span>Compteur de samedis travaillés (calculé, alimente la valorisation à partir du seuil — vert : samedi valorisé)</span>
+      <span class="lg"><span class="pill quota-ok">reliquat</span>/<span class="pill quota-ko">déficit</span>Solde trimestriel (médiateurs avec aménagement)</span>
+    </div>
+  </details>
+
+  <!-- State: museum-closed period alert (non-blocking) -->
+  <div class="banner banner-warn state-box" id="state-closed" role="status" hidden>
+    ⚠ <span><strong>Fermeture annuelle du musée : du 25/12 au 01/01.</strong> L'édition des cellules de ces jours reste possible — une alerte non bloquante « Le musée est fermé ce jour-là » s'affiche alors, mais la saisie d'exceptions est permise (décision du 2026-10-03, diffère du refus de la vue quotidienne).</span>
+  </div>
+
+  <!-- State: no-cycle mediator info -->
+  <div class="banner banner-info state-box" id="state-nocycle" role="status" hidden>
+    ⓘ <span><strong>Bob Fontaine n'a pas de cycle de travail :</strong> cellules neutres (blanches), aucune présence dérivée, aucune semaine de cycle affichée. Les saisies restent possibles ; « Effacer » laisse la cellule neutre, sans état dérivé à rétablir.</span>
+  </div>
+
+  <!-- ===== Year 2026 grid (normal state) ===== -->
+  <div class="annual-card state-box" id="grid-2026">
+    <div class="grid-wrap">
+      <table class="agrid" aria-label="Tableau de fonctionnement 2026 — extrait : semaine du 28 septembre et jours remarquables">
+        <colgroup>
+          <col style="width:108px">
+          <col style="width:30px"><col style="width:30px"><col style="width:30px"><col style="width:30px">
+          <col style="width:30px"><col style="width:30px"><col style="width:30px"><col style="width:30px">
+          <col style="width:30px"><col style="width:30px"><col style="width:30px"><col style="width:30px">
+        </colgroup>
+        <thead>
+          <tr class="thead-row">
+            <th class="date" scope="col"><span class="d-day" style="color: var(--color-text-muted); font-weight: 400;">Date</span><span class="d-day" style="color: var(--color-text-muted); font-size: 9px; font-weight: 400;">Matin · Après-midi</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Alice Dupont</span><span class="pill pill-contract">temps plein</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Karim Benali</span><span class="pill pill-contract">temps partiel</span><span class="mquota"><span class="pill quota-ok" title="Solde trimestriel calculé par computeQuarterlyBalance — quota configurable par trimestre">T3 : reliquat +4 h</span></span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Marie Lambert</span><span class="pill pill-contract">stagiaire</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Bob Fontaine</span><span class="pill pill-contract">mi-temps</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Yves Moreau</span><span class="pill pill-contract">temps plein</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Nadia Belkacem</span><span class="pill pill-contract">temps plein</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- ===== Semaine normale : lun 28/09 → dim 04/10/2026 (S 40) ===== -->
+          <tr>
+            <th class="date" scope="row"><span class="d-day">lun. 28/09</span><span class="wk">S 40</span></th>
+            <td class="c p"><span class="cycp">S2</span></td><td class="c p"></td>
+            <td class="c p"><span class="cycp">S1</span></td><td class="c p"></td>
+            <td class="c p"><span class="cycp">S1</span></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c p"><span class="cycp">S4</span></td><td class="c p"></td>
+            <td class="c p"><span class="cycp">S1</span></td><td class="c p"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">mar. 29/09</span></th>
+            <td class="c y">CA</td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c y">AM</td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">mer. 30/09</span></th>
+            <td class="c g">TELE</td><td class="c p"></td>
+            <td class="c y">RHS</td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">jeu. 01/10</span></th>
+            <td class="c r">formation</td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c y">CEX</td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c r">syndicat</td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">ven. 02/10</span></th>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c m">amgt 02/10</td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c y">CEX</td><td class="c p"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">sam. 03/10</span></th>
+            <td class="c m"><span class="ct" title="7e samedi avec créneaux — valorisé à partir du seuil (10)">×7</span>Réf. WE</td><td class="c n"></td>
+            <td class="c n"><span class="ct zero" title="Aucun créneau le samedi — compteur 0">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct" title="2e samedi avec créneaux">×2</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
+            <td class="c p"><span class="ct" title="9e samedi avec créneaux — prochain samedi valorisé (seuil 10)">×9</span></td><td class="c p"></td>
+            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">dim. 04/10</span></th>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+          </tr>
+          <tr class="extrait"><td colspan="13">⋯ extrait — jours remarquables de l'année ⋯</td></tr>
+          <!-- ===== Jours remarquables ===== -->
+          <tr class="closed">
+            <th class="date" scope="row"><span class="d-day">jeu. 01/01</span><span class="dchip dchip-ferie">Férié</span> <span class="dchip dchip-closed">Fermé</span></th>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+          </tr>
+          <tr class="closed">
+            <th class="date" scope="row"><span class="d-day">ven. 01/05</span><span class="dchip dchip-ferie">Férié</span> <span class="dchip dchip-closed">Fermé</span></th>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+          </tr>
+          <tr class="ferie">
+            <th class="date" scope="row"><span class="d-day">mer. 11/11</span><span class="dchip dchip-ferie">Férié</span></th>
+            <td class="c y">CA</td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+          </tr>
+          <tr class="closed">
+            <th class="date" scope="row"><span class="d-day">ven. 25/12</span><span class="dchip dchip-ferie">Férié</span> <span class="dchip dchip-closed">Fermé</span></th>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">sam. 26/12</span></th>
+            <td class="c n"><span class="ct zero">×7</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct">×2</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct valued" title="10e samedi avec créneaux — valorisé (seuil 10, valuedSaturdayThreshold)">×10</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">dim. 27/12</span></th>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">lun. 28/12</span><span class="wk">S 53</span></th>
+            <td class="c p"><span class="cycp">S3</span></td><td class="c p"></td>
+            <td class="c p"><span class="cycp">S2</span></td><td class="c p"></td>
+            <td class="c p"><span class="cycp">S2</span></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c p"><span class="cycp">S1</span></td><td class="c p"></td>
+            <td class="c p"><span class="cycp">S2</span></td><td class="c p"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== State: year 2027 (partial) ===== -->
+  <div class="annual-card state-box" id="grid-2027" hidden>
+    <div class="grid-wrap">
+      <table class="agrid" aria-label="Tableau de fonctionnement 2027 — extrait : première semaine">
+        <colgroup>
+          <col style="width:108px">
+          <col style="width:30px"><col style="width:30px"><col style="width:30px"><col style="width:30px">
+          <col style="width:30px"><col style="width:30px"><col style="width:30px"><col style="width:30px">
+          <col style="width:30px"><col style="width:30px"><col style="width:30px"><col style="width:30px">
+        </colgroup>
+        <thead>
+          <tr class="thead-row">
+            <th class="date" scope="col"><span class="d-day" style="color: var(--color-text-muted); font-weight: 400;">Date</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Alice Dupont</span><span class="pill pill-contract">temps plein</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Karim Benali</span><span class="pill pill-contract">temps partiel</span><span class="mquota"><span class="pill quota-ok">T1 : reliquat +4 h</span></span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Marie Lambert</span><span class="pill pill-contract">stagiaire</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Bob Fontaine</span><span class="pill pill-contract">mi-temps</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Yves Moreau</span><span class="pill pill-contract">temps plein</span></th>
+            <th class="mh" colspan="2" scope="col"><span class="mname">Nadia Belkacem</span><span class="pill pill-contract">temps plein</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="closed">
+            <th class="date" scope="row"><span class="d-day">ven. 01/01/27</span><span class="dchip dchip-ferie">Férié</span> <span class="dchip dchip-closed">Fermé</span></th>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+            <td class="c cl"></td><td class="c cl"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">lun. 04/01/27</span><span class="wk">S 1</span></th>
+            <td class="c p"><span class="cycp">S3</span></td><td class="c p"></td>
+            <td class="c p"><span class="cycp">S2</span></td><td class="c p"></td>
+            <td class="c p"><span class="cycp">S2</span></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c p"><span class="cycp">S1</span></td><td class="c p"></td>
+            <td class="c p"><span class="cycp">S2</span></td><td class="c p"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">mar. 05/01/27</span></th>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c y">RHS</td><td class="c p"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">mer. 06/01/27</span></th>
+            <td class="c y">CA</td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c g">TELE</td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">jeu. 07/01/27</span></th>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c m">amgt 07/01</td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">ven. 08/01/27</span></th>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c r">formation</td><td class="c p"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c p"></td><td class="c p"></td>
+            <td class="c p"></td><td class="c p"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">sam. 09/01/27</span></th>
+            <td class="c n"><span class="ct zero" title="Compteur remis à zéro au changement d'année">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
+            <td class="c n"><span class="ct zero">×0</span></td><td class="c n"></td>
+          </tr>
+          <tr>
+            <th class="date" scope="row"><span class="d-day">dim. 10/01/27</span></th>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+            <td class="c n"></td><td class="c n"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== State: empty year ===== -->
+  <div class="annual-card state-box" id="state-empty" hidden>
+    <div class="empty-state">
+      <span class="es-icon" aria-hidden="true">🗓️</span>
+      <h3>Aucune donnée pour cette année</h3>
+      <p>Aucun médiateur avec cycle, aucune absence saisie. Les jours et les semaines ISO restent calculés pour l'année sélectionnée.</p>
+      <div class="empty-actions">
+        <button class="btn btn-secondary" type="button">🔄 Charger les données de démonstration</button>
+        <button class="btn btn-secondary" type="button">📂 Importer JSON.gz…</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mockup annotations -->
+  <div class="mockup-caption" aria-hidden="true">
+    <div class="annotation"><strong>Structure :</strong> lignes = tous les jours (week-ends compris), colonnes = médiateurs, une cellule par demi-journée (Matin · Après-midi). Semaine ISO « S 40 » sur la ligne du lundi uniquement ; 2026 compte 53 semaines ISO (« S 53 » le lundi 28/12). Maquette : extrait d'une semaine + jours remarquables, pas les 365 jours.</div>
+    <div class="annotation"><strong>Présence dérivée :</strong> l'orange vide est CALCULÉ depuis le cycle (jamais stocké) ; effacer une cellule revient à l'état dérivé. Bob (sans cycle) : cellules neutres, aucune pilule de cycle. La semaine de cycle (S1, S2…) est affichée une fois par semaine ISO, dans la zone de la cellule du lundi, valable pour toute la semaine.</div>
+    <div class="annotation"><strong>Compteur de samedis :</strong> calculé automatiquement (samedis de l'année avec créneaux), affiché sur les lignes de samedi, remis à zéro chaque année ; il alimente le seuil des samedis valorisés (ex. ×10 vert = 10e samedi valorisé, valuedSaturdayThreshold). Aucune colonne de comptage (ratio, totaux) — décision du 2026-10-03.</div>
+    <div class="annotation"><strong>Solde trimestriel :</strong> badge « reliquat / déficit » pour les médiateurs avec un aménagement (Karim, temps partiel) ; aucun solde pour les autres. Fériés : liste française par défaut, modifiable par dérogation et par année (voir la maquette d'édition). Export Excel au format exact de la table de référence ; pas d'impression/PDF en v1.</div>
+    <div class="annotation"><strong>Contrastes (WCAG 1.4.3) :</strong> jaune #F9A825/#2b2b2b = 7,18 ; orange mission #d68c45/#3a2408 = 5,36 ; gris #6b6b6b/blanc = 5,33 ; rouge #c0392b/blanc = 5,44 ; badges #e3efe8/#1e5536 = 7,38 et #fdecea/#c0392b = 4,76 ; alerte ambre #fef5e7/#8a4d10 = 6,17.</div>
+  </div>
+</main>
+
+<!-- Mockup state switch -->
+<div class="mockup-switch" role="group" aria-label="États de maquette de la grille annuelle">
+  <span>États :</span>
+  <button type="button" data-state="normal" class="active" aria-pressed="true">Semaine normale</button>
+  <button type="button" data-state="closed" aria-pressed="false">Fermeture 25/12–01/01</button>
+  <button type="button" data-state="nocycle" aria-pressed="false">Sans cycle</button>
+  <button type="button" data-state="y2027" aria-pressed="false">Année 2027</button>
+  <button type="button" data-state="empty" aria-pressed="false">Année vide</button>
+</div>
+
+<script>
+// Mockup-only interaction: switch between the annual grid states.
+var boxes = {
+  'closed': document.getElementById('state-closed'),
+  'nocycle': document.getElementById('state-nocycle'),
+  'empty': document.getElementById('state-empty'),
+  'g2026': document.getElementById('grid-2026'),
+  'g2027': document.getElementById('grid-2027')
+};
+var year2026 = document.getElementById('year-2026');
+var year2027 = document.getElementById('year-2027');
+function setYear(y) {
+  var on = y === 2027;
+  year2027.classList.toggle('active', on);
+  year2027.setAttribute('aria-pressed', on ? 'true' : 'false');
+  year2026.classList.toggle('active', !on);
+  year2026.setAttribute('aria-pressed', on ? 'false' : 'true');
+}
+var extras = {
+  'normal': function () { setYear(2026); document.body.classList.remove('nocycle'); },
+  'closed': function () { setYear(2026); document.body.classList.remove('nocycle'); },
+  'nocycle': function () { setYear(2026); document.body.classList.add('nocycle'); },
+  'y2027': function () { setYear(2027); document.body.classList.remove('nocycle'); },
+  'empty': function () { setYear(2026); document.body.classList.remove('nocycle'); }
+};
+document.querySelectorAll('.mockup-switch button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.mockup-switch button').forEach(function (b) {
+      b.classList.remove('active'); b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('active'); btn.setAttribute('aria-pressed', 'true');
+    var s = btn.dataset.state;
+    boxes.closed.hidden = s !== 'closed';
+    boxes.nocycle.hidden = s !== 'nocycle';
+    boxes.empty.hidden = s !== 'empty';
+    boxes.g2026.hidden = s === 'y2027' || s === 'empty';
+    boxes.g2027.hidden = s !== 'y2027';
+    extras[s]();
+  });
+});
+</script>
+</body>
+</html>
