@@ -47,7 +47,7 @@ export default function ConfigurationView() {
     try {
       // Try JSON import first, fall back to Excel
       if (selectedFile.name.endsWith('.json') || selectedFile.name.endsWith('.gz')) {
-        const data = await importJSON(selectedFile);
+        const { data } = await importJSON(selectedFile);
         commit(data, COMMIT_LABELS.jsonImport);
       } else {
         await importExcel(selectedFile);

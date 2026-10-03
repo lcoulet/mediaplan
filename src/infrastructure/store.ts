@@ -98,10 +98,10 @@ function migrateValorisation(
   };
 }
 
-export function save(data: AppData): boolean {
+export function save(data: AppData, lastModified?: string): boolean {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    localStorage.setItem(LAST_MODIFIED_KEY, new Date().toISOString());
+    localStorage.setItem(LAST_MODIFIED_KEY, lastModified ?? new Date().toISOString());
     return true;
   } catch (e) {
     console.error('Failed to save data:', e);
@@ -111,6 +111,12 @@ export function save(data: AppData): boolean {
 
 export function getLastModified(): string | null {
   return localStorage.getItem(LAST_MODIFIED_KEY);
+}
+
+/** Restore an explicit lastModified timestamp (undo/redo/history jumps and
+ *  import baselines need the state's own timestamp, not the wall clock). */
+export function setLastModified(iso: string): void {
+  localStorage.setItem(LAST_MODIFIED_KEY, iso);
 }
 
 async function gzipCompress(text: string): Promise<Blob> {
@@ -143,7 +149,18 @@ export async function exportJSON(): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
-export function importJSON(file: File): Promise<AppData> {
+export interface ImportResult {
+  data: AppData;
+  /** Metadata embedded in the file; lastModified is undefined for legacy
+   *  raw-data files (nothing to compare — no age warning per the spec). */
+  metadata?: {
+    lastModified?: string;
+    exportedAt?: string;
+    version?: number;
+  };
+}
+
+export function importJSON(file: File): Promise<ImportResult> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -172,11 +189,20 @@ export function importJSON(file: File): Promise<AppData> {
         } else {
           text = typeof result === 'string' ? result : new TextDecoder().decode(result as ArrayBuffer);
         }
-        const parsed = JSON.parse(text) as AppData | { data: AppData };
+        const parsed = JSON.parse(text) as AppData | { data: AppData; lastModified?: string };
         // Support both old format (raw data) and new format ({ metadata, data })
-        const data = (parsed as { data?: AppData }).data || parsed as AppData;
-        save(data);
-        resolve(data);
+        const wrapped = parsed as { data?: AppData; lastModified?: string };
+        const data = wrapped.data || parsed as AppData;
+        const metadata: ImportResult['metadata'] = wrapped.data
+          ? {
+              lastModified: typeof wrapped.lastModified === 'string' ? wrapped.lastModified : undefined,
+              exportedAt: '',
+              version: 1,
+            }
+          : undefined;
+        // NO save() here: the import flow must run its confirmations before
+        // anything is committed (a declined confirmation leaves nothing changed).
+        resolve({ data, metadata });
       } catch (err) {
         reject(err);
       }
