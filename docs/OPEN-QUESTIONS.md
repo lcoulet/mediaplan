@@ -322,11 +322,18 @@ import/export mode (shared JSON.gz files) until tenant access is sorted.
       (2026-10-03) — day/accueil views cover it; the Saturday counter
       is computed automatically
 - [x] GRID EDITING (2026-10-03): click on a half-day cell opens a
-      CONTEXT MENU with all the codes (CA, RHS, AM, TELE, amgt, Réf. WE,
+      CONTEXT MENU with all codes (CA, RHS, AM, TELE, amgt, Réf. WE,
       CEX, TPT, free text, clear/back-to-derived). PLUS a PAINT MODE:
       pick a value once, then every click on a cell duplicates the
       value into it (click-by-click, no drag); each cell must be
-      clicked individually to start
+      clicked individually to start. Paint mode is ACTIVATED FROM the
+      context menu (pick a value, then toggle paint) — undo granularity
+      = one undoable operation per painted cell.
+- [x] MUSEUM-CLOSED DAYS in the annual view (decided 2026-10-03):
+      editing 25/12, 01/01, 01/05 shows a NON-BLOCKING ALERT (« le musée
+      est fermé ce jour-là ») but stays POSSIBLE — deliberately
+      different from the day view's refusal, because the annual table
+      may legitimately record exceptions
 - [x] PRESENCE MODEL (confirmed 2026-10-03): orange "presence per
       cycle" cells are DERIVED from the mediator's cycle (computed,
       never stored); absences/arrangements placed on top REPLACE the

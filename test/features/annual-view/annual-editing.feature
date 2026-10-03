@@ -16,8 +16,11 @@
 #      dérivée du cycle ; effacer une cellule revient à l'état dérivé.
 #   4. Vert non bloquant : texte libre + codes décodés en suggestions ;
 #      le sens des cellules vertes sera ajouté plus tard (2026-10-03).
-#   5. Éditer un jour de fermeture du musée (25/12, 01/01, 01/05) est
-#      REFUSÉ, comme dans la vue quotidienne.
+#   5. Éditer un jour de fermeture du musée (25/12, 01/01, 01/05) affiche
+#      une ALERTE NON BLOQUANTE (le musée est fermé ce jour-là) mais
+#      l'édition reste possible (décision 2026-10-03 — diffère de la vue
+#      quotidienne qui refuse, car le tableau couvre l'année entière
+#      et peut légitimement noter des exceptions).
 
 Fonctionnalité: Tableau de fonctionnement — édition de la grille annuelle
   En tant que coordinateur
@@ -94,16 +97,16 @@ Fonctionnalité: Tableau de fonctionnement — édition de la grille annuelle
   # Jours de fermeture du musée
   # ------------------------------------------------------------------
 
-  Scénario: Éditer un jour de fermeture du musée est refusé
+  Scénario: Éditer un jour de fermeture du musée affiche une alerte mais reste possible
     Quand le coordinateur clique sur la cellule du matin du 25 décembre 2026 d'Alice
-    Alors aucune édition n'est possible et le menu contextuel n'ouvre pas de saisie
-    Et un message indique que le musée est fermé ce jour-là
+    Alors une alerte non bloquante indique que le musée est fermé ce jour-là
+    Et le coordinateur peut néanmoins choisir un code dans le menu contextuel
 
-  Scénario: Le refus vaut aussi pour le 1er janvier et le 1er mai
+  Scénario: L'alerte vaut aussi pour le 1er janvier et le 1er mai
     Quand le coordinateur tente d'éditer une cellule du 1er janvier 2027 d'Alice
-    Alors l'édition est refusée
+    Alors une alerte non bloquante s'affiche et l'édition reste possible
     Et le coordinateur tente d'éditer une cellule du 1er mai 2027 d'Alice
-    Alors l'édition est refusée
+    Alors une alerte non bloquante s'affiche et l'édition reste possible
 
   # ------------------------------------------------------------------
   # Mode peinture
