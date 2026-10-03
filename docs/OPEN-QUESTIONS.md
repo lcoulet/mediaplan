@@ -125,6 +125,43 @@ weeks 39–51, analyzed locally, never committed):**
 - [ ] Space color conflicts with mediator lane hatching/cycle colors —
       readability check needed during design review
 
+## Header Import/Export buttons (decided 2026-10-03 — M365 tenant unavailable)
+
+**Context:** the museum M365 tenant blocks app registrations for the
+coordinator (no Azure permissions). The team will work in MANUAL
+import/export mode (shared JSON.gz files) until tenant access is sorted.
+
+**Established (decided 2026-10-03):**
+- [x] TWO BUTTONS in the HEADER (top, alongside the other action
+      buttons): Export (💾) and Import — foreground daily functions,
+      like the Secutix import button. The Données section of the
+      Configuration view keeps the full-featured import/export
+- [x] EXPORT-HIGHLIGHT: when local data changed SINCE the last export
+      (or since the last import/connection), the Export button must be
+      VISUALLY HIGHLIGHTED (unsaved-changes indicator)
+- [x] IMPORT OLD-FILE WARNING: importing a file whose data is OLDER
+      (by lastModified metadata) than local data triggers a warning
+      (« ce fichier est plus ancien que vos données ») — confirm to
+      proceed anyway. NOTE: TODO.md claimed this was done; it is NOT
+      in the code — the checkmark was premature
+
+**Open questions (before spec):**
+- [ ] Highlight detection basis: compare lastModified of the data
+      against a new `lastExportedAt` stamp (persisted) — or track
+      "dirty" via history entries? Proposed: persist `lastExportedAt`
+      (+ lastImportedAt), highlight when data.lastModified > lastExportedAt
+- [ ] Button placement: next to « ⇩ Import Secutix » in the header
+      actions, or integrated INTO a single import button (file picker
+      chooses)? Proposed: two separate buttons — Export is one-click
+      (save JSON.gz with timestamp filename), Import opens the file
+      picker directly
+- [ ] Does the Import header button go through the same confirmation
+      as the Configuration view import (⚠ replaces all data), plus
+      the old-file warning?
+- [ ] Highlight style: badge/dot on the Export button (like the
+      unassigned count), or colored button? Proposed: amber dot badge
+      + title, no color change (header already busy)
+
 ## Mediator Annual Planning View (vue planning médiateurs)
 
 **Established so far:**
