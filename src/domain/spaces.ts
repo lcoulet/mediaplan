@@ -189,30 +189,18 @@ export function canDeleteSpace(
  * #FFFFFF is NOT in the palette: white marks Secutix auto-created spaces.
  */
 const DEFAULT_SPACE_PALETTE = [
-  '#4A90D9', // blue
-  '#7B1FA2', // purple
-  '#2E7D32', // green
-  '#E65100', // deep orange
-  '#C0392B', // red
-  '#00838F', // teal
-  '#8D6E63', // brown
-  '#F9A825', // yellow
-  '#4527A0', // deep purple
-  '#0277BD', // light blue
-  '#558B2F', // light green
-  '#AD1457', // pink
-  '#37474F', // blue grey
-  '#00695C', // dark teal
-  '#6D4C41', // coffee
-  '#283593', // indigo
-  '#EF6C00', // orange
-  '#1B5E20', // dark green
-  '#B71C1C', // dark red
-  '#4E342E', // espresso
-  '#01579B', // dark blue
-  '#33691E', // olive
-  '#6A1B9A', // violet
-  '#5D4037', // dark brown
+  '#A8CFF0', // light blue
+  '#C5A8E8', // light purple
+  '#A8D8A8', // light green
+  '#F5B89A', // light orange
+  '#E8A8A0', // light red
+  '#A0D8DD', // light teal
+  '#D4BCA8', // light brown
+  '#F5DEA8', // light yellow
+  '#B8A8D8', // pale violet
+  '#A8D0E8', // pale blue
+  '#C0D8A0', // pale green
+  '#E8B8D0', // pale pink
 ];
 
 export function defaultSpacePalette(index: number): string {

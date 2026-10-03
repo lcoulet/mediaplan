@@ -220,11 +220,13 @@ describe('defaultSpacePalette', () => {
 
   it('returns distinct colors for consecutive indices', () => {
     const seen = new Set<string>();
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 12; i++) {
       const color = defaultSpacePalette(i);
       expect(seen.has(color)).toBe(false);
       seen.add(color);
     }
+    // The palette cycles after 12 (lighter default palette, 12 colors)
+    expect(defaultSpacePalette(12)).toBe(defaultSpacePalette(0));
   });
 
   it('cycles: index N (palette length) equals index 0', () => {

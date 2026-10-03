@@ -88,8 +88,14 @@ export default function SpacesSection() {
 
   function handleColorChange(space: Space, color: string) {
     // Native color input always yields a valid #RRGGBB; still validate the
-    // domain contract before committing.
-    const validation = validateSpace(spaces, { name: space.name, color });
+    // domain contract before committing. excludeId is REQUIRED: without it
+    // the space validates against itself and is seen as its own name
+    // duplicate, silently rejecting every color change (fixed bug).
+    const validation = validateSpace(spaces, {
+      name: space.name,
+      color,
+      excludeId: space.id,
+    });
     if (!validation.ok) return;
     clearRowError(space.id);
     commitData(
