@@ -6,10 +6,12 @@
 
 import { useState } from 'react';
 import { useData, COMMIT_LABELS } from './DataContext';
+import { notifySyncStampsChanged } from './Header';
 import { exportJSON, importJSON } from '../infrastructure/store';
 import { exportExcel, importExcel } from '../infrastructure/excel';
 import { clearPlanningData } from '../domain/clear-data';
 import { getDefaultHalfDayConfig, validateHalfDayConfig, migrateAbsencesToConfig } from '../domain/models';
+import { loadStamps, saveStamps, resolveImportBaseline } from '../domain/sync-state';
 import SpacesSection from './SpacesSection';
 
 export default function ConfigurationView() {
@@ -26,7 +28,14 @@ export default function ConfigurationView() {
   const dirty = morningEnd !== halfDayConfig.morningEnd || afternoonStart !== halfDayConfig.afternoonStart;
 
   function handleExportJSON() {
-    exportJSON().catch((err) => alert('Erreur lors de l\u2019export : ' + err.message));
+    exportJSON()
+      .then(() => {
+        // Same stamps as the header Export button: a successful export makes
+        // the downloaded state the new reference (header badge clears).
+        saveStamps({ ...loadStamps(), lastExportedAt: new Date().toISOString() });
+        notifySyncStampsChanged();
+      })
+      .catch((err) => alert('Erreur lors de l\u2019export : ' + err.message));
   }
 
   function handleExportSchedule() {
@@ -47,8 +56,17 @@ export default function ConfigurationView() {
     try {
       // Try JSON import first, fall back to Excel
       if (selectedFile.name.endsWith('.json') || selectedFile.name.endsWith('.gz')) {
-        const { data } = await importJSON(selectedFile);
-        commit(data, COMMIT_LABELS.jsonImport);
+        const { data, metadata } = await importJSON(selectedFile);
+        // The imported state replaces the in-memory state too (undoable via
+        // the history entry the commit creates)
+        commit(data, COMMIT_LABELS.jsonImport, metadata?.lastModified || new Date().toISOString());
+        dispatch({ type: 'SET_DATA', data });
+        // Same baseline rule as the header import: the file IS the new
+        // reference state (badge stays consistent across both entry points)
+        const now = new Date().toISOString();
+        saveStamps(resolveImportBaseline({ lastModified: metadata?.lastModified }, now));
+        notifySyncStampsChanged();
+        setSelectedFile(null);
       } else {
         await importExcel(selectedFile);
       }
