@@ -4,7 +4,7 @@
 // Spec: test/features/annual-view/annual-grid.feature (domain scenarios).
 // Palette: Excel hues accessibility-adjusted (decision 2026-10-03, contrasts
 // computed in contrast_palette_mix.py — see docs/OPEN-QUESTIONS.md).
-import type { Absence, AbsenceType } from './types';
+import type { Absence, AbsenceType, Slot } from './types';
 
 // ---- Cell palette --------------------------------------------------------
 
@@ -137,4 +137,39 @@ export function halfDayOfAbsence(absence: Absence, date: Date): 'morning' | 'aft
   if (iso < absence.startDate || iso > absence.endDate) return null;
   if (absence.halfDay === 'morning' || absence.halfDay === 'afternoon') return absence.halfDay;
   return 'none';
+}
+
+// ---- Worked-Saturday counter ----------------------------------------------
+
+/**
+ * Worked-Saturday counter of a mediator at a date (decision 2026-10-03):
+ * COMPUTED automatically — the number of Saturdays of the displayed year,
+ * up to and including the given date, with at least one non-cancelled slot
+ * assigned to the mediator. Displayed on Saturday rows only (null for any
+ * other weekday); resets on year change because only the date's own year is
+ * counted. Feeds the valued-Saturday threshold (valuedSaturdayThreshold).
+ */
+export function workedSaturdayCounter(mediatorId: string, slots: Slot[], date: Date): number | null {
+  if (date.getDay() !== 6) return null; // Saturday rows only
+  const year = date.getFullYear();
+  const dateIso = toIsoDate(date);
+  const workedSaturdays = new Set<string>();
+  for (const slot of slots) {
+    if (!slot.mediatorIds?.includes(mediatorId)) continue;
+    if (slot.status === 'cancelled') continue;
+    if (!slot.date || slot.date > dateIso) continue;
+    const slotDate = new Date(`${slot.date}T00:00:00`);
+    if (slotDate.getFullYear() !== year) continue; // per-year: resets on year change
+    if (slotDate.getDay() !== 6) continue;
+    workedSaturdays.add(slot.date);
+  }
+  return workedSaturdays.size;
+}
+
+/** ISO date (YYYY-MM-DD) of a local Date, without timezone drift. */
+function toIsoDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }

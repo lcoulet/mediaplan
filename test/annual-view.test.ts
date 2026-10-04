@@ -3,12 +3,13 @@
 // Spec: test/features/annual-view/annual-grid.feature (domain scenarios).
 import { describe, it, expect } from 'vitest';
 import { parseLocalDate } from '../src/domain/models';
-import type { Absence } from '../src/domain/types';
+import type { Absence, Slot } from '../src/domain/types';
 import {
   ANNUAL_PALETTE,
   annualCodeCatalog,
   codeForAbsence,
   halfDayOfAbsence,
+  workedSaturdayCounter,
 } from '../src/domain/annual-view';
 
 const d = parseLocalDate;
@@ -142,5 +143,78 @@ describe('halfDayOfAbsence', () => {
 
   it('returns null for a date outside the range', () => {
     expect(halfDayOfAbsence(mkAbsence({ startDate: '2026-06-10', endDate: '2026-06-11' }), d('2026-06-15'))).toBeNull();
+  });
+});
+
+// ---- Worked-Saturday counter ---------------------------------------------
+
+function mkSlot(mediatorId: string, date: string, status: Slot['status'] = 'confirmed'): Slot {
+  return {
+    id: `slot_${mediatorId}_${date}`,
+    scheduleId: 'sch_1',
+    offerId: 'off_1',
+    mediatorIds: [mediatorId],
+    date,
+    startTime: '10:00',
+    endTime: '12:00',
+    participantCount: 10,
+    status,
+    notes: '',
+    origin: 'manual',
+    importSource: '',
+    importedAt: '',
+    modifiedAfterImport: false,
+    groupName: '',
+    guide: '',
+    location: '',
+    groupNature: '',
+    contactName: '',
+    contactPhone: '',
+    contactEmail: '',
+  };
+}
+
+describe('workedSaturdayCounter', () => {
+  it('counts 1, 2, 3 on the mediator Saturdays WITH slots as the year goes', () => {
+    const slots = [
+      mkSlot('med_alice', '2026-01-10'),
+      mkSlot('med_alice', '2026-02-14'),
+      mkSlot('med_alice', '2026-03-14'),
+    ];
+    expect(workedSaturdayCounter('med_alice', slots, d('2026-02-14'))).toBe(2);
+    expect(workedSaturdayCounter('med_alice', slots, d('2026-03-14'))).toBe(3);
+    expect(workedSaturdayCounter('med_alice', slots, d('2026-12-26'))).toBe(3);
+  });
+
+  it('shows 0 on a Saturday before the first worked Saturday, and null on any non-Saturday', () => {
+    const slots = [mkSlot('med_alice', '2026-02-14')];
+    expect(workedSaturdayCounter('med_alice', slots, d('2026-01-10'))).toBe(0);
+    expect(workedSaturdayCounter('med_alice', slots, d('2026-06-09'))).toBeNull();
+  });
+
+  it('ignores cancelled slots and other mediators\' slots', () => {
+    // Alice: her cancelled slot is ignored, Bob's slot is not hers -> 0
+    expect(workedSaturdayCounter('med_alice', [mkSlot('med_alice', '2026-01-10', 'cancelled'), mkSlot('med_bob', '2026-01-10')], d('2026-01-10'))).toBe(0);
+    // Alice: her own confirmed slot counts; Bob's does not inflate it
+    expect(workedSaturdayCounter('med_alice', [mkSlot('med_alice', '2026-01-10'), mkSlot('med_bob', '2026-01-10')], d('2026-01-10'))).toBe(1);
+    // Bob: his own slot counts for his counter
+    expect(workedSaturdayCounter('med_bob', [mkSlot('med_bob', '2026-01-10')], d('2026-01-10'))).toBe(1);
+  });
+
+  it('resets to 0 when the year changes', () => {
+    const slots = [
+      mkSlot('med_alice', '2026-02-14'),
+      mkSlot('med_alice', '2027-01-09'),
+    ];
+    expect(workedSaturdayCounter('med_alice', slots, d('2027-01-09'))).toBe(1);
+    expect(workedSaturdayCounter('med_alice', slots, d('2027-12-25'))).toBe(1);
+  });
+
+  it('counts several slots on the same Saturday once', () => {
+    const slots = [
+      mkSlot('med_alice', '2026-01-10'),
+      mkSlot('med_alice', '2026-01-10'),
+    ];
+    expect(workedSaturdayCounter('med_alice', slots, d('2026-01-10'))).toBe(1);
   });
 });
