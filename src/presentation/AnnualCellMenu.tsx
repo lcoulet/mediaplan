@@ -57,21 +57,29 @@ const SUGGESTION_TITLES: Record<string, string> = {
 interface AnnualCellMenuProps {
   /** The cell being edited. */
   target: AnnualCellTarget;
+  /** The code « Peindre ce code » duplicates: the last code picked in the
+   *  view (persisted across menu openings — paint is activated FROM the
+   *  menu, mockup (1), feature « mode peinture » scenarios). */
+  paintCode: string;
   /** A code chip was picked (catalog code or « Souhait »). */
   onPickCode: (code: string) => void;
   /** Free text was submitted (trimmed, non-blank). */
   onPickFreeText: (text: string) => void;
   /** « Effacer » — clear the stored entry, revert to the derived state. */
   onClear: (target: AnnualCellTarget) => void;
+  /** Activate paint mode with this value (last picked code, mockup (1)). */
+  onPaint: (code: string) => void;
   /** Close without committing (Escape, click outside handled by parent). */
   onClose: () => void;
 }
 
 export default function AnnualCellMenu({
   target,
+  paintCode,
   onPickCode,
   onPickFreeText,
   onClear,
+  onPaint,
   onClose,
 }: AnnualCellMenuProps) {
   const [freeText, setFreeText] = useState('');
@@ -174,6 +182,19 @@ export default function AnnualCellMenu({
         </div>
       </div>
       <div className="acm-foot">
+        <button
+          type="button"
+          role="menuitem"
+          className="acm-item"
+          title={`Activer le mode peinture avec « ${paintCode} » — chaque clic duplique le code, Échap pour quitter`}
+          onClick={() => {
+            onPaint(paintCode);
+            onClose();
+          }}
+        >
+          <span className="mi" aria-hidden="true">🖌</span>
+          <span>Peindre ce code <span className="acm-hint">({paintCode})</span></span>
+        </button>
         <button type="button" role="menuitem" className="acm-item" onClick={() => { onClear(target); onClose(); }}>
           <span className="mi" aria-hidden="true">⌫</span>
           <span>Effacer <span className="acm-hint">(retour au dérivé)</span></span>

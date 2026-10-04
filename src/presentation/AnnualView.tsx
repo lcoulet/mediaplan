@@ -34,7 +34,12 @@ import {
   addHolidayDerogation,
   removeHolidayDerogation,
   resetHolidayDerogation,
+  setHalfDayException,
+  clearHalfDayException,
+  annualMenuChoice,
+  annualFreeTextEntry,
 } from '../domain/annual-editing';
+import AnnualCellMenu, { type AnnualCellTarget } from './AnnualCellMenu';
 import { quarterOfDate, computeQuarterlyBalance, defaultValorisationConfig } from '../domain/hours';
 import type { Mediator, WorkCycle } from '../domain/types';
 
@@ -194,6 +199,89 @@ export default function AnnualView() {
     commitOverrides(resetHolidayDerogation(holidayOverrides, String(year), iso));
   };
 
+  // ---- Cell editing (slice 4): context menu + paint mode -----------------
+  //
+  // One undoable commit per edited/painted cell (decision 2026-10-03):
+  // dispatch + commit with the label of the applied value.
+  const [menuTarget, setMenuTarget] = useState<AnnualCellTarget | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
+  // Paint mode: the value to duplicate on each click (the last picked code).
+  // Click-by-click only — no drag painting (decision 2026-10-03).
+  const [paintValue, setPaintValue] = useState<string | null>(null);
+  // The last code chip picked in the view: « Peindre ce code » duplicates it
+  // (paint is activated FROM the menu, after a value was chosen).
+  const [lastPickedCode, setLastPickedCode] = useState('CA');
+  const gridRef = useRef<HTMLDivElement | null>(null);
+
+  const applyEntry = (
+    mediatorId: string,
+    iso: string,
+    halfDay: 'morning' | 'afternoon',
+    entry: { type: import('../domain/types').AbsenceType; notes: string }
+  ) => {
+    const absences = setHalfDayException(data.absences, { mediatorId, date: iso, halfDay, type: entry.type, notes: entry.notes });
+    const nextData = { ...data, absences };
+    dispatch({ type: 'SET_DATA', data: nextData });
+    commit(nextData, `Tableau : ${entry.notes} (${iso})`);
+  };
+
+  const clearCell = (target: AnnualCellTarget) => {
+    const absences = clearHalfDayException(data.absences, target.mediatorId, target.date, target.halfDay);
+    const nextData = { ...data, absences };
+    dispatch({ type: 'SET_DATA', data: nextData });
+    commit(nextData, `Tableau : effacement (${target.date})`);
+  };
+
+  const pickCode = (code: string) => {
+    if (!menuTarget) return;
+    setLastPickedCode(code);
+    const entry = annualMenuChoice(code);
+    if (entry) applyEntry(menuTarget.mediatorId, menuTarget.date, menuTarget.halfDay, entry);
+  };
+
+  const pickFreeText = (text: string) => {
+    if (!menuTarget) return;
+    const entry = annualFreeTextEntry(text);
+    if (entry) applyEntry(menuTarget.mediatorId, menuTarget.date, menuTarget.halfDay, entry);
+  };
+
+  // Cell click: paint mode duplicates the value; otherwise open the menu
+  // positioned by the click inside the grid card.
+  const cellClick = (m: Mediator, iso: string, halfDay: 'morning' | 'afternoon', e: React.MouseEvent) => {
+    if (paintValue) {
+      const entry = annualMenuChoice(paintValue);
+      if (entry) applyEntry(m.id, iso, halfDay, entry);
+      return;
+    }
+    setMenuTarget({ mediatorId: m.id, mediatorName: `${m.firstName} ${m.lastName}`, date: iso, halfDay });
+    const card = gridRef.current?.getBoundingClientRect();
+    if (card) {
+      setMenuPos({ top: e.clientY - card.top, left: Math.min(e.clientX - card.left, card.width - 270) });
+    }
+  };
+
+  // Escape: closes the menu, then exits paint mode (feature scenarios).
+  // A mousedown outside the grid card does the same.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (menuTarget) return; // the menu's own handler closes it (stopPropagation)
+      if (paintValue) setPaintValue(null);
+    };
+    const onDown = (e: MouseEvent) => {
+      if (gridRef.current && !gridRef.current.contains(e.target as Node)) {
+        setMenuTarget(null);
+        setPaintValue(null);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onDown);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', onDown);
+    };
+  }, [menuTarget, paintValue]);
+
   // ---- Navigation (decisions 2026-10-04): week label -> weekly view on
   // that ISO week; day label -> daily view on that date -------------------
   const gotoDay = (iso: string) => {
@@ -244,8 +332,27 @@ export default function AnnualView() {
         {inactiveMediators.length > 0 && !showInactive
           ? ` ; ${inactiveMediators.length} désactivé${inactiveMediators.length === 1 ? '' : 's'} masqué${inactiveMediators.length === 1 ? '' : 's'} par défaut`
           : ''}
-        .
+        . Clic sur une demi-journée → menu des codes, texte libre, effacement,
+        peinture.
       </p>
+
+      {/* Paint-mode banner (decision 2026-10-03): the duplicated value +
+          exit affordances (Esc, click outside the grid, ✕ Quitter). */}
+      {paintValue && (
+        <div className="annual-paint-banner" role="status">
+          <span aria-hidden="true">🖌</span>
+          <span>Peinture : <strong>{paintValue}</strong> — cliquez les cellules à remplir, Échap pour quitter.</span>
+          <span className="bp-spacer"></span>
+          <button
+            className="btn-exit-paint"
+            type="button"
+            title="Quitter le mode peinture (Échap ou clic hors de la grille)"
+            onClick={() => setPaintValue(null)}
+          >
+            ✕ Quitter
+          </button>
+        </div>
+      )}
 
       {/* Collapsible legend — palette decided 2026-10-03 */}
       <details className="annual-legend-box">
@@ -343,7 +450,7 @@ export default function AnnualView() {
           </div>
         </div>
       ) : (
-        <div className="annual-card">
+        <div className={`annual-card ${paintValue ? 'painting' : ''}`} ref={gridRef}>
           <div className="grid-wrap">
             <table className="agrid" aria-label={`Tableau de fonctionnement ${year}`}>
               <colgroup>
@@ -457,6 +564,16 @@ export default function AnnualView() {
                               key={`${m.id}-${key}`}
                               className={`c ${cell ? STATE_CLASS[cell.state] ?? '' : 'st-neutral'}`}
                               title={cell?.code ? cell.code : undefined}
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`${m.firstName} ${m.lastName} — ${iso} ${key === 'morning' ? 'Matin' : 'Après-midi'}${cell?.code ? ` — ${cell.code}` : ''}`}
+                              onClick={(e) => cellClick(m, iso, key, e)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  cellClick(m, iso, key, e as unknown as React.MouseEvent);
+                                }
+                              }}
                             >
                               {counter !== null && (
                                 <span
@@ -479,6 +596,21 @@ export default function AnnualView() {
               </tbody>
             </table>
           </div>
+          {/* Context menu of the clicked half-day cell — anchored to the
+              grid card, above the sticky columns, below modals. */}
+          {menuTarget && (
+            <div style={{ position: 'absolute', top: menuPos?.top ?? 0, left: menuPos?.left ?? 0, pointerEvents: 'auto' }}>
+              <AnnualCellMenu
+                target={menuTarget}
+                paintCode={lastPickedCode}
+                onPickCode={pickCode}
+                onPickFreeText={pickFreeText}
+                onClear={clearCell}
+                onClose={() => setMenuTarget(null)}
+                onPaint={(code) => setPaintValue(code)}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

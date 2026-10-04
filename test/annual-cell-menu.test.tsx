@@ -18,6 +18,8 @@ function renderMenu(props: Partial<Parameters<typeof AnnualCellMenu>[0]> = {}) {
       onPickCode={noop}
       onPickFreeText={noop}
       onClear={noop}
+      onPaint={noop}
+      paintCode="CA"
       onClose={noop}
       {...props}
     />
