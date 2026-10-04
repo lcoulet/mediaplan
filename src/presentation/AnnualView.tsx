@@ -248,7 +248,10 @@ export default function AnnualView() {
   // Cell click: paint mode duplicates the value; otherwise open the menu
   // near the click, clamped so the 260px-wide, ~330px-tall menu stays
   // inside the viewport (fixed positioning, above the sticky grid).
-  const cellClick = (m: Mediator, iso: string, halfDay: 'morning' | 'afternoon', e: React.MouseEvent) => {
+  // `pos` carries the anchor coordinates: the click point for mouse, or
+  // the cell's own bounding box for keyboard activation (React keyboard
+  // events carry no clientX/clientY).
+  const cellClick = (m: Mediator, iso: string, halfDay: 'morning' | 'afternoon', pos: { x: number; y: number }) => {
     if (paintValue) {
       const entry = annualMenuChoice(paintValue);
       if (entry) applyEntry(m.id, iso, halfDay, entry);
@@ -256,8 +259,8 @@ export default function AnnualView() {
     }
     setMenuTarget({ mediatorId: m.id, mediatorName: `${m.firstName} ${m.lastName}`, date: iso, halfDay });
     setMenuPos({
-      top: Math.min(e.clientY, window.innerHeight - 340),
-      left: Math.min(e.clientX, window.innerWidth - 270),
+      top: Math.min(pos.y, window.innerHeight - 340),
+      left: Math.min(pos.x, window.innerWidth - 270),
     });
   };
 
@@ -568,11 +571,12 @@ export default function AnnualView() {
                               role="button"
                               tabIndex={0}
                               aria-label={`${m.firstName} ${m.lastName} — ${iso} ${key === 'morning' ? 'Matin' : 'Après-midi'}${cell?.code ? ` — ${cell.code}` : ''}`}
-                              onClick={(e) => cellClick(m, iso, key, e)}
+                              onClick={(e) => cellClick(m, iso, key, { x: e.clientX, y: e.clientY })}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
                                   e.preventDefault();
-                                  cellClick(m, iso, key, e as unknown as React.MouseEvent);
+                                  const r = e.currentTarget.getBoundingClientRect();
+                                  cellClick(m, iso, key, { x: r.left + r.width / 2, y: r.top });
                                 }
                               }}
                             >
