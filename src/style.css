@@ -1458,3 +1458,129 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
     color: var(--color-text);
     background: var(--color-surface);
 }
+
+/* ===== Annual view (« Tableau de fonctionnement ») =====
+   Palette decided 2026-10-03 (Excel hues, WCAG AA-adjusted — contrasts
+   computed in contrast_palette_mix.py, see docs/OPEN-QUESTIONS.md).
+   Structure decided 2026-10-04: own leftmost « Sem. » column (rowspan 7),
+   route-focus row, week/day navigation, inactive toggle. */
+
+.annual-view .toolbar { margin-bottom: 12px; }
+.annual-toolbar-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.annual-toolbar-note { font-size: 13px; color: var(--color-text-muted); margin: -6px 0 12px; }
+
+/* Year segmented control */
+.year-seg { display: inline-flex; border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; background: var(--color-surface); }
+.year-seg button { border: none; background: var(--color-surface); padding: 8px 16px; font-size: 14px; cursor: pointer; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.year-seg button + button { border-left: 1px solid var(--color-border); }
+.year-seg button.active { background: var(--color-primary); color: #fff; font-weight: 600; }
+
+/* Inactive-mediators toggle (decision 2026-10-04, #17) */
+.toggle-inactive { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); font-size: 13px; color: var(--color-text-muted); cursor: pointer; user-select: none; }
+.toggle-inactive input { width: 15px; height: 15px; accent-color: var(--color-primary); cursor: pointer; margin: 0; }
+.toggle-inactive input:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.toggle-inactive.checked-state { color: var(--color-text); font-weight: 600; }
+
+/* Collapsible legend */
+.annual-legend-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); margin-bottom: 12px; box-shadow: var(--shadow-sm); }
+.annual-legend-box summary { cursor: pointer; padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--color-text); list-style: none; }
+.annual-legend-box summary::before { content: "▸ "; color: var(--color-text-muted); }
+.annual-legend-box[open] summary::before { content: "▾ "; }
+.annual-legend-body { padding: 4px 14px 12px; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--color-text-muted); }
+.annual-legend-body .lg { display: inline-flex; align-items: center; gap: 6px; }
+.annual-legend-body .sw { display: inline-block; width: 26px; height: 14px; border-radius: 3px; border: 1px solid var(--color-border-light); flex-shrink: 0; }
+.sw-presence { background: #C67A33; }
+.sw-absence { background: #F9A825; }
+.sw-remote { background: #B85555; }
+.sw-mission { background: #d68c45; }
+.sw-arrangement { background: #7B5AA0; }
+.sw-leaveRequest { background: #4178AB; }
+.sw-jdm { background: #2F7A4A; }
+.sw-workAbsence { background: #c0392b; }
+.sw-neutral { background: #fff; }
+.sw-closed { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #8a8a8a 5px 7px); }
+.sw-ferie { background: #fef5e7; border-color: #d68c45; }
+.ct-sw { display: inline-block; padding: 0 5px; border-radius: 8px; background: #e3efe8; color: #1e5536; font-size: 10px; font-weight: 700; }
+.annual-legend-body .pill { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 700; line-height: 1.6; }
+.quota-ok { background: #e3efe8; color: #1e5536; }
+.quota-ko { background: #fdecea; color: #c0392b; }
+
+/* Férié panel (per-year dérogations) */
+.annual-ferie-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 12px; overflow: hidden; }
+.annual-ferie-box summary { cursor: pointer; padding: 10px 14px; font-size: 13px; font-weight: 600; list-style: none; }
+.annual-ferie-box summary::before { content: "▸ "; color: var(--color-text-muted); }
+.annual-ferie-box[open] summary::before { content: "▾ "; }
+.annual-ferie-body { padding: 0 14px 12px; }
+.annual-ferie-line { font-size: 12px; color: var(--color-text-muted); margin-bottom: 8px; }
+.annual-chiplist { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.annual-chip { display: inline-flex; align-items: center; gap: 5px; background: #fafafa; border: 1px solid var(--color-border); border-radius: 14px; padding: 2px 4px 2px 10px; font-size: 12px; }
+.annual-chip button { background: none; border: none; cursor: pointer; color: var(--color-danger); font-size: 12px; padding: 0 4px; border-radius: 50%; }
+.annual-chip button:hover { background: var(--color-danger-bg); }
+.annual-chip.added { border-style: dashed; border-color: var(--color-primary-light); color: var(--color-primary-dark); }
+.annual-chip.removed { text-decoration: line-through; color: #5f5f5f; }
+.annual-ferie-form { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 8px; border-top: 1px dashed var(--color-border); }
+.annual-ferie-form label { font-size: 12px; font-weight: 600; }
+.annual-ferie-form .date-input { padding: 5px 8px; font-size: 13px; border: 1px solid var(--color-border); border-radius: var(--radius); font-family: inherit; color: var(--color-text); background: var(--color-surface); }
+.annual-ferie-add { padding: 6px 12px; font-size: 13px; }
+
+/* Grid card */
+.annual-card { background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
+.annual-card .grid-wrap { overflow-x: auto; position: relative; max-height: 70vh; }
+.agrid { border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+.agrid th, .agrid td { border-bottom: 1px solid var(--color-border-light); }
+/* Week column (leftmost, own column — decision 2026-10-04): sticky with
+   the date column, spans the 7 day-rows of each ISO week (rowspan). */
+.agrid .wkcol { position: sticky; left: 0; z-index: 2; width: 48px; min-width: 48px; max-width: 48px; text-align: center; padding: 2px; background: var(--color-surface); border-right: 1px solid var(--color-border-light); vertical-align: middle; }
+.agrid tr.thead-row .wkcol { z-index: 4; background: #fafafa; border-bottom: 1px solid var(--color-border); border-right: 1px solid var(--color-border); }
+.wkcol-head { font-size: 9px; font-weight: 600; color: var(--color-text-muted); }
+.wk-btn { display: inline-block; padding: 1px 4px; border-radius: 8px; border: none; cursor: pointer; background: #e3efe8; color: #1e5536; font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: inherit; line-height: 1.6; }
+.wk-btn:hover { background: #d5e8dd; }
+.wk-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+/* Mediator header */
+.agrid .mh { text-align: left; padding: 6px 6px 6px 8px; vertical-align: top; min-width: 60px; border-bottom: 1px solid var(--color-border); border-left: 1px solid var(--color-border-light); background: #fafafa; font-weight: 400; overflow-wrap: break-word; }
+.agrid .mh .mname { display: block; font-size: 11px; font-weight: 700; white-space: normal; }
+.agrid .mh .mquota { display: block; margin-top: 2px; }
+.agrid .pill { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 700; line-height: 1.6; }
+.pill-contract { background: #f0f0f0; color: #5a5a5a; }
+/* Inactive column (decision #17): muted header + dashed borders + chip */
+.agrid .mh.inactive { background: #efefef; border-bottom: 1px dashed #767676; border-left: 1px dashed #767676; }
+.agrid .mh.inactive .mname { color: #5a5a5a; font-weight: 600; }
+.dchip-inactive { background: #e3e3e3; color: #5a5a5a; border: 1px dashed #767676; }
+/* Date column (sticky, second column) */
+.agrid .date { position: sticky; left: 48px; z-index: 2; width: 108px; min-width: 108px; max-width: 108px; text-align: left; padding: 3px 8px; background: var(--color-surface); border-right: 1px solid var(--color-border); font-weight: 400; vertical-align: middle; }
+.agrid tr.thead-row .date { z-index: 4; background: #fafafa; border-bottom: 1px solid var(--color-border); }
+.agrid .d-day { display: block; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.agrid .d-day.muted { color: var(--color-text-muted); font-weight: 400; }
+.agrid .d-day.small { font-size: 9px; font-weight: 400; }
+.day-btn { display: inline-block; padding: 0 4px; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: inherit; font-size: 11px; font-weight: 600; font-family: inherit; white-space: nowrap; }
+.day-btn:hover { background: #eef5f1; }
+.day-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+.dchip { display: inline-block; margin-top: 1px; padding: 0 5px; border-radius: 8px; font-size: 9px; font-weight: 700; }
+.dchip-ferie { background: var(--color-warning-bg); color: #8a4d10; border: 1px solid var(--color-warning); }
+.dchip-closed { background: var(--color-danger-bg); color: var(--color-danger); border: 1px solid var(--color-danger); }
+.agrid tr.ferie .date { background: #fef5e7; }
+.agrid tr.closed .date { background: #fdecea; }
+/* Route-focus row (decision 2026-10-04): the row of the route date
+   (?date=…) is highlighted + scrolled into view. */
+.agrid tr.route-focus { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+.agrid tr.route-focus > td, .agrid tr.route-focus > th { background-color: #eef5f1; }
+.agrid tr.route-focus .wkcol { background: #e3efe8; }
+.route-chip { display: inline-block; margin-left: 4px; padding: 0 4px; border-radius: 8px; background: #e3efe8; color: #1e5536; font-size: 9px; font-weight: 700; }
+/* Cells: ONE per half-day, ~30px wide */
+.agrid .c { width: 30px; min-width: 30px; max-width: 30px; height: 28px; padding: 1px 2px; border-left: 1px solid var(--color-border-light); font-size: 10px; font-weight: 700; text-align: center; vertical-align: middle; position: relative; overflow: hidden; white-space: nowrap; }
+.agrid .c.st-presence { background: #C67A33; }            /* derived cycle presence — empty cell */
+.agrid .c.st-absence { background: #F9A825; color: #2b2b2b; }   /* CA, RHS, AM... */
+.agrid .c.st-remote { background: #B85555; color: #fff; }        /* TELE télétravail */
+.agrid .c.st-mission { background: #d68c45; color: #3a2408; font-size: 9px; } /* free-text missions, Réf. WE */
+.agrid .c.st-arrangement { background: #7B5AA0; color: #fff; }   /* amgt JJ/MM */
+.agrid .c.st-leaveRequest { background: #4178AB; color: #fff; }  /* souhait (leave_request) */
+.agrid .c.st-jdm { background: #2F7A4A; color: #fff; }          /* JDM */
+.agrid .c.st-workAbsence { background: #c0392b; color: #fff; }   /* grève, syndicat, formation */
+.agrid .c.st-neutral { background: #fff; }                       /* neutral: no cycle / non-worked */
+.agrid tr.closed .c.st-neutral { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #8a8a8a 5px 7px); } /* museum-closed hatch */
+/* Cycle week pill — once per ISO week, in the Monday row area */
+.cycp { display: inline-block; padding: 0 4px; border-radius: 8px; background: #fff; color: #2b2b2b; border: 1px solid var(--color-border); font-size: 9px; font-weight: 700; line-height: 1.5; }
+/* Worked-Saturday counter — computed (Saturdays with slots) */
+.ct { position: absolute; top: 0; right: 0; padding: 0 3px; border-radius: 0 0 0 6px; background: #e3efe8; color: #1e5536; font-size: 9px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ct.valued { background: #2c6e49; color: #fff; } /* valorisation threshold reached */
+.ct.zero { background: #f0f0f0; color: #6b6b6b; }

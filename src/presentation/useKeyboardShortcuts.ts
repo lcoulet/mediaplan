@@ -5,7 +5,7 @@
 // ViewRouter in App.tsx), because it reads the context via useData().
 //
 // Shortcuts (all ignored when typing in a form field or when a modal is open):
-//   1-8        switch views (Header nav order)
+//   1-9        switch views (Header nav order)
 //   ←/→        previous/next day in daily view, ±7 days in weekly view
 //   T          jump to today (daily and weekly views)
 //   N          open the current view's "new entity" modal (mediators/offers/absences)
@@ -28,6 +28,7 @@ export const SHORTCUT_VIEWS: ViewName[] = [
   'offers',
   'absences',
   'stats',
+  'annual',
   'configuration',
 ];
 
@@ -75,8 +76,8 @@ export default function useKeyboardShortcuts() {
         return;
       }
 
-      // 1-8 switch views, in the Header's nav order
-      if (e.key >= '1' && e.key <= '8') {
+      // 1-9 switch views, in the Header's nav order
+      if (e.key >= '1' && e.key <= '9') {
         const view = SHORTCUT_VIEWS[Number(e.key) - 1];
         if (view) dispatch({ type: 'SET_VIEW', view });
         return;

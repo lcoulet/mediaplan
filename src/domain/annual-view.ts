@@ -6,7 +6,7 @@
 // computed in contrast_palette_mix.py — see docs/OPEN-QUESTIONS.md).
 import type { Absence, AbsenceType, Slot, WorkCycle } from './types';
 import { isoWeekKey, getWorkedHoursForDate } from './cycles';
-import { isMuseumClosed, isPublicHoliday } from './hours';
+import { isMuseumClosed, isPublicHoliday, frenchHolidays } from './hours';
 
 // ---- Cell palette --------------------------------------------------------
 
@@ -228,6 +228,51 @@ export function annualWeekLabelsForYear(year: number): AnnualWeekLabel[] {
     cursor.setDate(cursor.getDate() + 1);
   }
   return labels;
+}
+
+// ---- Férié panel display list ---------------------------------------------
+
+/** Chip states of the annual view's férié panel (per-year dérogations). */
+export const ANNUAL_FERIE_DEFAULT = 'default' as const;
+export const ANNUAL_FERIE_ADDED = 'added' as const;
+export const ANNUAL_FERIE_REMOVED = 'removed' as const;
+
+/** One chip of the férié panel: a holiday date and its dérogation state. */
+export interface AnnualFerieChip {
+  /** ISO date (YYYY-MM-DD), always inside the displayed year. */
+  date: string;
+  /** French name of the holiday ('' for ADDED dérogations: no known name). */
+  name: string;
+  /** 'default' (auto-computed French list), 'added' or 'removed' dérogation. */
+  status: typeof ANNUAL_FERIE_DEFAULT | typeof ANNUAL_FERIE_ADDED | typeof ANNUAL_FERIE_REMOVED;
+}
+
+/**
+ * Display list of the férié panel for a year: the auto-computed French
+ * holidays (frenchHolidays in hours.ts) as 'default' chips, defaults struck
+ * through as 'removed' when the year's dérogation removed them, then the
+ * year's 'added' dérogation dates appended at the end (chronologically).
+ * Dates outside the requested year in the dérogation are ignored — a chip
+ * always belongs to exactly one displayed year. Pure function.
+ */
+export function annualHolidayPanelList(
+  year: number,
+  overrides?: AnnualHolidayOverrides
+): AnnualFerieChip[] {
+  const derogation = overrides?.[String(year)];
+  const added = (derogation?.added ?? []).filter((d) => Number(d.slice(0, 4)) === year);
+  const removed = new Set(
+    (derogation?.removed ?? []).filter((d) => Number(d.slice(0, 4)) === year)
+  );
+  const chips: AnnualFerieChip[] = frenchHolidays(year).map((h) => ({
+    date: h.date,
+    name: h.name,
+    status: removed.has(h.date) ? ANNUAL_FERIE_REMOVED : ANNUAL_FERIE_DEFAULT,
+  }));
+  for (const date of [...added].sort()) {
+    chips.push({ date, name: '', status: ANNUAL_FERIE_ADDED });
+  }
+  return chips;
 }
 
 // ---- Holiday overrides ------------------------------------------------------

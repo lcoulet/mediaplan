@@ -12,6 +12,7 @@ import MediatorsView from './presentation/MediatorsView';
 import OffersView from './presentation/OffersView';
 import AbsencesView from './presentation/AbsencesView';
 import StatsView from './presentation/StatsView';
+import AnnualView from './presentation/AnnualView';
 import ConfigurationView from './presentation/ConfigurationView';
 import StatusBar from './presentation/StatusBar';
 
@@ -35,6 +36,8 @@ function ViewRouter() {
       return <AbsencesView />;
     case 'stats':
       return <StatsView />;
+    case 'annual':
+      return <AnnualView />;
     case 'configuration':
       return <ConfigurationView />;
     default:

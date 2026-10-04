@@ -25,7 +25,8 @@ const NAV_ITEMS: { view: ViewName; label: string; shortcut: string }[] = [
   { view: 'offers', label: 'Offres', shortcut: '5' },
   { view: 'absences', label: 'Absences', shortcut: '6' },
   { view: 'stats', label: 'Statistiques', shortcut: '7' },
-  { view: 'configuration', label: 'Configuration', shortcut: '8' },
+  { view: 'annual', label: 'Tableau', shortcut: '8' },
+  { view: 'configuration', label: 'Configuration', shortcut: '9' },
 ];
 
 // Notification channel: bumped whenever a sync stamp changes (export/import

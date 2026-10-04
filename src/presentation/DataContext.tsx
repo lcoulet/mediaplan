@@ -77,6 +77,10 @@ function getInitialState(): AppState {
       'offres': 'offers',
       'absences': 'absences',
       'statistiques': 'stats',
+      // Annual view (« Tableau de fonctionnement »)
+      'tableau': 'annual',
+      'annuel': 'annual',
+      'fonctionnement': 'annual',
       'configuration': 'configuration',
       // Legacy URL param of the former Import / Export view
       'import-export': 'configuration',
@@ -312,6 +316,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       'offers': 'offres',
       'absences': 'absences',
       'stats': 'statistiques',
+      'annual': 'tableau',
       'configuration': 'configuration',
     };
     urlParams.set('display', displayMap[state.currentView]);
