@@ -178,6 +178,19 @@ import/export mode (shared JSON.gz files) until tenant access is sorted.
 
 ## Mediator Annual Planning View (vue planning médiateurs)
 
+**Navigation & route binding (decided 2026-10-04):**
+- [x] ROUTE SYNC: the annual view follows the date in the route
+      (?date=...) — opening it focuses/scrolls to the requested date's
+      row (and changing the date from elsewhere lands on the same
+      focused day), like the other views share the app's global date
+- [x] WEEK PILL → WEEKLY VIEW: clicking a week label (S 40) navigates
+      to the weekly view on that ISO week
+- [x] DAY LABEL → DAY VIEW: clicking a day's date label navigates to
+      the day view on that date
+- [x] WEEK NUMBER COLUMN: the ISO week number lives in its OWN leftmost
+      column (like the Excel reference), spanning the week's 7 rows —
+      replacing the Monday-row-only week display
+
 **Established so far:**
 - [x] View is an annual grid: rows = days of the year, columns = mediators,
   one cell per half-day (morning / afternoon) — matches the Excel reference
