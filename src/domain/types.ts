@@ -1,5 +1,7 @@
 // types.ts — Entity interfaces for the MediaPlan domain
 
+import type { AnnualHolidayOverrides } from './annual-view';
+
 export interface Mediator {
   id: string;
   lastName: string;
@@ -233,6 +235,12 @@ export interface AppData {
   // Valorisation settings (multipliers, holiday overrides). Legacy data
   // loads with defaults.
   valorisation?: ValorisationConfig;
+  // Annual view holiday dérogations (per-year added/removed dates against
+  // the auto-computed French list — see AnnualHolidayOverrides in
+  // annual-view.ts). Unlike the whole-list holidayOverrides of
+  // ValorisationConfig, these are DELTAS. Legacy data persisted before the
+  // annual view existed loads as {} (pure defaults for every year).
+  annualHolidayOverrides?: AnnualHolidayOverrides;
   halfDayConfig?: {
     morningEnd: string;
     afternoonStart: string;

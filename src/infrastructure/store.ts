@@ -4,6 +4,7 @@ import { generateExportFilename, buildExportMetadata } from '../domain/export-ut
 import { defaultOfferColor } from '../domain/models';
 import { defaultValorisationConfig } from '../domain/hours';
 import { migrateLocationsToSpaces } from '../domain/spaces';
+import type { AnnualHolidayOverrides } from '../domain/annual-view';
 import type { AppData, Offer, Slot, ValorisationConfig, Space } from '../domain/types';
 
 export const STORAGE_KEY = 'mediaplan_data_v1';
@@ -64,11 +65,38 @@ export function load(): AppData {
       // Valorisation settings — legacy data loads with the defaults;
       // partially persisted configs are filled in with the defaults.
       valorisation: migrateValorisation(parsed.valorisation),
+      // Annual view holiday dérogations — legacy data persisted before the
+      // annual view existed loads as {} (pure defaults for every year);
+      // partially persisted / malformed entries are sanitized.
+      annualHolidayOverrides: migrateAnnualHolidayOverrides(
+        (parsed as Partial<AppData>).annualHolidayOverrides
+      ),
     };
   } catch (e) {
     console.error('Failed to load data:', e);
     return { ...defaultData };
   }
+}
+
+/**
+ * Sanitize persisted annual holiday dérogations into the canonical shape
+ * ({ [year]: { added: string[], removed: string[] } }): year entries missing
+ * one of the arrays are filled in with [], entries that are not year maps
+ * (wrong shape, corrupted data) are dropped. Pure function, idempotent.
+ */
+function migrateAnnualHolidayOverrides(
+  raw: unknown
+): AnnualHolidayOverrides {
+  if (typeof raw !== 'object' || raw === null) return {};
+  const result: AnnualHolidayOverrides = {};
+  for (const [year, entry] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof entry !== 'object' || entry === null) continue; // malformed year
+    const e = entry as { added?: unknown; removed?: unknown };
+    const added = Array.isArray(e.added) ? e.added.filter((d): d is string => typeof d === 'string') : [];
+    const removed = Array.isArray(e.removed) ? e.removed.filter((d): d is string => typeof d === 'string') : [];
+    result[year] = { added, removed };
+  }
+  return result;
 }
 
 /**

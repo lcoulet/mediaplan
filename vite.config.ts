@@ -25,5 +25,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     include: ['test/**/*.test.ts', 'test/**/*.test.tsx', 'src/**/*.test.ts'],
+    coverage: {
+      // Dev/diagnostic scripts (scripts/*.mjs) are not application code:
+      // they are manual verification tools, not shipped, not unit-tested.
+      exclude: ['scripts/**', 'node_modules/**', 'dist/**'],
+    },
   },
 })

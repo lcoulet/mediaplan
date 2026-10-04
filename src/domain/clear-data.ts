@@ -24,5 +24,8 @@ export function clearPlanningData(data: AppData, options: ClearOptions = {}): Ap
     quotas: [...data.quotas],
     spaces: [...data.spaces],
     ...(data.valorisation ? { valorisation: data.valorisation } : {}),
+    // Annual view holiday dérogations survive: they are configuration of
+    // the annual grid (per-year holiday list), not planning data.
+    ...(data.annualHolidayOverrides ? { annualHolidayOverrides: data.annualHolidayOverrides } : {}),
   };
 }
