@@ -41,6 +41,8 @@ import {
 } from '../domain/annual-editing';
 import AnnualCellMenu, { type AnnualCellTarget } from './AnnualCellMenu';
 import { quarterOfDate, computeQuarterlyBalance, defaultValorisationConfig } from '../domain/hours';
+import { buildAnnualExportModel, annualExportFilename } from '../domain/annual-export';
+import { writeAnnualExcel } from '../infrastructure/annual-excel';
 import type { Mediator, WorkCycle } from '../domain/types';
 
 // French weekday abbreviations of the date labels (lun. 28/09)
@@ -299,6 +301,33 @@ export default function AnnualView() {
 
   const empty = data.mediators.length === 0;
 
+  // ---- Excel export (slice 5, decisions 2026-10-03 #11 + 2026-10-04
+  // #18-21): the DISPLAYED year, the columns as shown (hidden inactive
+  // mediators are NOT exported — the toggle state at export time is law),
+  // codes as full text, counters in the Saturday cells, legend fills.
+  // Fully client-side: SheetJS in the browser, no network request.
+  const exportExcel = () => {
+    const model = buildAnnualExportModel(data, year, {
+      includeInactive: showInactive,
+      holidayOverrides,
+    });
+    const bytes = writeAnnualExcel(model);
+    // Copy into a plain ArrayBuffer (TS BlobPart rejects ArrayBufferLike)
+    const buffer = new ArrayBuffer(bytes.byteLength);
+    new Uint8Array(buffer).set(bytes);
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = annualExportFilename(year);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="annual-view">
       <div className="toolbar">
@@ -325,6 +354,14 @@ export default function AnnualView() {
             />
             <span>Médiateurs désactivés</span>
           </label>
+          <button
+            className="btn btn-secondary annual-export-btn"
+            type="button"
+            title="Export Excel au format de la table de référence — textes complets (pas d'abréviations), compteurs de samedis inclus, médiateurs désactivés masqués exclus — pas d'impression/PDF en v1"
+            onClick={exportExcel}
+          >
+            ⇩ Exporter Excel
+          </button>
         </div>
       </div>
       <p className="annual-toolbar-note">
