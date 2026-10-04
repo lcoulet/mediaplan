@@ -494,7 +494,7 @@ export function seedDemoData(data: AppData): void {
   const med1 = mediators[1];
   cycles.push(mkCycle(med1.id, 'S1', { 3: ['10:00', '17:00'], 4: ['10:00', '17:00'], 5: ['10:00', '17:00'], 6: ['10:00', '17:00'], 7: ['10:00', '17:00'] }, currentWeek));
   med1.activeCycleId = cycles[cycles.length - 1].id;
-  med1.contractType = 'mi-temps (temps partiel)';
+  med1.contractType = 'mi-temps';
 
   // Vermillon (2): Mon + Wed + Fri 09:00-16:30 — part-time week
   const med2 = mediators[2];

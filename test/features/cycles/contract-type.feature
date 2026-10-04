@@ -2,7 +2,7 @@
 # Capability: Type de contrat d'un médiateur — champ optionnel, texte libre
 # avec suggestions prédéfinies, affichage en pilule à côté du nom.
 # Décision design (2026-09-25/26) : Mediator reçoit un contractType
-# optionnel. Suggestions prédéfinies: temps plein, mi-temps (temps partiel),
+# optionnel. Suggestions prédéfinies: temps plein, mi-temps,
 # stagiaire. Affiché en pilule à côté du nom du médiateur.
 
 Fonctionnalité: Type de contrat d'un médiateur
@@ -39,7 +39,7 @@ Fonctionnalité: Type de contrat d'un médiateur
 
   Scénario: Suggestions prédéfinies affichées dans le sélecteur
     Quand le coordinateur ouvre le sélecteur de type de contrat d'Alice
-    Alors les suggestions « temps plein », « mi-temps (temps partiel) » et « stagiaire » sont proposées
+    Alors les suggestions « temps plein », « mi-temps » et « stagiaire » sont proposées
 
   Scénario: Choisir une suggestion prédéfinie
     Quand le coordinateur ouvre le sélecteur de type de contrat d'Alice
@@ -95,5 +95,5 @@ Fonctionnalité: Type de contrat d'un médiateur
     Exemples:
       | contrat                  |
       | temps plein              |
-      | mi-temps (temps partiel) |
-      | stagiaire                 |
+      | mi-temps                 |
+      | stagiaire                |

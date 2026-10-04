@@ -12,7 +12,7 @@ import type { MultiSelectOption } from './MultiSelect';
 
 // Predefined suggestions for the free-text contract type (spec:
 // contract-type.feature) and working-time arrangement.
-const CONTRACT_TYPE_SUGGESTIONS = ['temps plein', 'mi-temps (temps partiel)', 'stagiaire'];
+const CONTRACT_TYPE_SUGGESTIONS = ['temps plein', 'mi-temps', 'stagiaire'];
 const ARRANGEMENT_SUGGESTIONS = ['temps partiel', 'mi-temps thérapeutique'];
 
 interface Props {
