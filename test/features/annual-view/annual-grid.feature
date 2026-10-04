@@ -44,12 +44,27 @@
 #  10. Solde trimestriel affiché pour les médiateurs avec un aménagement
 #      (reliquat / déficit reporté — computeQuarterlyBalance dans
 #      src/domain/hours.ts).
-#  11. Export Excel au format EXACT de la table de référence (SheetJS ;
+#   11. Export Excel au format EXACT de la table de référence (SheetJS ;
 #      lignes = jours avec jour de semaine + libellé de semaine ISO, un
 #      groupe de colonnes par médiateur Matin/Après-midi, codes dans les
 #      cellules, couleurs de remplissage). PAS d'impression/PDF en v1.
-#  12. Les absences sont stockées PAR DATE et PAR DEMI-JOURNÉE : changer
+#   12. Les absences sont stockées PAR DATE et PAR DEMI-JOURNÉE : changer
 #      d'année ne touche jamais aux données d'une autre année.
+# Décisions navigation arrêtées le 2026-10-04 (OPEN-QUESTIONS,
+#   « Navigation & route binding ») :
+#   13. SYNCHRO ROUTE : la vue suit la date globale de l'application
+#       (paramètre ?date= de la route — currentDate dans
+#       src/presentation/DataContext.tsx) ; l'ouvrir fait défiler et
+#       met en évidence la ligne du jour demandé, comme les autres vues.
+#   14. PILULE DE SEMAINE → VUE HEBDO : un clic sur un libellé de
+#       semaine (« S 40 ») ouvre la vue hebdomadaire sur cette semaine ISO.
+#   15. LIBELLÉ DE JOUR → VUE JOUR : un clic sur le libellé de la date
+#       d'un jour ouvre la vue quotidienne sur cette date.
+#   16. COLONNE SEMAINE : le numéro de semaine ISO vit dans sa PROPRE
+#       colonne à gauche de la colonne date (comme le fichier Excel de
+#       référence), à cheval sur les 7 lignes de la semaine — il REMPLACE
+#       l'affichage sur la ligne du lundi ; la pilule de cycle (S1, S2...)
+#       reste dans la zone de la cellule du lundi.
 
 Fonctionnalité: Tableau de fonctionnement — grille annuelle des médiateurs
   En tant que coordinateur
@@ -75,14 +90,15 @@ Fonctionnalité: Tableau de fonctionnement — grille annuelle des médiateurs
     Alors chaque ligne de jour comporte 2 cellules par médiateur
     Et ces cellules correspondent au Matin et à l'Après-midi
 
-  Scénario: Numéro de semaine ISO affiché sur les lignes du lundi
-    Quand la grille affiche le lundi 7 septembre 2026
-    Alors la ligne du lundi 7 septembre 2026 porte le libellé « S 37 »
-    Et les lignes de mardi à dimanche ne portent pas de libellé de semaine
+  Scénario: Numéro de semaine ISO dans sa propre colonne à gauche
+    Alors la colonne « Semaine » tout à gauche de la grille affiche « S 37 » sur la hauteur des 7 jours de la semaine du 7 septembre 2026
+    Et chaque numéro de semaine s'étend sur les 7 lignes de sa semaine, du lundi au dimanche
+    Et aucune ligne de jour ne porte de libellé de semaine dans la colonne date
+    Et la pilule de cycle (S1, S2...) reste affichée dans la zone de la cellule du lundi de chaque médiateur
 
   Scénario: Année à 53 semaines ISO — libellés S 1 à S 53
-    Alors la grille 2026 affiche des libellés de semaine de « S 1 » à « S 53 »
-    Et la ligne du lundi 28 décembre 2026 porte le libellé « S 53 »
+    Alors la grille 2026 affiche des libellés de semaine de « S 1 » à « S 53 » dans la colonne « Semaine »
+    Et la semaine du lundi 28 décembre 2026 porte le libellé « S 53 »
 
   Scénario: Commuter d'année
     Quand le coordinateur sélectionne l'année 2027 dans le sélecteur d'année
@@ -243,3 +259,23 @@ Fonctionnalité: Tableau de fonctionnement — grille annuelle des médiateurs
     Et le fichier comporte un groupe de colonnes par médiateur avec les cellules Matin et Après-midi
     Et les codes sont écrits dans les cellules avec les couleurs de remplissage de la légende de l'application
     Et aucune fonction d'impression ou d'export PDF n'est proposée pour cette vue en v1
+
+  # ------------------------------------------------------------------
+  # Navigation (décisions 2026-10-04 — route, semaine, jour)
+  # ------------------------------------------------------------------
+
+  Scénario: La vue suit la date de la route et met en évidence la ligne du jour
+    Quand le coordinateur ouvre le tableau de fonctionnement avec la date du 30 septembre 2026 dans la route
+    Alors la grille défile jusqu'à la ligne du mercredi 30 septembre 2026
+    Et la ligne du 30 septembre 2026 est mise en évidence visuellement
+    Et la date globale de l'application reste le 30 septembre 2026, partagée avec les autres vues
+
+  Scénario: Un clic sur un libellé de semaine ouvre la vue hebdomadaire
+    Quand le coordinateur clique sur le libellé « S 40 » de la colonne « Semaine »
+    Alors la vue hebdomadaire s'ouvre sur la semaine ISO 40
+    Et la date globale de l'application est positionnée sur un jour de la semaine 40 de l'année affichée
+
+  Scénario: Un clic sur le libellé d'un jour ouvre la vue quotidienne
+    Quand le coordinateur clique sur le libellé de la date du mercredi 30 septembre 2026
+    Alors la vue quotidienne s'ouvre sur le 30 septembre 2026
+    Et la date globale de l'application est le 30 septembre 2026

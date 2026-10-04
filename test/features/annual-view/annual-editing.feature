@@ -25,6 +25,10 @@
 #      l'édition reste possible (décision 2026-10-03 — diffère de la vue
 #      quotidienne qui refuse, car le tableau couvre l'année entière
 #      et peut légitimement noter des exceptions).
+#   6. Navigation hors du périmètre d'édition : la vue suit la date de la
+#      route, les libellés de semaine et de jour ouvrent les vues hebdo
+#      et jour, et le numéro de semaine ISO vit dans sa propre colonne à
+#      gauche (décisions 2026-10-04 — spécifiées dans annual-grid.feature).
 
 Fonctionnalité: Tableau de fonctionnement — édition de la grille annuelle
   En tant que coordinateur
