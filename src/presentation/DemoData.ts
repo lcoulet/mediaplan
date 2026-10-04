@@ -287,7 +287,30 @@ export function seedDemoData(data: AppData): void {
     const date = new Date(refDate);
     date.setDate(date.getDate() + day);
     const dow = date.getDay();
-    if (dow === 0 || dow === 6) continue; // Skip weekends
+    // Saturdays: a few confirmed slots for the weekend-cycle mediator
+    // (Fortin, Wed–Sun) so the annual-view Saturday counters (×N) and the
+    // valued-Saturday rule are demonstrable on demo data.
+    if (dow === 6 && day % 3 === 0) {
+      const weekendMed = mediators[1];
+      const satOffer = offers[0];
+      // Copy duration/setup/teardown from the offer like every other demo
+      // slot (enforced by demo-data-consistency tests).
+      const startMin = 10 * 60;
+      const endMin = startMin + satOffer.duration;
+      const end = `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
+      slots.push(
+        createSlot({
+          date: fmt(date),
+          startTime: '10:00',
+          endTime: end,
+          offerId: satOffer.id,
+          mediatorIds: [weekendMed.id],
+          setupTime: satOffer.setupTime,
+          teardownTime: satOffer.teardownTime,
+        })
+      );
+    }
+    if (dow === 0 || dow === 6) continue; // Skip weekends (regular slots)
 
     const patternStart = dayPatternOffsets[dow];
     const weekNum = Math.floor(day / 7);

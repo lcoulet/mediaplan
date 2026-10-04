@@ -383,32 +383,32 @@ describe('canAssignSlotOnDate', () => {
 // ---- Quarterly balance -----------------------------------------------------------
 
 describe('computeQuarterlyBalance — who is tracked', () => {
-  const aliceArrangement = mkMediator({ arrangement: 'temps partiel' });
   const slot = mkSlot('2026-01-06', '10:00', '18:00');
   const quota = mkQuota({ hours: 120 });
   const cfg = mkConfig();
 
-  it('tracks nothing for a mediator without arrangement, even with quotas and slots', () => {
-    expect(computeQuarterlyBalance(mkMediator(), [slot], [quota], cfg, 2026, 1)).toBeNull();
+  // Decision 2026-10-04: a CONFIGURED quota is enough to track a mediator —
+  // neither an arrangement nor a contract type is required. This reverses
+  // the original arrangement-only trigger (tracked in OPEN-QUESTIONS).
+  it('tracks a mediator with a configured quota, without arrangement or contract type', () => {
+    expect(computeQuarterlyBalance(mkMediator(), [slot], [quota], cfg, 2026, 1)).not.toBeNull();
   });
 
-  it('does not track on contract type alone (aménagement is the trigger, and both stay separate)', () => {
-    const contractOnly = mkMediator({ contractType: 'temps plein' });
-    expect(computeQuarterlyBalance(contractOnly, [slot], [quota], cfg, 2026, 1)).toBeNull();
-    // With BOTH fields set, the arrangement drives tracking — the contract
-    // type is independent information only.
-    const both = mkMediator({ contractType: 'temps plein', arrangement: 'mi-temps thérapeutique' });
-    expect(computeQuarterlyBalance(both, [slot], [quota], cfg, 2026, 1)).not.toBeNull();
+  it('tracks on contract type alone when a quota is configured', () => {
+    const contractOnly = mkMediator({ contractType: 'mi-temps' });
+    expect(computeQuarterlyBalance(contractOnly, [slot], [quota], cfg, 2026, 1)).not.toBeNull();
   });
 
   it('tracks nothing when the quarter has no configured quota', () => {
-    expect(computeQuarterlyBalance(aliceArrangement, [slot], [], cfg, 2026, 1)).toBeNull();
+    const alice = mkMediator({ arrangement: 'temps partiel' });
+    expect(computeQuarterlyBalance(alice, [slot], [], cfg, 2026, 1)).toBeNull();
     expect(
-      computeQuarterlyBalance(aliceArrangement, [slot], [mkQuota({ quarter: 2 })], cfg, 2026, 1)
+      computeQuarterlyBalance(alice, [slot], [mkQuota({ quarter: 2 })], cfg, 2026, 1)
     ).toBeNull();
   });
 
   it('computes a balance for a mediator with arrangement and configured quota', () => {
+    const aliceArrangement = mkMediator({ arrangement: 'temps partiel' });
     expect(computeQuarterlyBalance(aliceArrangement, [slot], [quota], cfg, 2026, 1)).toEqual({
       quota: 120,
       trackedHours: 8,
@@ -418,12 +418,14 @@ describe('computeQuarterlyBalance — who is tracked', () => {
   });
 
   it('ignores another mediator\'s quota and slots', () => {
+    const aliceArrangement = mkMediator({ arrangement: 'temps partiel' });
     const quotas = [mkQuota({ mediatorId: 'med_bob', hours: 50 })];
     const slots = [mkSlot('2026-01-06', '10:00', '18:00', { mediatorId: 'med_bob' })];
     expect(computeQuarterlyBalance(aliceArrangement, slots, quotas, cfg, 2026, 1)).toBeNull();
   });
 
   it('does not count cancelled slots', () => {
+    const aliceArrangement = mkMediator({ arrangement: 'temps partiel' });
     const slots = [
       mkSlot('2026-01-06', '10:00', '18:00'),
       mkSlot('2026-01-07', '10:00', '18:00', { status: 'cancelled' }),
@@ -567,15 +569,18 @@ describe('computeQuarterlyBalance — effectiveFrom', () => {
     expect(result?.trackedHours).toBe(16);
   });
 
-  it('stops tracking entirely once the arrangement is removed', () => {
+  it('keeps tracking a configured quota after the arrangement is removed (decision 2026-10-04)', () => {
     const slots = [
       ...manySlots(50, '2026-01-02'),
       mkSlot('2026-02-20', '10:00', '18:00'), // after removal on 15/02
     ];
     const quotas = [mkQuota({ hours: 120 })];
-    // The mediator state after removal: no arrangement → nothing tracked
+    // The mediator state after removal: no arrangement — but the quota is
+    // still configured, and a configured quota alone drives the tracking.
     const removed = mkMediator();
-    expect(computeQuarterlyBalance(removed, slots, quotas, mkConfig(), 2026, 1)).toBeNull();
+    expect(computeQuarterlyBalance(removed, slots, quotas, mkConfig(), 2026, 1)).not.toBeNull();
+    // Stopping the tracking = removing the quota configuration itself.
+    expect(computeQuarterlyBalance(removed, slots, [], mkConfig(), 2026, 1)).toBeNull();
   });
 });
 

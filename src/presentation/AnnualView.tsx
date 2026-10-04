@@ -529,7 +529,7 @@ export default function AnnualView() {
                               className={`pill ${quota.balance >= 0 ? 'quota-ok' : 'quota-ko'}`}
                               title="Solde trimestriel calculé par computeQuarterlyBalance — quota configurable par trimestre"
                             >
-                              T{quarter} : {quota.balance >= 0 ? 'reliquat' : 'déficit'} {quota.balance >= 0 ? '+' : ''}{quota.balance} h
+                              T{quarter} : {quota.balance >= 0 ? 'reliquat' : 'déficit'} {quota.balance >= 0 ? '+' : ''}{Math.round(quota.balance * 10) / 10} h
                             </span>
                           </span>
                         )}
@@ -603,7 +603,7 @@ export default function AnnualView() {
                           return (
                             <td
                               key={`${m.id}-${key}`}
-                              className={`c ${cell ? STATE_CLASS[cell.state] ?? '' : 'st-neutral'}`}
+                              className={`c ${cell ? STATE_CLASS[cell.state] ?? '' : 'st-neutral'}${key === 'morning' ? ' m-boundary' : ''}`}
                               title={cell?.code ? cell.code : undefined}
                               role="button"
                               tabIndex={0}

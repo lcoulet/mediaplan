@@ -1524,10 +1524,14 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
 .annual-ferie-add { padding: 6px 12px; font-size: 13px; }
 
 /* Grid card */
-.annual-card { background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
-.annual-card .grid-wrap { overflow-x: auto; position: relative; max-height: 70vh; }
-/* Frozen header row: thead stays visible while scrolling the 365 day-rows */
-.agrid thead th { position: sticky; top: 0; }
+.annual-card { background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: visible; }
+/* NOTE: overflow MUST stay visible on .annual-card — overflow:hidden on an
+   ancestor breaks position:sticky on the header row (sticky silently fails). */
+.annual-card .grid-wrap { overflow-x: auto; overflow-y: auto; position: relative; max-height: 70vh; }
+/* Frozen header row: thead stays visible while scrolling the 365 day-rows.
+   z-index is required: day cells are position:relative and would otherwise
+   paint OVER the sticky header. */
+.agrid thead th { position: sticky; top: 0; z-index: 3; }
 .agrid thead tr.thead-row .wkcol { z-index: 5; }
 .agrid { border-collapse: separate; border-spacing: 0; table-layout: fixed; }
 .agrid th, .agrid td { border-bottom: 1px solid var(--color-border-light); }
@@ -1540,7 +1544,11 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
 .wk-btn:hover { background: #d5e8dd; }
 .wk-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
 /* Mediator header */
-.agrid .mh { text-align: left; padding: 6px 6px 6px 8px; vertical-align: top; min-width: 60px; border-bottom: 1px solid var(--color-border); border-left: 1px solid var(--color-border-light); background: #fafafa; font-weight: 400; overflow-wrap: break-word; }
+/* Thicker separator at each mediator boundary (start of the morning cell of
+   each mediator pair) — user request 2026-10-04: "traits plus épais entre
+   chaque personne". */
+.agrid .c.m-boundary { border-left: 2px solid var(--color-border); }
+.agrid .mh { text-align: left; padding: 6px 6px 6px 8px; vertical-align: top; min-width: 60px; border-bottom: 1px solid var(--color-border); border-left: 2px solid var(--color-border); background: #fafafa; font-weight: 400; overflow-wrap: break-word; }
 .agrid .mh .mname { display: block; font-size: 11px; font-weight: 700; white-space: normal; }
 .agrid .mh .mquota { display: block; margin-top: 2px; }
 .agrid .pill { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 700; line-height: 1.6; }

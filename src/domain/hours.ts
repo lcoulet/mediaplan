@@ -303,9 +303,9 @@ export function computeQuarterlyBalance(
   year: number,
   quarter: 1 | 2 | 3 | 4
 ): QuarterlyBalance | null {
-  // The quota applies only to mediators with an arrangement; removing the
-  // arrangement stops the tracking entirely.
-  if (!mediator.arrangement) return null;
+  // Decision 2026-10-04: a CONFIGURED quota alone triggers the tracking —
+  // neither an arrangement nor a contract type is required. No configured
+  // quota for the quarter ⇒ no tracking (returns null below).
   const cfg = configOrDefault(config);
   const quota = quotas.find(
     (q) => q.mediatorId === mediator.id && q.year === year && q.quarter === quarter
