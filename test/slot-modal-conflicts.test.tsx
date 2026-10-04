@@ -1,8 +1,9 @@
 // test/slot-modal-conflicts.test.tsx — Conflict labels in the slot modal's
-// mediator pills: the competence mark must NOT read as validating a conflict
-// (decision 2026-10-04 follow-up). A mediator confirmed on the offer AND
-// unavailable (absence / overlap / off worked period) must show the conflict
-// label clean of the ✅.
+// mediator pills. The mediator-level unavailability state is harmonized on
+// « Absent » for ANY cause (decision 2026-10-04: leave OR non-worked day of
+// the cycle OR outside the worked hours range) — the cause stays in the
+// label's parenthetical. The competence mark must NOT read as validating a
+// conflict.
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { DataProvider } from '../src/presentation/DataContext';
@@ -74,18 +75,18 @@ describe('SlotModal — conflict labels on mediator pills', () => {
     window.history.replaceState({}, '', '/');
   });
 
-  it('labels the off-worked-period conflict WITHOUT the competence ✅ glued to it', () => {
+  it('labels the off-worked-period conflict as « Absent » (cause in parentheses), no ✅', () => {
     // s1 07:30-08:30 is before the worked range 09:00-18:00; m1 is confirmed
-    // on the offer. The pill must show the conflict label; the ✅ must not
-    // sit immediately before « — Indisponible » (reads as validating it).
+    // on the offer. Mediator state harmonized on « Absent » (decision
+    // 2026-10-04) with the cause in the parenthetical — the ✅ must not
+    // sit immediately before the conflict suffix.
     seedStorage({});
     renderModal();
-    const pill = screen.getByText(/Indisponible \(hors période travaillée\)/);
-    // The ✅ must not directly precede the conflict suffix on the same pill
-    expect(pill.textContent).not.toMatch(/✅\s*—\s*Indisponible/);
+    const pill = screen.getByText(/— Absent \(hors période travaillée\)/);
+    expect(pill.textContent).not.toMatch(/✅\s*—\s*Absent/);
   });
 
-  it('labels an absence conflict WITHOUT the ✅ glued to it', () => {
+  it('labels an absence conflict as « Absent » (cause : congés)', () => {
     seedStorage({
       absences: [{
         id: 'a1', mediatorId: 'm1', startDate: '2026-10-06', endDate: '2026-10-06',
@@ -94,6 +95,7 @@ describe('SlotModal — conflict labels on mediator pills', () => {
     });
     renderModal();
     const pill = screen.getByText(/— Absent/);
+    expect(pill.textContent).toMatch(/— Absent/);
     expect(pill.textContent).not.toMatch(/✅\s*—\s*Absent/);
   });
 

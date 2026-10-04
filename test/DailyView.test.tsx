@@ -1016,10 +1016,13 @@ describe('DailyView', () => {
 
   // ---- Worked-period conflict marker (decision 2026-10-04) ---------------
   // A slot assigned outside the mediator's worked period (non-worked day of
-  // the cycle, or hours outside the worked range) shows the « Indisponible »
-  // badge + the conflict outline, like an absence/overlap conflict.
+  // the cycle, or hours outside the worked range) shows the « Absent »
+  // badge + the conflict outline, like an absence/overlap conflict. The
+  // mediator-level state is « Absent » for ANY unavailability cause
+  // (decision 2026-10-04: harmonized on the pre-existing « Absent » label;
+  // the tooltip names the cause).
 
-  it('marks a slot OUTSIDE the worked range with the Indisponible badge', () => {
+  it('marks a slot OUTSIDE the worked range with the Absent badge', () => {
     const withCycle: AppData = {
       ...mockData,
       cycles: [{
@@ -1051,7 +1054,7 @@ describe('DailyView', () => {
     const slotEl = container.querySelector('.daily-slot.assigned')!;
     expect(slotEl).toBeTruthy();
     expect(slotEl.className).toContain('slot-conflict');
-    expect(slotEl.textContent).toContain('Indisponible');
+    expect(slotEl.textContent).toContain('Absent');
   });
 
   it('does NOT mark a slot inside the worked range', () => {
@@ -1084,7 +1087,7 @@ describe('DailyView', () => {
     const slotEl = container.querySelector('.daily-slot.assigned')!;
     expect(slotEl).toBeTruthy();
     expect(slotEl.className).not.toContain('slot-conflict');
-    expect(slotEl.textContent).not.toContain('Indisponible');
+    expect(slotEl.textContent).not.toContain('Absent');
   });
 
   // ---- All conflicts visible on the day-view slot blocks (decision

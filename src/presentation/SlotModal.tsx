@@ -187,14 +187,16 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
       let label = `${m.firstName} ${m.lastName}`;
 
       // Competence mark and conflict label must not be glued together:
-      // « Alice ✅ — Indisponible » reads as if the ✅ validated the
-      // conflict. On conflict, the conflict label comes alone (the
-      // competence rank still drives the sort).
+      // « Alice ✅ — Absent » reads as if the ✅ validated the conflict.
+      // On conflict, the conflict label comes alone (the competence rank
+      // still drives the sort). Mediator-level unavailability is harmonized
+      // on « Absent » for ANY cause (decision 2026-10-04) — the cause
+      // rides in the parenthetical.
       const conflict =
         museumClosed ? `🚫 ${museumClosed}` :
         overlap ? 'Conflit horaire' :
         absent ? 'Absent' :
-        offWorkedPeriod ? 'Indisponible (hors période travaillée)' :
+        offWorkedPeriod ? 'Absent (hors période travaillée)' :
         null;
 
       if (conflict) {

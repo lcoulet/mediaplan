@@ -921,12 +921,15 @@ export default function DailyView() {
                     // Exactly one explicit badge per conflict cause —
                     // every conflict must be readable ON the block, not
                     // just from the outline (decision 2026-10-04 follow-up).
+                    // Mediator-level unavailability state is harmonized on
+                    // « Absent » for ANY cause (leave, non-worked day,
+                    // outside hours) — the tooltip names the cause.
                     const conflictBadge = offWorkedPeriod
-                      ? { label: '🚫 Indisponible', title: 'Hors période travaillée du cycle (jour non travaillé ou hors plage horaire)' }
+                      ? { label: '🚫 Absent', title: 'Jour non travaillé du cycle ou hors plage horaire (hors période travaillée)' }
                       : overlapConflict
                         ? { label: '⚠️ Conflit horaire', title: 'Chevauchement avec un autre créneau du même médiateur' }
                         : absentConflict
-                          ? { label: '🚫 Absent', title: 'Le médiateur est absent sur ce créneau' }
+                          ? { label: '🚫 Absent', title: 'Le médiateur est absent sur ce créneau (congés, mission, maladie…)' }
                           : null;
 
                     // Total block = setup + booking + teardown.
