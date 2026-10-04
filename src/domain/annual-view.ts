@@ -347,8 +347,10 @@ const TYPE_STATE: Record<AbsenceType, string> = {
 
 /** Palette state of a stored entry: catalog code first, type fallback.
  *  « amgt » is matched by prefix: the stored entry carries the arrangement
- *  date (« amgt 21/06 »), still a violet arrangement cell. */
-function stateForEntry(absence: Absence): string {
+ *  date (« amgt 21/06 »), still a violet arrangement cell.
+ *  Exported for the annual view's memoized per-year cell matrix (same
+ *  precedence as deriveAnnualCell, computed once per data change). */
+export function stateForEntry(absence: Absence): string {
   const code = codeForAbsence(absence);
   const catalog = annualCodeCatalog().find(
     (c) => c.code === code || (c.code === 'amgt' && code.startsWith('amgt'))
@@ -398,8 +400,9 @@ export function deriveAnnualCell(
   return null;
 }
 
-/** True when the absence spans exactly the given date (single-day entry). */
-function isSameDayEntry(absence: Absence, date: Date): boolean {
+/** True when the absence spans exactly the given date (single-day entry).
+ *  Exported for the annual view's memoized per-year cell matrix. */
+export function isSameDayEntry(absence: Absence, date: Date): boolean {
   const iso = toIsoDate(date);
   return absence.startDate === iso && absence.endDate === iso;
 }

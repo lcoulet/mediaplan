@@ -144,4 +144,17 @@ describe('AnnualCellMenu (context menu)', () => {
       expect(el.getAttribute('tabindex')).not.toBe('-1');
     }
   });
+
+  // ---- UX fixes 2026-10-04 -------------------------------------------------
+
+  it('UX fix 2: the head has a visible « Fermer le menu » button that closes without committing', () => {
+    const onClose = vi.fn();
+    const onPickCode = vi.fn();
+    renderMenu({ onClose, onPickCode });
+    const closeBtn = screen.getByRole('button', { name: 'Fermer le menu' });
+    expect(closeBtn.textContent).toBe('✕');
+    fireEvent.click(closeBtn);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onPickCode).not.toHaveBeenCalled();
+  });
 });

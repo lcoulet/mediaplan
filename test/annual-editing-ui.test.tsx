@@ -242,6 +242,37 @@ describe('AnnualView cell editing (slice 4)', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
+  it('UX fix 4: exiting paint mode is side-effect free — the next cell click opens the menu, no stale paint', () => {
+    const { container } = renderAnnual();
+    // Enter paint mode with CA
+    fireEvent.click(cellSelector(container, '2026-06-09', 0, 0));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'CA' }));
+    fireEvent.click(cellSelector(container, '2026-06-09', 0, 0));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Peindre ce code/ }));
+    expect(screen.getByRole('status')).toBeTruthy();
+    // Exit via the banner button
+    fireEvent.click(screen.getByTitle(/Quitter le mode peinture/));
+    expect(screen.queryByRole('status')).toBeNull();
+    // The very next click must OPEN THE MENU (paint cleared, nothing sticky)
+    fireEvent.click(cellSelector(container, '2026-06-15', 0, 0));
+    expect(screen.getByRole('menu')).toBeTruthy();
+    // And that cell was NOT painted
+    const cell = cellSelector(container, '2026-06-15', 0, 0);
+    expect(cell.textContent).not.toContain('CA');
+  });
+
+  it('UX fix 4: the banner names the action (« Quitter la peinture ») and the painted code', () => {
+    const { container } = renderAnnual();
+    fireEvent.click(cellSelector(container, '2026-06-09', 0, 0));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'RHS' }));
+    fireEvent.click(cellSelector(container, '2026-06-09', 0, 0));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Peindre ce code/ }));
+    const banner = screen.getByRole('status');
+    expect(banner.textContent).toContain('Peinture');
+    expect(banner.textContent).toContain('RHS');
+    expect(banner.textContent).toContain('Quitter la peinture');
+  });
+
   it('each painted cell is one undoable operation (undo reverts cells one by one)', () => {
     // Full app: the ↶ undo button lives in the Header
     window.history.replaceState({}, '', '/?display=tableau');

@@ -317,6 +317,33 @@ describe('AnnualView (Tableau de fonctionnement)', () => {
     expect(screen.getByText(/télétravail/i)).toBeTruthy();
     expect(screen.getByText(/souhait en attente/i)).toBeTruthy();
   });
+
+  // ---- UX fixes 2026-10-04 ----------------------------------------------
+
+  it('UX fix 5: rich hover tooltip — mediator, date, half-day and legend wording, not the bare code', () => {
+    const { container } = renderAnnual();
+    // Stored absence: tooltip carries the full context + legend + code
+    const caCell = container.querySelector('#annual-row-2026-06-10')!.querySelectorAll('td.c')[0];
+    const title = caCell.getAttribute('title')!;
+    expect(title).toContain('Alice Dupont');
+    expect(title).toContain('2026-06-10');
+    expect(title).toContain('Matin');
+    expect(title).toContain('absence');
+    expect(title).toContain('CA');
+    // Derived presence: explicitly says so (never stored)
+    const presenceCell = container.querySelector('#annual-row-2026-06-09')!.querySelectorAll('td.c')[0];
+    expect(presenceCell.getAttribute('title')).toContain('présence dérivée du cycle');
+    // Neutral cell (Bob, no cycle): says non-worked
+    const neutralCell = container.querySelector('#annual-row-2026-06-13')!.querySelectorAll('td.c')[2];
+    expect(neutralCell.getAttribute('title')).toContain('non travaillé');
+  });
+
+  it('UX fix 3: half-day cells are focusable with a visible focus outline class hook', () => {
+    const { container } = renderAnnual();
+    const cell = container.querySelector('#annual-row-2026-06-10')!.querySelectorAll('td.c')[0];
+    expect(cell.getAttribute('role')).toBe('button');
+    expect(cell.getAttribute('tabindex')).toBe('0');
+  });
 });
 
 describe('Annual view wiring (nav + route)', () => {

@@ -17,19 +17,21 @@
 // Editing (context menu, paint mode) is a separate slice; this view only
 // DISPLAYS the derived state.
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useData } from './DataContext';
 import { toLocalDateString, parseLocalDate } from '../domain/models';
 import {
-  deriveAnnualCell,
   workedSaturdayCounter,
   annualHolidayState,
   annualHolidayPanelList,
   ANNUAL_FERIE_ADDED,
   ANNUAL_FERIE_REMOVED,
+  isSameDayEntry,
+  stateForEntry,
+  codeForAbsence,
   type AnnualHolidayOverrides,
 } from '../domain/annual-view';
-import { cycleWeekForDate, isoWeekKey } from '../domain/cycles';
+import { cycleWeekForDate, isoWeekKey, getWorkedHoursForDate } from '../domain/cycles';
 import {
   addHolidayDerogation,
   removeHolidayDerogation,
@@ -61,10 +63,8 @@ function ferieLabel(iso: string): string {
   return `${day} ${MONTH_SHORT[d.getMonth()]}`;
 }
 
-const HALF_DAYS: { key: 'morning' | 'afternoon'; label: string }[] = [
-  { key: 'morning', label: 'Matin' },
-  { key: 'afternoon', label: 'Après-midi' },
-];
+// Half-day keys of each cell column (labels live in the colgroup header).
+const HALF_DAY_KEYS = ['morning', 'afternoon'] as const;
 
 // Cell palette state -> CSS class (annual-… styles in style.css, palette
 // decided 2026-10-03 — Excel hues accessibility-adjusted)
@@ -79,8 +79,174 @@ const STATE_CLASS: Record<string, string> = {
   workAbsence: 'st-workAbsence',
 };
 
+// Palette state -> French legend text (rich hover tooltip, UX fix 2026-10-04):
+// the full legend wording from the collapsible legend, in the cell's tooltip.
+const STATE_LEGEND: Record<string, string> = {
+  absence: 'absence',
+  mission: 'mission / événement',
+  remote: 'télétravail',
+  arrangement: 'aménagement (exception au cycle)',
+  leaveRequest: 'souhait en attente (demande non confirmée)',
+  jdm: 'mission Jardins du muséum',
+  workAbsence: 'absence liée au travail',
+};
+
 // Suggestions of the free-text legend note (codes decoded from the Excel file)
 const FREE_TEXT_SUGGESTIONS = ['Réf. WE', 'JDM', 'Stop Motion', 'offre anniv', 'Montréal', 'RDV aux Jardins'];
+
+// ---- Memoized half-day cell (UX perf fix 2026-10-04) ----------------------
+// 7300 cells (365 days x 10 mediators x 2) re-reconciled on every commit made
+// paint clicks take ~300ms. The cell now takes ONLY primitive props (all
+// cheap to compare) and NO event closures: click/keyboard are DELEGATED to
+// the table (data-* attributes), so React.memo skips re-rendering every cell
+// except the ones whose state/code/counter actually changed.
+interface AnnualCellProps {
+  mediatorId: string;
+  name: string;
+  iso: string;
+  halfDay: 'morning' | 'afternoon';
+  active: boolean;
+  state: string | undefined;
+  code: string | undefined;
+  counter: number | null;
+  valued: boolean;
+  threshold: number;
+  cyclePill: string | null;
+}
+
+const AnnualCell = React.memo(function AnnualCell({
+  mediatorId, name, iso, halfDay, active, state, code, counter, valued, threshold, cyclePill,
+}: AnnualCellProps) {
+  const cls = `c ${state ? STATE_CLASS[state] ?? '' : 'st-neutral'}${halfDay === 'morning' ? ' m-boundary' : ''}`;
+  const halfLabel = halfDay === 'morning' ? 'Matin' : 'Après-midi';
+  // Rich hover tooltip (UX fix 5): full context + legend wording, not the
+  // bare code — computed from primitives inside the memoized cell.
+  const title = !active ? undefined
+    : state === 'presence' ? `${name} — ${iso} ${halfLabel} — présence dérivée du cycle`
+    : state ? `${name} — ${iso} ${halfLabel}${STATE_LEGEND[state] ? ` — ${STATE_LEGEND[state]}` : ''}${code ? ` (${code})` : ''}`
+    : `${name} — ${iso} ${halfLabel} — jour non travaillé (neutre)`;
+  return (
+    <td
+      className={cls}
+      data-mid={mediatorId}
+      data-iso={iso}
+      data-half={halfDay}
+      title={title}
+      role="button"
+      tabIndex={0}
+      aria-label={`${name} — ${iso} ${halfLabel}${code ? ` — ${code}` : ''}`}
+    >
+      {counter !== null && (
+        <span
+          className={`ct ${valued ? 'valued' : ''} ${counter === 0 ? 'zero' : ''}`}
+          title={`${counter === 0 ? 'Aucun samedi' : ordinal(counter) + ' samedi'} travaillé${valued ? ' — valorisé' : ` — valorisé à partir du ${threshold}ᵉ`}`}
+        >
+          ×{counter}
+        </span>
+      )}
+      {cyclePill && <span className="cycp">{cyclePill}</span>}
+      {code}
+    </td>
+  );
+});
+
+// ---- Memoized day ROW (UX perf fix 2026-10-04, second tier) ---------------
+// Even with memoized cells, React re-created all 7300 cell ELEMENTS on every
+// commit (paint click, menu open) — ~200ms. The view therefore builds a
+// rowsModel (all row content + a signature) and CACHES the rendered <tr>
+// element per day: a row whose signature is unchanged returns the IDENTICAL
+// element reference, and React skips that subtree entirely. A paint click
+// re-renders exactly one row.
+interface RowCell {
+  mid: string;
+  name: string;
+  half: 'morning' | 'afternoon';
+  active: boolean;
+  state: string | undefined;
+  code: string | undefined;
+  counter: number | null;
+  valued: boolean;
+  cyclePill: string | null;
+}
+
+interface RowModel {
+  iso: string;
+  dayIndex: number;
+  label: string;
+  mondayIso: string;
+  rowspan: number;
+  rowState: 'holiday' | 'museumClosed' | null;
+  isFocus: boolean;
+  cells: RowCell[];
+  sig: string;
+}
+
+function AnnualRow({
+  row, focusRef, threshold, gotoDay, gotoWeek,
+}: {
+  row: RowModel;
+  focusRef: React.Ref<HTMLTableRowElement> | undefined;
+  threshold: number;
+  gotoDay: (iso: string) => void;
+  gotoWeek: (mondayIso: string) => void;
+}) {
+  const d = parseLocalDate(row.iso);
+  return (
+    <tr
+      id={`annual-row-${row.iso}`}
+      ref={focusRef}
+      className={[
+        row.rowState === 'holiday' ? 'ferie' : '',
+        row.rowState === 'museumClosed' ? 'closed' : '',
+        row.isFocus ? 'route-focus' : '',
+      ].filter(Boolean).join(' ')}
+    >
+      {row.dayIndex === 0 && (
+        <th className="wkcol" rowSpan={row.rowspan} scope="rowgroup">
+          <button
+            type="button"
+            className="wk-btn"
+            title={`Ouvrir la vue hebdo — ${row.label}`}
+            onClick={() => gotoWeek(row.mondayIso)}
+          >
+            {row.label}
+          </button>
+        </th>
+      )}
+      <th className="date" scope="row">
+        <button type="button" className="day-btn" title={`Ouvrir la vue jour — ${row.iso}`} onClick={() => gotoDay(row.iso)}>
+          {dayLabel(d)}
+        </button>
+        {row.rowState === 'holiday' && <span className="dchip dchip-ferie">Férié</span>}
+        {row.rowState === 'museumClosed' && (
+          <>
+            <span className="dchip dchip-ferie">Férié</span>
+            <span className="dchip dchip-closed">Fermé</span>
+          </>
+        )}
+        {row.isFocus && (
+          <span className="route-chip" title="Ligne ciblée par la date de la route (?date=…) — mise en évidence + défilement">●</span>
+        )}
+      </th>
+      {row.cells.map((c) => (
+        <AnnualCell
+          key={`${c.mid}-${c.half}`}
+          mediatorId={c.mid}
+          name={c.name}
+          iso={row.iso}
+          halfDay={c.half}
+          active={c.active}
+          state={c.state}
+          code={c.code}
+          counter={c.counter}
+          valued={c.valued}
+          threshold={threshold}
+          cyclePill={c.cyclePill}
+        />
+      ))}
+    </tr>
+  );
+}
 
 export default function AnnualView() {
   const { state, dispatch, commit } = useData();
@@ -117,11 +283,15 @@ export default function AnnualView() {
 
   // ---- Column model: active mediators first, inactive revealed by the
   // toggle (never mixed: hidden = not rendered at all, per the decision) ----
-  const activeMediators = data.mediators.filter((m) => m.active);
-  const inactiveMediators = data.mediators.filter((m) => !m.active);
-  const columns: Mediator[] = showInactive
-    ? [...activeMediators, ...inactiveMediators]
-    : activeMediators;
+  // Memoized (UX perf fix 2026-10-04): these lists feed the useMemo deps of
+  // the per-year cell matrices; a fresh array per render invalidated every
+  // memo and rebuilt the whole model on each click.
+  const activeMediators = useMemo(() => data.mediators.filter((m) => m.active), [data.mediators]);
+  const inactiveMediators = useMemo(() => data.mediators.filter((m) => !m.active), [data.mediators]);
+  const columns: Mediator[] = useMemo(
+    () => (showInactive ? [...activeMediators, ...inactiveMediators] : activeMediators),
+    [showInactive, activeMediators, inactiveMediators]
+  );
 
   // Per-mediator lookup of the active cycle (one active cycle per mediator)
   const cycleByMediator = useMemo(() => {
@@ -183,7 +353,168 @@ export default function AnnualView() {
   // Quarter of the displayed moment (quota balance display)
   const quarter = quarterOfDate(currentDate);
 
-  // ---- Férié panel operations (immutable ops + one undoable commit) ----
+  // ---- Precomputed per-year cell matrices (UX perf fix 2026-10-04) -------
+  // deriveAnnualCell loops over ALL absences for every cell; at 365 days x
+  // N mediators x 2 half-days this is O(days*mediators*absences) on EVERY
+  // render and made paint-mode clicks and menu picks visibly slow. The grid
+  // is a pure function of {mediators, cycles, absences, days, overrides},
+  // so each matrix below is computed ONCE per data change instead of being
+  // recomputed in the render body for all ~700 cells.
+  //
+  // absencesByMediator was replaced by overlayByMediator (per-date index).
+
+  // workedByMediator: per ISO date, which half-days the mediator's cycle
+  // works — the derived presence, computed once instead of per cell.
+  const workedByMediator = useMemo(() => {
+    const map = new Map<string, Map<string, { morning: boolean; afternoon: boolean }>>();
+    for (const m of columns) {
+      const cycle = cycleByMediator.get(m.id);
+      const perDay = new Map<string, { morning: boolean; afternoon: boolean }>();
+      if (cycle) {
+        for (const d of days) {
+          const iso = toLocalDateString(d);
+          const worked = getWorkedHoursForDate(cycle, d).worked;
+          perDay.set(iso, { morning: worked, afternoon: worked });
+        }
+      }
+      map.set(m.id, perDay);
+    }
+    return map;
+  }, [columns, cycleByMediator, days]);
+
+  // overlayByMediator: per mediator, per ISO date, the absences covering that
+  // date (in original order, with their half-day coverage) — ONE pass over
+  // the absences' day ranges. Replaces the O(days x absences) per-cell scan:
+  // a paint click rebuilds this in O(total covered days) instead of
+  // formatting a date string 292k times.
+  const overlayByMediator = useMemo(() => {
+    const map = new Map<string, Map<string, { absence: import('../domain/types').Absence; coverage: 'morning' | 'afternoon' | 'none' }[]>>();
+    for (const absence of data.absences) {
+      let perDate = map.get(absence.mediatorId);
+      if (!perDate) {
+        perDate = new Map();
+        map.set(absence.mediatorId, perDate);
+      }
+      const coverage = absence.halfDay === 'morning' || absence.halfDay === 'afternoon' ? absence.halfDay : 'none';
+      const cursor = parseLocalDate(absence.startDate);
+      const end = parseLocalDate(absence.endDate);
+      while (cursor <= end) {
+        const iso = toLocalDateString(cursor);
+        const entries = perDate.get(iso);
+        if (entries) entries.push({ absence, coverage });
+        else perDate.set(iso, [{ absence, coverage }]);
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+    return map;
+  }, [data.absences]);
+
+  // cellModel: the derivation RESULT of every rendered half-day cell of the
+  // displayed year — overlay entry (stored absence) or derived presence.
+  // Built once per data change with the SAME overlay precedence as
+  // deriveAnnualCell (same-day entry > covering range > derived presence),
+  // just computed once for the whole grid instead of per rendered cell.
+  const cellModel = useMemo(() => {
+    const map = new Map<string, { state: string; code?: string }>();
+    for (const m of columns) {
+      const perDate = overlayByMediator.get(m.id);
+      const worked = workedByMediator.get(m.id)!;
+      for (const d of days) {
+        const iso = toLocalDateString(d);
+        // Overlay: a stored absence covering this mediator + date + half-day
+        // wins. Same-day entries (cell-editing scope) take precedence over a
+        // covering multi-day range, which is kept as fallback (last match).
+        let range: import('../domain/types').Absence | null = null;
+        let morningDone = false;
+        let afternoonDone = false;
+        const entries = perDate?.get(iso);
+        if (entries) {
+          for (const { absence, coverage } of entries) {
+            if (coverage === 'none' || coverage === 'morning') {
+              if (isSameDayEntry(absence, d)) {
+                map.set(`${m.id}|${iso}|morning`, { state: stateForEntry(absence), code: codeForAbsence(absence) });
+                morningDone = true;
+              } else {
+                range = absence;
+              }
+            }
+            if (coverage === 'none' || coverage === 'afternoon') {
+              if (isSameDayEntry(absence, d)) {
+                map.set(`${m.id}|${iso}|afternoon`, { state: stateForEntry(absence), code: codeForAbsence(absence) });
+                afternoonDone = true;
+              } else {
+                range = absence;
+              }
+            }
+          }
+        }
+        const dayWorked = worked.get(iso);
+        const halves: { half: 'morning' | 'afternoon'; done: boolean }[] = [
+          { half: 'morning', done: morningDone },
+          { half: 'afternoon', done: afternoonDone },
+        ];
+        for (const { half, done } of halves) {
+          if (done) continue;
+          const key = `${m.id}|${iso}|${half}`;
+          if (range) {
+            map.set(key, { state: stateForEntry(range), code: codeForAbsence(range) });
+          } else if (dayWorked?.[half]) {
+            map.set(key, { state: 'presence' });
+          }
+        }
+      }
+    }
+    return map;
+  }, [columns, overlayByMediator, workedByMediator, days]);
+
+  // saturdayCounters: worked-Saturday counter per mediator per Saturday of
+  // the year — workedSaturdayCounter re-scans ALL slots for each rendered
+  // Saturday cell; computed once here instead.
+  const saturdayCounters = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const m of columns) {
+      if (!m.active) continue;
+      for (const d of days) {
+        if (d.getDay() !== 6) continue;
+        const iso = toLocalDateString(d);
+        const n = workedSaturdayCounter(m.id, data.slots, d);
+        if (n !== null) map.set(`${m.id}|${iso}`, n);
+      }
+    }
+    return map;
+  }, [columns, data.slots, days]);
+
+  // cycleWeekNameByMediator: the cycle pill (S1, S2…) shown on Monday
+  // morning cells — cycleWeekForDate recomputes the ISO-week rotation for
+  // every rendered cell; memoized per mediator x ISO week.
+  const cycleWeekNameByMediator = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of columns) {
+      const cycle = cycleByMediator.get(m.id);
+      if (!cycle) continue;
+      const seenWeeks = new Set<string>();
+      for (const d of days) {
+        const monday = new Date(d);
+        monday.setDate(monday.getDate() - ((d.getDay() + 6) % 7));
+        const mondayIso = toLocalDateString(monday);
+        if (seenWeeks.has(mondayIso)) continue;
+        seenWeeks.add(mondayIso);
+        const name = cycleWeekForDate(cycle, d)?.name;
+        if (name) map.set(`${m.id}|${mondayIso}`, name);
+      }
+    }
+    return map;
+  }, [columns, cycleByMediator, days]);
+
+  // Cycle pill lookup: name of the week the date belongs to (same ISO week
+  // as the Monday-anchored cache key).
+  const cyclePillFor = (m: Mediator, d: Date): string | null => {
+    const monday = new Date(d);
+    monday.setDate(monday.getDate() - ((d.getDay() + 6) % 7));
+    return cycleWeekNameByMediator.get(`${m.id}|${toLocalDateString(monday)}`) ?? null;
+  };
+
+  // Férié panel operations (immutable ops + one undoable commit) ----
   const commitOverrides = (next: AnnualHolidayOverrides) => {
     const nextData = { ...data, annualHolidayOverrides: next };
     dispatch({ type: 'SET_DATA', data: nextData });
@@ -266,18 +597,108 @@ export default function AnnualView() {
     });
   };
 
+  // Per-mediator display name (stable string props for the memoized cells).
+  const nameByMediator = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of columns) map.set(m.id, `${m.firstName} ${m.lastName}`);
+    return map;
+  }, [columns]);
+
+  // ---- rowsModel + element cache (UX perf fix 2026-10-04, second tier) ----
+  // The full tbody content as data + a per-row signature. The render builds
+  // <tr> elements from this model and caches them by signature: when only
+  // paint/menu state changed, all but the touched rows keep the IDENTICAL
+  // element reference and React skips them (bypasses re-creating 7300 cells).
+  const rowsModel = useMemo(() => {
+    const threshold = valorisation.valuedSaturdayThreshold;
+    const rows: RowModel[] = [];
+    for (const group of weekGroups) {
+      group.days.forEach((d, dayIndex) => {
+        const iso = toLocalDateString(d);
+        const isSaturday = d.getDay() === 6;
+        const isMonday = d.getDay() === 1;
+        const rowState = dayState.get(iso) ?? null;
+        const cells: RowCell[] = [];
+        // Signature of the row's full DISPLAYED content — names, states,
+        // codes, counters AND the valued threshold all participate, so a
+        // cached <tr> can never show stale content after a rename or a
+        // valorisation config change.
+        const sigParts: string[] = [
+          rowState ?? '-',
+          dayIndex === 0 ? group.label : '',
+          iso === focusIso ? 'F' : '',
+          `thr:${threshold}`,
+        ];
+        for (const m of columns) {
+          const pill = isMonday ? cyclePillFor(m, d) : null;
+          const counter = isSaturday && m.active
+            ? saturdayCounters.get(`${m.id}|${iso}`) ?? null
+            : null;
+          const valued = counter !== null && counter >= threshold;
+          const name = nameByMediator.get(m.id) ?? '';
+          for (const half of HALF_DAY_KEYS) {
+            const cell = m.active ? cellModel.get(`${m.id}|${iso}|${half}`) : undefined;
+            cells.push({
+              mid: m.id,
+              name,
+              half,
+              active: m.active,
+              state: cell?.state,
+              code: cell?.code,
+              counter: half === 'morning' ? counter : null,
+              valued,
+              cyclePill: half === 'morning' ? pill : null,
+            });
+            sigParts.push(`${m.id}:${name}:${m.active}:${cell?.state ?? '-'}:${cell?.code ?? ''}:${counter ?? ''}:${valued ? 'v' : ''}:${pill ?? ''}`);
+          }
+        }
+        rows.push({
+          iso,
+          dayIndex,
+          label: group.label,
+          mondayIso: group.mondayIso,
+          rowspan: group.days.length,
+          rowState,
+          isFocus: iso === focusIso,
+          cells,
+          sig: sigParts.join('|'),
+        });
+      });
+    }
+    return rows;
+  }, [weekGroups, dayState, columns, cellModel, saturdayCounters, cyclePillFor, nameByMediator, focusIso, valorisation]);
+
+  // Element cache: iso -> { sig, element }. Rebuilding the element list is
+  // skipped per row when the signature (all displayed content) is unchanged.
+  const rowCacheRef = useRef(new Map<string, { sig: string; element: React.ReactElement }>());
+  // Keyed by year: switching years drops the cache (different days, and the
+  // memory of 365 cached rows should not accumulate across years).
+  const rowCacheYearRef = useRef(year);
+  if (rowCacheYearRef.current !== year) {
+    rowCacheYearRef.current = year;
+    rowCacheRef.current = new Map();
+  }
+
+  // Exit paint mode (UX fix 2026-10-04): one explicit user intent, one
+  // behavior — stop painting WITHOUT any side effect (no menu opens on the
+  // click that exits). Escape and click-outside reuse this.
+  const exitPaint = () => setPaintValue(null);
+
+  // The paint banner's « ✕ Quitter » button exits paint mode only; clicking
+  // a cell while painting paints (cellClick), never re-opens the menu.
+
   // Escape: closes the menu, then exits paint mode (feature scenarios).
   // A mousedown outside the grid card does the same.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       if (menuTarget) return; // the menu's own handler closes it (stopPropagation)
-      if (paintValue) setPaintValue(null);
+      if (paintValue) exitPaint();
     };
     const onDown = (e: MouseEvent) => {
       if (gridRef.current && !gridRef.current.contains(e.target as Node)) {
         setMenuTarget(null);
-        setPaintValue(null);
+        if (paintValue) exitPaint();
       }
     };
     document.addEventListener('keydown', onKey);
@@ -378,19 +799,22 @@ export default function AnnualView() {
       </p>
 
       {/* Paint-mode banner (decision 2026-10-03): the duplicated value +
-          exit affordances (Esc, click outside the grid, ✕ Quitter). */}
+          exit affordances (Esc, click outside the grid, ✕ Quitter).
+          UX fix 2026-10-04: an explicit « Quitter la peinture » button next
+          to the code — the exit is a first-class action, not only a small
+          ✕; both exit paint without any side effect. */}
       {paintValue && (
         <div className="annual-paint-banner" role="status">
           <span aria-hidden="true">🖌</span>
-          <span>Peinture : <strong>{paintValue}</strong> — cliquez les cellules à remplir, Échap pour quitter.</span>
+          <span>Peinture : <strong>{paintValue}</strong> — cliquez les cellules à remplir.</span>
           <span className="bp-spacer"></span>
           <button
             className="btn-exit-paint"
             type="button"
             title="Quitter le mode peinture (Échap ou clic hors de la grille)"
-            onClick={() => setPaintValue(null)}
+            onClick={exitPaint}
           >
-            ✕ Quitter
+            ✕ Quitter la peinture
           </button>
         </div>
       )}
@@ -538,103 +962,59 @@ export default function AnnualView() {
                   })}
                 </tr>
               </thead>
-              <tbody>
-                {weekGroups.map((group) =>
-                  group.days.map((d, dayIndex) => {
-                  const iso = toLocalDateString(d);
-                  const rowState = dayState.get(iso) ?? null;
-                  const isFocus = iso === focusIso;
-                  const isSaturday = d.getDay() === 6;
-                  const isMonday = d.getDay() === 1;
-                  return (
-                    <tr
-                      key={iso}
-                      id={`annual-row-${iso}`}
-                      ref={isFocus ? focusRef : undefined}
-                      className={[
-                        rowState === 'holiday' ? 'ferie' : '',
-                        rowState === 'museumClosed' ? 'closed' : '',
-                        isFocus ? 'route-focus' : '',
-                      ].filter(Boolean).join(' ')}
-                    >
-                      {dayIndex === 0 && (
-                        <th className="wkcol" rowSpan={group.days.length} scope="rowgroup">
-                          <button
-                            type="button"
-                            className="wk-btn"
-                            title={`Ouvrir la vue hebdo — ${group.label}`}
-                            onClick={() => gotoWeek(group.mondayIso)}
-                          >
-                            {group.label}
-                          </button>
-                        </th>
-                      )}
-                      <th className="date" scope="row">
-                        <button type="button" className="day-btn" title={`Ouvrir la vue jour — ${iso}`} onClick={() => gotoDay(iso)}>
-                          {dayLabel(d)}
-                        </button>
-                        {rowState === 'holiday' && <span className="dchip dchip-ferie">Férié</span>}
-                        {rowState === 'museumClosed' && (
-                          <>
-                            <span className="dchip dchip-ferie">Férié</span>
-                            <span className="dchip dchip-closed">Fermé</span>
-                          </>
-                        )}
-                        {isFocus && (
-                          <span className="route-chip" title="Ligne ciblée par la date de la route (?date=…) — mise en évidence + défilement">●</span>
-                        )}
-                      </th>
-                      {columns.map((m) => {
-                        const cycle = cycleByMediator.get(m.id);
-                        return HALF_DAYS.map(({ key }, i) => {
-                          const cell = m.active
-                            ? deriveAnnualCell(m.id, d, key, {
-                                cycle,
-                                absences: data.absences,
-                              })
-                            : null;
-                          const isMondayCell = isMonday && i === 0;
-                          const cyclePill =
-                            isMondayCell && cycle ? cycleWeekForDate(cycle, d)?.name : null;
-                          const counter = isSaturday && m.active && key === 'morning'
-                            ? workedSaturdayCounter(m.id, data.slots, d)
-                            : null;
-                          const valued = counter !== null && counter >= valorisation.valuedSaturdayThreshold;
-                          return (
-                            <td
-                              key={`${m.id}-${key}`}
-                              className={`c ${cell ? STATE_CLASS[cell.state] ?? '' : 'st-neutral'}${key === 'morning' ? ' m-boundary' : ''}`}
-                              title={cell?.code ? cell.code : undefined}
-                              role="button"
-                              tabIndex={0}
-                              aria-label={`${m.firstName} ${m.lastName} — ${iso} ${key === 'morning' ? 'Matin' : 'Après-midi'}${cell?.code ? ` — ${cell.code}` : ''}`}
-                              onClick={(e) => cellClick(m, iso, key, { x: e.clientX, y: e.clientY })}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  e.preventDefault();
-                                  const r = e.currentTarget.getBoundingClientRect();
-                                  cellClick(m, iso, key, { x: r.left + r.width / 2, y: r.top });
-                                }
-                              }}
-                            >
-                              {counter !== null && (
-                                <span
-                                  className={`ct ${valued ? 'valued' : ''} ${counter === 0 ? 'zero' : ''}`}
-                                  title={`${counter === 0 ? 'Aucun samedi' : ordinal(counter) + ' samedi'} travaillé${valued ? ' — valorisé' : ` — valorisé à partir du ${valorisation.valuedSaturdayThreshold}ᵉ`}`}
-                                >
-                                  ×{counter}
-                                </span>
-                              )}
-                              {cyclePill && <span className="cycp">{cyclePill}</span>}
-                              {cell?.code}
-                            </td>
-                          );
-                        });
-                      })}
-                    </tr>
+              <tbody
+                // Event delegation for all 7300 cells (UX perf fix
+                // 2026-10-04): one React handler on the tbody instead of 4
+                // closures per cell — combined with memoized cells taking
+                // only primitive props, a paint click re-renders just the
+                // changed cell, not the whole grid.
+                onClick={(e) => {
+                  const td = (e.target as HTMLElement).closest('td.c');
+                  if (!td) return;
+                  const mid = td.getAttribute('data-mid');
+                  const iso = td.getAttribute('data-iso');
+                  const half = td.getAttribute('data-half');
+                  if (!mid || !iso || !half) return;
+                  const m = data.mediators.find((x) => x.id === mid);
+                  if (!m) return;
+                  cellClick(m, iso, half as 'morning' | 'afternoon', { x: e.clientX, y: e.clientY });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter' && e.key !== ' ') return;
+                  const td = (e.target as HTMLElement).closest('td.c');
+                  if (!td) return;
+                  const mid = td.getAttribute('data-mid');
+                  const iso = td.getAttribute('data-iso');
+                  const half = td.getAttribute('data-half');
+                  if (!mid || !iso || !half) return;
+                  const m = data.mediators.find((x) => x.id === mid);
+                  if (!m) return;
+                  e.preventDefault();
+                  const r = (td as HTMLTableCellElement).getBoundingClientRect();
+                  cellClick(m, iso, half as 'morning' | 'afternoon', { x: r.left + r.width / 2, y: r.top });
+                }}
+              >
+                {rowsModel.map((row) => {
+                  // Cached <tr> per row: identical element reference when the
+                  // row's signature is unchanged → React skips the subtree.
+                  const cache = rowCacheRef.current;
+                  const hit = cache.get(row.iso);
+                  if (hit && hit.sig === row.sig) {
+                    return hit.element;
+                  }
+                  const element = (
+                    <AnnualRow
+                      key={row.iso}
+                      row={row}
+                      focusRef={row.isFocus ? focusRef : undefined}
+                      threshold={valorisation.valuedSaturdayThreshold}
+                      gotoDay={gotoDay}
+                      gotoWeek={gotoWeek}
+                    />
                   );
-                  })
-                )}
+                  cache.set(row.iso, { sig: row.sig, element });
+                  return element;
+                })}
               </tbody>
             </table>
           </div>

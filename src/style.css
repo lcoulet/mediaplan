@@ -1589,6 +1589,13 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
 .agrid .c.st-workAbsence { background: #c0392b; color: #fff; }   /* grève, syndicat, formation */
 .agrid .c.st-neutral { background: #fff; }                       /* neutral: no cycle / non-worked */
 .agrid tr.closed .c.st-neutral { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #8a8a8a 5px 7px); } /* museum-closed hatch */
+/* UX fix 2026-10-04: hover highlight of a half-day cell — the cell under the
+   cursor gets a dark outline so the 30px cell is visually located in the
+   365-row grid (the sticky date/week columns stay readable). The outline is
+   drawn INSET so it never changes the table layout. */
+.agrid td.c { cursor: pointer; }
+.agrid td.c:hover { outline: 2px solid #2b2b2b; outline-offset: -2px; z-index: 1; }
+.agrid td.c:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; z-index: 1; }
 /* Cycle week pill — once per ISO week, in the Monday row area */
 .cycp { display: inline-block; padding: 0 4px; border-radius: 8px; background: #fff; color: #2b2b2b; border: 1px solid var(--color-border); font-size: 9px; font-weight: 700; line-height: 1.5; }
 /* Worked-Saturday counter — computed (Saturdays with slots) */
@@ -1609,7 +1616,17 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
   border-radius: var(--radius); box-shadow: var(--shadow-md); overflow: hidden;
   font-size: 13px;
 }
-.acm-head { padding: 7px 12px; font-size: 12px; font-weight: 700; border-bottom: 1px solid var(--color-border-light); background: #fafafa; }
+.acm-head { display: flex; align-items: center; gap: 6px; padding: 7px 12px; font-size: 12px; font-weight: 700; border-bottom: 1px solid var(--color-border-light); background: #fafafa; }
+.acm-head-text { flex: 1; min-width: 0; }
+/* UX fix 2026-10-04: visible close button of the cell menu. #6b6b6b/#fafafa = 4.78. */
+.acm-close {
+  flex-shrink: 0; width: 22px; height: 22px; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid var(--color-border); border-radius: 50%;
+  color: var(--color-text-muted); font-size: 12px; cursor: pointer; font-family: inherit;
+}
+.acm-close:hover { background: #f0f0f0; color: var(--color-text); }
+.acm-close:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
 /* Non-blocking museum-closed alert (25/12, 01/01, 01/05) — amber, editing
    stays possible (decision 2026-10-03). #fef5e7/#8a4d10 = 6.17. */
 .acm-closed-alert { display: flex; align-items: flex-start; gap: 6px; margin: 8px 10px 0; padding: 8px 12px; background: var(--color-warning-bg); border: 1px solid var(--color-warning); border-left: 4px solid var(--color-warning); color: #8a4d10; border-radius: var(--radius); font-size: 12px; }
@@ -1651,5 +1668,9 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
 .btn-exit-paint { background: transparent; border: 1px solid #3a2408; color: #3a2408; padding: 3px 12px; border-radius: var(--radius); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .btn-exit-paint:hover { background: rgba(58,36,8,0.12); }
 .btn-exit-paint:focus-visible { outline: 2px solid #3a2408; outline-offset: 1px; }
-/* Paint cursor on the cells while painting */
-.annual-card.painting .agrid td.c { cursor: crosshair; }
+/* Paint cursor on the cell under the pointer while painting.
+   UX perf fix 2026-10-04: scoped to :hover — toggling .painting no longer
+   recomputes the cursor style of every cell of the grid (a ~50ms style
+   recalc on enter/exit with 14,600 cells); only the hovered cell computes
+   its cursor. */
+.annual-card.painting .agrid td.c:hover { cursor: crosshair; }

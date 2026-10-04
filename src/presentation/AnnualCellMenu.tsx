@@ -119,7 +119,21 @@ export default function AnnualCellMenu({
       }}
     >
       <div className="acm-head">
-        {target.mediatorName} — {headDateLabel(target.date)} · {halfLabel}
+        <span className="acm-head-text">
+          {target.mediatorName} — {headDateLabel(target.date)} · {halfLabel}
+        </span>
+        {/* UX fix 2026-10-04: an explicit visible close button — the menu
+            had no affordance to dismiss it (only Escape / click-outside,
+            both undiscoverable). */}
+        <button
+          type="button"
+          className="acm-close"
+          aria-label="Fermer le menu"
+          title="Fermer le menu (Échap)"
+          onClick={onClose}
+        >
+          ✕
+        </button>
       </div>
       {closed && (
         <div role="alert" className="acm-closed-alert">
