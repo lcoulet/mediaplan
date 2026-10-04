@@ -246,7 +246,8 @@ export default function AnnualView() {
   };
 
   // Cell click: paint mode duplicates the value; otherwise open the menu
-  // positioned by the click inside the grid card.
+  // near the click, clamped so the 260px-wide, ~330px-tall menu stays
+  // inside the viewport (fixed positioning, above the sticky grid).
   const cellClick = (m: Mediator, iso: string, halfDay: 'morning' | 'afternoon', e: React.MouseEvent) => {
     if (paintValue) {
       const entry = annualMenuChoice(paintValue);
@@ -254,10 +255,10 @@ export default function AnnualView() {
       return;
     }
     setMenuTarget({ mediatorId: m.id, mediatorName: `${m.firstName} ${m.lastName}`, date: iso, halfDay });
-    const card = gridRef.current?.getBoundingClientRect();
-    if (card) {
-      setMenuPos({ top: e.clientY - card.top, left: Math.min(e.clientX - card.left, card.width - 270) });
-    }
+    setMenuPos({
+      top: Math.min(e.clientY, window.innerHeight - 340),
+      left: Math.min(e.clientX, window.innerWidth - 270),
+    });
   };
 
   // Escape: closes the menu, then exits paint mode (feature scenarios).
@@ -596,18 +597,22 @@ export default function AnnualView() {
               </tbody>
             </table>
           </div>
-          {/* Context menu of the clicked half-day cell — anchored to the
-              grid card, above the sticky columns, below modals. */}
-          {menuTarget && (
-            <div style={{ position: 'absolute', top: menuPos?.top ?? 0, left: menuPos?.left ?? 0, pointerEvents: 'auto' }}>
+          {/* Context menu of the clicked half-day cell — fixed at the click
+              position (clamped to the viewport), above the sticky grid
+              columns, below modals. */}
+          {menuTarget && menuPos && (
+            <div
+              style={{ position: 'fixed', top: Math.max(8, menuPos.top), left: Math.max(8, menuPos.left), zIndex: 150 }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
               <AnnualCellMenu
                 target={menuTarget}
                 paintCode={lastPickedCode}
                 onPickCode={pickCode}
                 onPickFreeText={pickFreeText}
                 onClear={clearCell}
-                onClose={() => setMenuTarget(null)}
                 onPaint={(code) => setPaintValue(code)}
+                onClose={() => setMenuTarget(null)}
               />
             </div>
           )}

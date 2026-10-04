@@ -1592,11 +1592,11 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
    Styles mirror the mockup public/mockups/annual-view/annual-editing.html;
    palette contrast values documented in docs/OPEN-QUESTIONS.md (2026-10-03). */
 
-/* Context menu — absolutely positioned inside .annual-card (the click
-   anchor); z-index above the grid's sticky columns (4-5) but below
-   modals (200). */
+/* Context menu — anchored by a fixed-position wrapper set by the view
+   (click coordinates clamped to the viewport); z-index above the grid's
+   sticky columns (4-5) but below modals (200). */
 .acm {
-  position: absolute; z-index: 150; width: 260px; max-width: calc(100% - 8px);
+  position: absolute; top: 0; left: 0; z-index: 150; width: 260px; max-width: calc(100vw - 16px);
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--radius); box-shadow: var(--shadow-md); overflow: hidden;
   font-size: 13px;
