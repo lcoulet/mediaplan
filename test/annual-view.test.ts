@@ -10,6 +10,8 @@ import {
   codeForAbsence,
   halfDayOfAbsence,
   workedSaturdayCounter,
+  annualWeekLabel,
+  annualWeekLabelsForYear,
 } from '../src/domain/annual-view';
 
 const d = parseLocalDate;
@@ -218,3 +220,61 @@ describe('workedSaturdayCounter', () => {
     expect(workedSaturdayCounter('med_alice', slots, d('2026-01-10'))).toBe(1);
   });
 });
+
+// ---- Week labels ---------------------------------------------------------
+
+describe('annualWeekLabel', () => {
+  it('labels a Monday row with its ISO week number', () => {
+    expect(annualWeekLabel(d('2026-09-07'))).toBe('S 37');
+    expect(annualWeekLabel(d('2026-09-14'))).toBe('S 38');
+  });
+
+  it('returns null on any other weekday — the label spans the week in its own column', () => {
+    expect(annualWeekLabel(d('2026-09-08'))).toBeNull();
+    expect(annualWeekLabel(d('2026-09-13'))).toBeNull(); // Sunday
+  });
+
+  it('follows the ISO week-year, not the calendar year (Mon 2025-12-29 is S 1 of 2026)', () => {
+    expect(annualWeekLabel(d('2025-12-29'))).toBe('S 1');
+    expect(annualWeekLabel(d('2026-12-28'))).toBe('S 53'); // 2026 has 53 ISO weeks
+  });
+});
+
+describe('annualWeekLabelsForYear', () => {
+  it('derives the week labels of a year from its day rows: one per ISO week, Monday-anchored', () => {
+    const rows = yearDays(2026);
+    const labels = annualWeekLabelsForYear(2026);
+    // 2026: 53 ISO weeks; the grid shows the calendar year
+    expect(labels.length).toBe(53);
+    expect(labels[0]).toEqual({ weekKey: '2026-W01', label: 'S 1', monday: '2025-12-29' });
+    expect(labels[36]).toEqual({ weekKey: '2026-W37', label: 'S 37', monday: '2026-09-07' });
+    expect(labels[52]).toEqual({ weekKey: '2026-W53', label: 'S 53', monday: '2026-12-28' });
+    // every label lands on a Monday of the grid rows
+    for (const l of labels) {
+      const dow = new Date(`${l.monday}T00:00:00`).getDay();
+      expect(dow).toBe(1);
+    }
+    expect(rows.length).toBe(365);
+  });
+
+  it('follows the ISO week-year at year boundaries (2027: partial S 53 then S 1..S 52)', () => {
+    const labels = annualWeekLabelsForYear(2027);
+    // Jan 1-3 2027 belong to ISO week 2026-W53 — the mockup labels the
+    // 2027-01-01 row « S 53 (2026) » — then the year runs S 1..S 52.
+    expect(labels.length).toBe(53);
+    expect(labels[0]).toEqual({ weekKey: '2026-W53', label: 'S 53', monday: '2026-12-28' });
+    expect(labels[1]).toEqual({ weekKey: '2027-W01', label: 'S 1', monday: '2027-01-04' });
+    expect(labels[52]).toEqual({ weekKey: '2027-W52', label: 'S 52', monday: '2027-12-27' });
+  });
+});
+
+/** All calendar days of a year as ISO dates (Jan 1 to Dec 31). */
+function yearDays(year: number): string[] {
+  const days: string[] = [];
+  const cursor = new Date(year, 0, 1);
+  while (cursor.getFullYear() === year) {
+    days.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`);
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return days;
+}

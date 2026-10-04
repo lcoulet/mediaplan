@@ -5,6 +5,7 @@
 // Palette: Excel hues accessibility-adjusted (decision 2026-10-03, contrasts
 // computed in contrast_palette_mix.py — see docs/OPEN-QUESTIONS.md).
 import type { Absence, AbsenceType, Slot } from './types';
+import { isoWeekKey } from './cycles';
 
 // ---- Cell palette --------------------------------------------------------
 
@@ -172,4 +173,58 @@ function toIsoDate(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+// ---- Week labels ----------------------------------------------------------
+
+/** One ISO week label of the annual grid's own « Semaine » column. */
+export interface AnnualWeekLabel {
+  /** ISO week key, e.g. '2026-W37'. */
+  weekKey: string;
+  /** Displayed label, e.g. 'S 37'. */
+  label: string;
+  /** ISO date of the week's Monday (the anchor row spanning the 7 days). */
+  monday: string;
+}
+
+/**
+ * Week label of a day row: 'S 37' on Mondays (the label spans its whole ISO
+ * week in its own leftmost column — decision 2026-10-04), null on any other
+ * weekday. Follows the ISO week-year: Mon 2025-12-29 is 'S 1' (of 2026).
+ */
+export function annualWeekLabel(date: Date): string | null {
+  if (date.getDay() !== 1) return null; // Monday rows only
+  const key = isoWeekKey(date); // '2026-W37'
+  return `S ${Number(key.split('-W')[1])}`;
+}
+
+/**
+ * All ISO week labels of a grid year: the ISO weeks touched by the year's
+ * days (Jan 1 to Dec 31), Monday-anchored and in chronological order. A year
+ * whose Jan 1 falls mid-week starts at that partial week's Monday (possibly
+ * in the previous December); 2026 has 53 ISO weeks, 2027 has 52.
+ */
+export function annualWeekLabelsForYear(year: number): AnnualWeekLabel[] {
+  const labels: AnnualWeekLabel[] = [];
+  const seen = new Set<string>();
+  // One label per ISO week TOUCHED by the year's calendar days: Jan 1
+  // belongs to 2026-W01 (so 2026 spans S 1..S 53, its Monday falling in Dec
+  // 2025), while Jan 1 2027 belongs to 2026-W53 (so 2027 starts at S 1 on
+  // Mon 2027-01-04). Mondays are the anchor row spanning the 7 days.
+  const cursor = new Date(year, 0, 1);
+  while (cursor.getFullYear() === year) {
+    const weekKey = isoWeekKey(cursor);
+    if (!seen.has(weekKey)) {
+      seen.add(weekKey);
+      const monday = new Date(cursor);
+      monday.setDate(monday.getDate() - ((cursor.getDay() + 6) % 7));
+      labels.push({
+        weekKey,
+        label: `S ${Number(weekKey.split('-W')[1])}`,
+        monday: toIsoDate(monday),
+      });
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return labels;
 }
