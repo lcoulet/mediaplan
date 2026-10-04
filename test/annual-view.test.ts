@@ -12,6 +12,7 @@ import {
   workedSaturdayCounter,
   annualWeekLabel,
   annualWeekLabelsForYear,
+  annualHolidayState,
 } from '../src/domain/annual-view';
 
 const d = parseLocalDate;
@@ -278,3 +279,42 @@ function yearDays(year: number): string[] {
   }
   return days;
 }
+
+// ---- Holiday overrides -----------------------------------------------------
+
+describe('annualHolidayState', () => {
+  it('marks the auto-computed French holidays of the year by default', () => {
+    expect(annualHolidayState(d('2026-07-14'))).toBe('holiday');
+    expect(annualHolidayState(d('2026-08-15'))).toBe('holiday');
+    expect(annualHolidayState(d('2026-07-13'))).toBeNull();
+  });
+
+  it('marks museum-closed days (25/12, 01/01, 01/05) with precedence over holiday', () => {
+    expect(annualHolidayState(d('2026-01-01'))).toBe('museumClosed');
+    expect(annualHolidayState(d('2026-05-01'))).toBe('museumClosed');
+    expect(annualHolidayState(d('2026-12-25'))).toBe('museumClosed');
+    expect(annualHolidayState(d('2027-01-01'))).toBe('museumClosed');
+  });
+
+  it('applies an ADD dérogation without touching the default markings', () => {
+    const overrides = { '2026': { added: ['2026-08-10'], removed: [] } };
+    expect(annualHolidayState(d('2026-08-10'), overrides)).toBe('holiday');
+    // other defaults unchanged (feature: « le marquage par défaut des
+    // autres jours fériés est inchangé »)
+    expect(annualHolidayState(d('2026-07-14'), overrides)).toBe('holiday');
+  });
+
+  it('applies a REMOVE dérogation that unmarks only the removed day', () => {
+    const overrides = { '2026': { added: [], removed: ['2026-07-14'] } };
+    expect(annualHolidayState(d('2026-07-14'), overrides)).toBeNull();
+    // other holidays of 2026 remain marked (feature: « les autres jours
+    // fériés de 2026 restent marqués »)
+    expect(annualHolidayState(d('2026-08-15'), overrides)).toBe('holiday');
+  });
+
+  it('keeps dérogations scoped to their own year', () => {
+    const overrides = { '2026': { added: ['2026-08-10'], removed: [] } };
+    expect(annualHolidayState(d('2027-08-10'), overrides)).toBeNull();
+    expect(annualHolidayState(d('2027-07-14'), overrides)).toBe('holiday');
+  });
+});

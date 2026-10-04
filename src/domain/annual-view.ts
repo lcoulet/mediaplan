@@ -6,6 +6,7 @@
 // computed in contrast_palette_mix.py — see docs/OPEN-QUESTIONS.md).
 import type { Absence, AbsenceType, Slot } from './types';
 import { isoWeekKey } from './cycles';
+import { isMuseumClosed, isPublicHoliday } from './hours';
 
 // ---- Cell palette --------------------------------------------------------
 
@@ -227,4 +228,44 @@ export function annualWeekLabelsForYear(year: number): AnnualWeekLabel[] {
     cursor.setDate(cursor.getDate() + 1);
   }
   return labels;
+}
+
+// ---- Holiday overrides ------------------------------------------------------
+
+/**
+ * Per-year holiday dérogations of the annual view: dates ADDED to and
+ * REMOVED from the auto-computed French list of that year. Unlike the
+ * whole-list `holidayOverrides` of ValorisationConfig (hours.ts), these
+ * are deltas: adding 10 août keeps every default marking, removing
+ * 14 juillet unmarks only that day (annual-grid.feature, fériés scenarios).
+ */
+export interface AnnualHolidayOverrides {
+  /** Year ('2026') -> { added, removed } ISO dates. */
+  [year: string]: { added: string[]; removed: string[] };
+}
+
+/**
+ * Row state of a day in the annual grid: 'museumClosed' (hatched — 25/12,
+ * 01/01, 01/05, whatever the year), 'holiday' (amber — public holiday of
+ * the effective list) or null (ordinary day). Museum closure takes
+ * precedence: a férié that falls on a closure day shows the closure state.
+ *
+ * The list is the auto-computed French holidays of the year (frenchHolidays
+ * in hours.ts), adjusted by the per-year add/remove dérogations; years
+ * without dérogations use the pure defaults.
+ */
+export function annualHolidayState(
+  date: Date,
+  overrides?: AnnualHolidayOverrides
+): 'holiday' | 'museumClosed' | null {
+  if (isMuseumClosed(date)) return 'museumClosed';
+  const iso = toIsoDate(date);
+  const year = String(date.getFullYear());
+  const derogation = overrides?.[year];
+  if (derogation) {
+    if (derogation.removed.includes(iso)) return null;
+    if (derogation.added.includes(iso)) return 'holiday';
+  }
+  if (isPublicHoliday(date)) return 'holiday';
+  return null;
 }
