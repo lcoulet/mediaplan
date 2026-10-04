@@ -62,6 +62,12 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .btn-ghost:disabled { color: #a8a8a8; cursor: not-allowed; }
 .year-seg { display: inline-flex; border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; background: var(--color-surface); }
 .year-seg span { padding: 8px 16px; font-size: 14px; color: #fff; background: var(--color-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Inactive-mediators toggle (decision 2026-10-04, #17) — same as annual-grid.html.
+   Label #6b6b6b/#f5f5f5 = 4.89 ; checked label #2b2b2b/#f5f5f5 = 12.99. */
+.toggle-inactive { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); font-size: 13px; color: var(--color-text-muted); cursor: pointer; user-select: none; }
+.toggle-inactive input { width: 15px; height: 15px; accent-color: var(--color-primary); cursor: pointer; margin: 0; }
+.toggle-inactive input:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.toggle-inactive.checked-state { color: var(--color-text); font-weight: 600; }
 
 /* ===== Banners ===== */
 .state-box[hidden] { display: none; }
@@ -239,9 +245,15 @@ body.paintmode .c.y { background: #F9A825; }
 <main class="app-main">
   <div class="toolbar">
     <h2>Tableau de fonctionnement — édition</h2>
-    <span class="year-seg" aria-label="Année affichée"><span>2026</span></span>
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <span class="year-seg" aria-label="Année affichée"><span>2026</span></span>
+      <label class="toggle-inactive" id="toggle-inactive">
+        <input type="checkbox" id="toggle-inactive-input">
+        <span>Médiateurs désactivés</span>
+      </label>
+    </div>
   </div>
-  <p class="toolbar-note" style="margin: -6px 0 12px;">Clic sur une demi-journée → menu contextuel des codes. Texte libre avec codes décodés en suggestions ; « Effacer » rétablit la présence dérivée du cycle (jamais stockée).</p>
+  <p class="toolbar-note" style="margin: -6px 0 12px;">Clic sur une demi-journée → menu contextuel des codes. Texte libre avec codes décodés en suggestions ; « Effacer » rétablit la présence dérivée du cycle (jamais stockée). Médiateurs désactivés (Mediator.active === false) : masqués par défaut — case « Médiateurs désactivés » pour les révéler.</p>
 
   <!-- ===== State: paint-mode banner ===== -->
   <div class="banner-paint state-box" id="banner-paint" role="status" hidden>
@@ -438,6 +450,7 @@ body.paintmode .c.y { background: #F9A825; }
     <div class="annotation"><strong>(3) Jour de fermeture :</strong> alerte ambre NON BLOQUANTE « Le musée est fermé ce jour-là » dans le menu (25/12, 01/01, 01/05) — la saisie reste possible.</div>
     <div class="annotation"><strong>(4) Fériés :</strong> panneau « Fériés 2026 » — liste française par défaut en puces ; + Ajouter une date (ex. 10/08), ✕ retire (ex. 14 juillet barré), dérogations propres à l'année sélectionnée.</div>
     <div class="annotation"><strong>(5) Annuler / rétablir :</strong> ↶ actif après chaque saisie ou cellule peinte (une opération par cellule), ↷ rétablit ; le changement d'année ne touche jamais les données des autres années (absences stockées par date et par demi-journée).</div>
+    <div class="annotation"><strong>Médiateurs désactivés (décision 2026-10-04) :</strong> la même case « Médiateurs désactivés » que la vue d'affichage (annual-grid.html) vit ici dans la barre d'outils — les médiateurs désactivés (Mediator.active === false) sont MASQUÉS PAR DÉFAUT dans la grille d'édition ; l'extra ici ne montre que des médiateurs actifs (le comportement complet, colonne atténuée « (désactivé) » incluse, est spécifié dans annual-grid.feature / annual-grid.html).</div>
     <div class="annotation"><strong>Contrastes (WCAG 1.4.3 / 1.4.11, palette mixte Excel + AA, décision 2026-10-03) :</strong> bannière peinture #d68c45/#3a2408 = 5,36 ; alerte ambre #fef5e7/#8a4d10 = 6,17 ; jaune #F9A825/#2b2b2b = 7,18 ; rose TELE #B85555/blanc = 4,70 ; violet amgt #7B5AA0/blanc = 5,51 ; bleu souhait #4178AB/blanc = 4,67 ; vert JDM #2F7A4A/blanc = 5,25 ; rouge #c0392b/blanc = 5,44 ; orange dérivée #C67A33/blanc = 3,37 (1.4.11) ; hachures #8a8a8a/#f5f5f5 = 3,17 (1.4.11) ; férié retiré #5f5f5f/#fafafa = 6,12. Couleurs assayed du fichier Excel de référence, ajustées AA — calculs dans contrast_palette_mix.py.</div>
   </div>
 </main>
@@ -495,6 +508,17 @@ document.querySelectorAll('.mockup-switch button').forEach(function (btn) {
 });
 // Échap quits paint mode (mockup behavior mirroring the spec).
 // Échap also closes any open context menu (or a click outside of it).
+// Inactive-mediators toggle (decision 2026-10-04, #17): mockup plumbing — the
+// editing extract shows active mediators only; the checkbox logs the intent,
+// the full column behavior is specified in annual-grid.feature / mockup.
+var toggleInput = document.getElementById('toggle-inactive-input');
+var toggleLabel = document.getElementById('toggle-inactive');
+if (toggleInput) {
+  toggleInput.addEventListener('change', function () {
+    if (toggleLabel) { toggleLabel.classList.toggle('checked-state', toggleInput.checked); }
+    console.log('[mockup] Médiateurs désactivés : ' + (toggleInput.checked ? 'affichés' : 'masqués'));
+  });
+}
 document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') {
     setPaint(false);

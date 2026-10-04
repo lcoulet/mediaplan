@@ -65,6 +65,12 @@
 #       référence), à cheval sur les 7 lignes de la semaine — il REMPLACE
 #       l'affichage sur la ligne du lundi ; la pilule de cycle (S1, S2...)
 #       reste dans la zone de la cellule du lundi.
+#   17. MÉDIATEURS DÉSACTIVÉS : une case à cocher « Médiateurs
+#       désactivés » dans la barre d'outils affiche/masque les colonnes
+#       des médiateurs désactivés (Mediator.active === false) —
+#       MASQUÉS PAR DÉFAUT. Repère visuel de la colonne désactivée :
+#       en-tête atténué (fond grisé, nom en gris) + libellé
+#       « (désactivé) » ; cellules neutres, sans présence dérivée.
 
 Fonctionnalité: Tableau de fonctionnement — grille annuelle des médiateurs
   En tant que coordinateur
@@ -279,3 +285,32 @@ Fonctionnalité: Tableau de fonctionnement — grille annuelle des médiateurs
     Quand le coordinateur clique sur le libellé de la date du mercredi 30 septembre 2026
     Alors la vue quotidienne s'ouvre sur le 30 septembre 2026
     Et la date globale de l'application est le 30 septembre 2026
+
+  # ------------------------------------------------------------------
+  # Médiateurs désactivés (décision 2026-10-04 — décision 17)
+  # ------------------------------------------------------------------
+
+  Scénario: Médiateur désactivé masqué par défaut
+    Etant donné Alice active et Bob désactivé (Mediator.active === false)
+    Alors la grille affiche uniquement la colonne d'Alice
+    Et la colonne de Bob n'est pas affichée
+
+  Scénario: La case « Médiateurs désactivés » révèle la colonne du médiateur désactivé
+    Etant donné Alice active et Bob désactivé (Mediator.active === false)
+    Quand le coordinateur coche la case « Médiateurs désactivés » dans la barre d'outils
+    Alors la colonne de Bob apparaît dans la grille
+    Et les cellules Matin et Après-midi de Bob sont affichées
+
+  Scénario: Décocher la case masque de nouveau la colonne désactivée
+    Etant donné Alice active et Bob désactivé (Mediator.active === false)
+    Et la case « Médiateurs désactivés » cochée
+    Quand le coordinateur décoche la case « Médiateurs désactivés »
+    Alors la colonne de Bob disparaît de la grille
+    Et la grille revient à l'affichage des seuls médiateurs actifs
+
+  Scénario: Repère visuel de désactivation sur la colonne révélée
+    Etant donné Alice active et Bob désactivé (Mediator.active === false)
+    Et la case « Médiateurs désactivés » cochée
+    Alors l'en-tête de la colonne de Bob est atténué visuellement
+    Et l'en-tête de Bob affiche le libellé « (désactivé) »
+    Et les cellules de Bob restent neutres, sans présence dérivée du cycle
