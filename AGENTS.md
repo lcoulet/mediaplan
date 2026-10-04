@@ -16,7 +16,8 @@ The UI is in **French**. All documentation is in **English**.
 - **TypeScript** — strict mode, type safety on all domain models
 - **Vitest** — test runner (replaces node --test)
 - HTML5 / CSS3 (global stylesheets: style.css, calendar.css)
-- SheetJS (planned, not yet integrated — build dependency, not committed)
+- SheetJS (xlsx) — Excel reading (Secutix import) and writing (annual-table
+  export); committed dependency
 - Caddy for serving static files in production (deployment details are kept
   private, outside this repository)
 

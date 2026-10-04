@@ -275,6 +275,21 @@ import/export mode (shared JSON.gz files) until tenant access is sorted.
       displays the current cycle week (S1/S2/...) next to the mediator name
 - [x] Mediators view: a modal to define the sequence of cycle weeks
       (the cycle chain of the mediator)
+- [x] WORKED-PERIOD CONFLICT (decided 2026-10-04): assigning a mediator
+      OUTSIDE their worked period (non-worked day of the cycle OR hours
+      outside the worked range) surfaces as an availability conflict,
+      non-blocking: slot status « Indisponibilité » on the weekly view
+      (counted in the stats badge, cause named in the tooltip), « Absent »
+      badge on the daily-view block and in the slot modal's mediator pill.
+      A mediator WITHOUT a cycle has no cycle constraint
+- [x] « ABSENT » HARMONIZATION (decided 2026-10-04): the MEDIATOR-level
+      unavailability state is « Absent » for ANY cause (recorded absence,
+      non-worked day, outside hours) — matching the pre-existing
+      « Absent » label; the cause rides in tooltips/pill parentheticals.
+      The SLOT-level weekly status stays « Indisponibilité » (it covers
+      overlap too — a different level of reading). Day-view conflict
+      badges: « 🚫 Absent » / « ⚠️ Conflit horaire », one badge per block,
+      explicitly visible on the block (outline alone was not enough)
 - [ ] CYCLE ARCHETYPES (noted 2026-09-29, to spec): cycles should have
       ARCHETYPES — reusable predefined cycle templates (e.g. full-time
       Mon-Fri, part-time patterns, weekend rotations) that a mediator's

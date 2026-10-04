@@ -1,7 +1,8 @@
 # ADR-0001: Vanilla JavaScript (no framework)
 
 ## Status
-Accepted (2026-09-13)
+Superseded by ADR-0013 (migrate to Vite + React + TypeScript) — kept for
+historical context. Originally accepted 2026-09-13.
 
 ## Context
 MediaPlan is a frontend-only app for managing museum mediation schedules.

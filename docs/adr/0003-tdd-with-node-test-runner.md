@@ -1,7 +1,8 @@
 # ADR-0003: TDD with Node.js built-in test runner
 
 ## Status
-Accepted (2026-09-13)
+Superseded by ADR-0013 (tests migrated to Vitest) — kept for historical
+context. Originally accepted 2026-09-13.
 
 ## Context
 The project needs automated tests with strict TDD discipline (RED-GREEN-REFACTOR).

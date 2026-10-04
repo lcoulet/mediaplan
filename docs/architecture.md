@@ -35,6 +35,9 @@ Modern browsers only: Chrome, Firefox, Edge, Safari.
 
 - Production: Caddy serves `dist/` as static files
 - Dev: Vite dev server (`npm run dev` → http://localhost:5173)
+- The user guide is synced into `public/guide/` at dev/build time
+  (`scripts/sync-guide.mjs`, runs via `npm run dev`/`npm run build`) and
+  opened by the `?` shortcut
 - HTTPS via Let's Encrypt (automatic via Caddy)
 - Domain: `mediaplan.coulet.me`
 
@@ -44,7 +47,8 @@ Modern browsers only: Chrome, Firefox, Edge, Safari.
 - **React 18** — UI framework
 - **TypeScript** — type safety
 - **Vitest** — test runner
-- [SheetJS](https://sheetjs.com/) — Excel import/export (planned, not yet integrated)
+- [SheetJS](https://sheetjs.com/) — Excel import/export (Secutix reader,
+  annual-table export)
 
 ### Build & Deploy
 

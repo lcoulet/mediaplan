@@ -8,8 +8,8 @@ Avant de manipuler le planning, cinq notions suffisent pour comprendre l'applica
 
 - **L'offre** : une activité proposée au public (visite guidée, atelier, spectacle…). Chaque offre a une **durée** (celle du public), une capacité, un lieu, une couleur, et des **durées de mise en place / rangement** qui s'ajoutent avant et après. Le **type d'accueil** précise si elle se déroule **libre** (aucun médiateur requis), **réservée encadrée** ou **en animation par un médiateur**.
 - **La réservation (créneau)** : une instance datée d'une offre, avec ses horaires, son groupe, et un ou plusieurs médiateurs. C'est l'unité de base du planning. Une réservation est soit **importée** de Secutix (bandeau d'entrée dans le planning), soit **manuelle** (créée directement dans l'application).
-- **Le médiateur** : un membre de l'équipe qui anime les offres. Il a une **couleur** (représentée partout par un point ●), des **compétences** par offre (✅ confirmé, 📚 en formation), et un statut actif/inactif.
-- **L'absence** : une indisponibilité d'un médiateur (congé, mission, formation, maladie…), à la journée ou la demi-journée. Les absences s'affichent en fond du planning et font passer les créneaux concernés en « Indisponibilité ».
+- **Le médiateur** : un membre de l'équipe qui anime les offres. Il a une **couleur** (représentée partout par un point ●), des **compétences** par offre (✅ confirmé, 📚 en formation), un **cycle de travail** (jours et horaires récurrents), un **type de contrat** et éventuellement un **aménagement** du temps de travail, et un statut actif/inactif.
+- **L'absence** : une indisponibilité d'un médiateur (congé, mission, formation, maladie…), à la journée ou la demi-journée. Les absences s'affichent en fond du planning et font passer les créneaux concernés en « Indisponibilité ». Un médiateur est **absent** quelle que soit la cause de son indisponibilité (congés, jour non travaillé du cycle, hors plage horaire).
 
 ### Les données restent sur votre poste
 
@@ -30,7 +30,7 @@ Le planning est **verrouillé par défaut** : les réservations importées de Se
 
 ### Les états du planning
 
-Chaque créneau porte un **état unique**, visible en vue Hebdo (couleur + symbole) — voir le tableau au chapitre 2. Dans l'ordre de gravité : ❌ à assigner, 🚫 indisponibilité, ⚠️ incompétent, 📚 en apprentissage, ✔️ OK. Les créneaux des offres **libres** sont toujours verts, même sans médiateur.
+Chaque créneau porte un **état unique**, visible en vue Hebdo (couleur + symbole) — voir le tableau au chapitre 2. Dans l'ordre de gravité : ❌ à assigner, 🚫 indisponibilité, ⚠️ incompétent, 📚 en apprentissage, ✔️ OK. Les créneaux des offres **libres** sont toujours verts, même sans médiateur. En vue Jour, les conflits du créneau (médiateur absent, chevauchement) s'affichent en badges sur les blocs.
 
 ---
 
@@ -49,7 +49,7 @@ La vue **Plan Hebdo** est votre tableau de bord : chaque créneau porte une **co
 | Symbole | État | Signification | Gravité |
 |---------|------|---------------|---------|
 | ❌ | À assigner | réservation sans médiateur | 🔴 la plus urgente |
-| 🚫 | Indisponibilité | le médiateur assigné est absent ou a un chevauchement | 🔴 |
+| 🚫 | Indisponibilité | aucun médiateur assigné n'est disponible : absent (congés, maladie…), affecté hors de sa période travaillée du cycle, ou en chevauchement avec un autre créneau | 🔴 |
 | ⚠️ | Incompétent | aucun médiateur assigné n'est compétent sur l'offre | 🟠 warning |
 | 📚 | En apprentissage | aucun médiateur confirmé, mais un en formation | 🟡 info |
 | ✔️ | OK | au moins un médiateur disponible et confirmé | 🟢 |
@@ -75,6 +75,12 @@ Tous les moyens d'affecter une offre sont détaillés au **chapitre 4**.
   - **planning verrouillé** : formulaire restreint — assignation de médiateurs, participants, statut, notes, et **durées de mise en place / rangement** (ajustables sans déverrouiller)
   - **planning déverrouillé** : édition complète (offre, date, horaires, suppression)
 - Les avertissements en direct dans le formulaire signalent les **chevauchements** et les **absences**
+- **Conflits visibles sur les blocs (vue Jour)** : chaque créneau en conflit porte un badge explicite — « 🚫 Absent » (le médiateur est absent : congés, maladie, jour non travaillé du cycle ou hors plage horaire) ou « ⚠️ Conflit horaire » (chevauchement) — avec un contour rouge pointillé ; le survol nomme la cause exacte
+
+![Créneau en conflit — le badge « 🚫 Absent » et le contour rouge pointillé sur le bloc](captures/daily-conflict-badge.png)
+
+*Un créneau affecté à un médiateur absent : badge « 🚫 Absent » au coin du bloc, contour rouge pointillé, cause détaillée dans l'info-bulle. Le créneau reste enregistrable — le conflit est un signalement, pas une interdiction.*
+
 - Dans la vue Hebdo, un créneau devient ✔️ dès qu'au moins un médiateur assigné est disponible **et** confirmé sur l'offre
 - Compétences : visibles dans le sélecteur de médiateurs (✅ confirmé, 📚 en formation, ⚠️ incompétent)
 
@@ -98,6 +104,9 @@ La vue **Médiateurs** est le référentiel de l'équipe.
 - **Ajout / modification / suppression** via les boutons d'action du tableau
 - **Couleur** : pastille attribuée à chaque médiateur, affichée partout (planning, tableaux, formulaires) comme un point ●
 - **Compétences** : par offre, avec un statut — ✅ **confirmé** (peut animer seul), 📚 **en formation** (peut être assigné en complément pour apprendre, ou exceptionnellement seul si aucun confirmé n'est disponible)
+- **Type de contrat** (temps plein, mi-temps, stagiaire…) : pill à côté du nom, sélecteur avec valeurs prédéfinies + texte libre
+- **Aménagement du temps de travail** (mi-temps, temps partiel, 80%…) : pour les médiateurs concernés, un **quota d'heures trimestriel** est suivi (saisi dans le formulaire du médiateur, solde affiché dans la vue Tableau)
+- **Cycle de travail** : le bouton de cycle ouvre la chaîne des semaines (S1, S2…) — jours et plages horaires travaillés, copie/collage JSON entre médiateurs
 - **Statut actif/inactif** : un médiateur inactif disparaît du planning sans être supprimé (utile pour les départs)
 - **Tri par colonne**, **recherche texte**, filtre **« Actifs seulement »**
 
@@ -150,13 +159,15 @@ Cliquez sur un créneau (ou videz le drag pour le rouvrir) :
 
 ---
 
-## 5. Imports & sauvegardes
+## 5. Imports, sauvegardes & configuration
 
-![Vue Import / Export — le panneau d'import Secutix et les boutons de sauvegarde](captures/import-export-view.png)
+![Vue Configuration — les sections Espaces et Données : import Secutix, export JSON.gz, nettoyage](captures/configuration-view.png)
 
-*L'import Secutix, l'export JSON.gz et le nettoyage des données dans une seule vue.*
+*La vue Configuration : gestion des espaces et des données — export, import de sauvegarde, nettoyage et données de démonstration.*
 
 ### Import Secutix (les réservations du public)
+
+L'import Secutix se lance depuis le **bouton « Importer Secutix » de l'en-tête** (présent dans toutes les vues) :
 
 - Chargez l'export « visitPlanning » depuis Secutix
 - Les réservations sont **rapprochées des offres par leur libellé Secutix** — une offre du catalogue doit exister avec le même libellé
@@ -167,16 +178,20 @@ Cliquez sur un créneau (ou videz le drag pour le rouvrir) :
 
 ### Sauvegarde et partage entre postes
 
-Comme les données ne sortent jamais du poste (chapitre 1), la sauvegarde est le seul canal de partage :
+Comme les données ne sortent jamais du poste (chapitre 1), la sauvegarde est le seul canal de partage. Les boutons **Exporter / Importer** sont dans l'en-tête (toutes les vues) et dans la vue Configuration (section Données) :
 
 - **Export JSON.gz** : sauvegarde compressée avec date dans le nom de fichier — à partager entre coordinatrices ou changer de poste
 - **Import** : restauration complète — l'application vous **avertit si la sauvegarde est plus ancienne** que vos données locales (comparaison des dates de dernière modification)
 - ⚠️ L'import **remplace** toutes les données, il ne fusionne pas : exportez avant d'importer
 
-### Nettoyage et démonstration
+### Nettoyage et démonstration (vue Configuration, section Données)
 
 - **Nettoyer les données** : supprime les réservations, absences et plannings ; optionnellement aussi les médiateurs et les offres (cases à cocher) — double confirmation et sauvegarde JSON recommandée avant
 - **🔄 Reset** : régénère les données de démonstration (~15 mois, tous les états de planning représentés)
+
+### Espaces (vue Configuration, section Espaces)
+
+La liste des **espaces** (lieux d'intervention : galeries, ateliers, salles) utilisés par les offres et les réservations. Chaque offre a un espace par défaut, surchargé par la réservation Secutix (colonne ESPACE).
 
 ---
 
@@ -227,6 +242,28 @@ Les statistiques portent sur **toutes les réservations** de la période, visite
 
 *Les absences : tri par colonne, filtre par médiateur, et le toggle « Absences passées » pour masquer l'historique.*
 
+### Tableau de fonctionnement (vue annuelle)
+
+La vue **Tableau** (touche `8`) est la vue annuelle : une ligne par jour de l'année, une colonne par médiateur actif — le « tableau de fonctionnement » de l'équipe.
+
+![Vue Tableau — la grille annuelle : une ligne par jour, une colonne par médiateur, les cellules colorées par état](captures/annual-grid.png)
+
+*Le tableau de fonctionnement : les médiateurs en colonnes, l'année en lignes — présences dérivées du cycle de travail, absences colorées par type, semaine ISO en colonne de gauche, ligne du jour focus avec ●.*
+
+- **Chaque cellule** croise un médiateur et une demi-journée : la **présence** (issue du cycle de travail) y est affichée par défaut ; les **absences** (congés, missions, formations, maladie) couvrent la présence en couleur ; les **souhaits de congés** s'affichent en bleu, distincts des congés confirmés
+- **Clic sur une cellule** : un menu contextuel permet de poser une absence ou un souhait sur la demi-journée, ou d'effacer l'entrée — avec les codes usuels (CA, RHS, AM, TELE…)
+
+![Menu contextuel d'une cellule — codes colorés, souhait, texte libre](captures/annual-context-menu.png)
+
+*Le menu contextuel d'une demi-journée : médiateur et date en tête (fermeture ✕), codes colorés d'absence, souhait de congés, texte libre, « Peindre ce code » et « Effacer (retour au dérivé) ».*
+
+- **Mode peinture** : « Peindre ce code » dans le menu applique le code sur toutes les cellules survolées — pour saisir une semaine de congés d'un geste ; sortie par Échap, clic hors grille ou le bouton « ✕ Quitter la peinture »
+- **Colonne de compteurs du samedi** : le décompte des samedis travaillés par médiateur (suivi du cycle)
+- **Année** : segmenteur en haut de vue ; la colonne de gauche affiche la semaine ISO (cliquable → vue Hebdo), le jour de la ligne est cliquable (→ vue Jour)
+- **Suivi des quotas trimestriels** : pour les médiateurs en **aménagement** du temps de travail (mi-temps, 80%…), le quota d'heures par trimestre est suivi (valeur seuil, cellules valorisées au-delà)
+- **Médiateurs désactivés** : un toggle les affiche/masque — masqués par défaut
+- **Export Excel** : le bouton d'export génère le tableau annuel complet (textes complets, compteurs de samedis, couleurs) dans un classeur Excel
+
 ---
 
 ## 7. Lexique
@@ -245,10 +282,15 @@ Les statistiques portent sur **toutes les réservations** de la période, visite
 | **Visite libre** | Réservation d'une offre à type d'accueil « Accueil Libre » — aucun médiateur requis, toujours verte |
 | **Offres non programmées** | Le catalogue glissable en bas de la vue Jour, pour créer des créneaux manuels |
 | **État du planning** | Diagnostic unique d'un créneau : ❌ à assigner, 🚫 indisponibilité, ⚠️ incompétent, 📚 en apprentissage, ✔️ OK |
+| **Absent** | État d'un médiateur indisponible, quelle que soit la cause : congés, maladie, jour non travaillé du cycle ou hors plage horaire — la cause est détaillée dans l'info-bulle |
 | **Verrouillage** | Mode par défaut protégeant les horaires des réservations importées ; l'assignation reste toujours libre |
 | **Modifié après import** | Marque ✏ signalant une réservation importée dont les horaires ont été changés après déblocage |
 | **Secutix** | Le système de billetterie du musée d'où viennent les réservations du public (export « visitPlanning ») |
 | **Sauvegarde JSON.gz** | Fichier compressé de toutes les données, pour archiver ou transférer vers un autre poste |
+| **Tableau de fonctionnement** | La vue annuelle : une ligne par jour de l'année, une colonne par médiateur — présences du cycle, absences, souhaits, quotas |
+| **Cycle de travail** | Le schéma hebdomadaire récurrent d'un médiateur (semaines S1, S2… en rotation) : jours travaillés et plage horaire par jour |
+| **Aménagement** | Aménagement du temps de travail d'un médiateur (mi-temps, 80%…) — déclenche le suivi du quota d'heures trimestriel |
+| **Souhait de congés** | Demande de congés non confirmée, saisie dans le tableau annuel (cellule bleue), distincte du congé confirmé |
 
 ---
 
@@ -260,7 +302,7 @@ MediaPlan se pilote au clavier : les touches ci-dessous fonctionnent partout dan
 
 | Touche | Action |
 |--------|--------|
-| `1` – `8` | Changer de vue : `1` Jour, `2` Hebdo, `3` Accueil, `4` Médiateurs, `5` Offres, `6` Absences, `7` Statistiques, `8` Import / Export |
+| `1` – `9` | Changer de vue : `1` Jour, `2` Hebdo, `3` Accueil, `4` Médiateurs, `5` Offres, `6` Absences, `7` Statistiques, `8` Tableau (annuel), `9` Configuration |
 | `←` / `→` | Vue Jour : jour précédent / suivant — vue Hebdo : semaine précédente / suivante (même jour de la semaine) |
 | `T` | Revenir à aujourd'hui (vues Jour et Hebdo) |
 | `N` | Créer un nouvel élément dans la vue courante : médiateur (`4`), offre (`5`) ou absence (`6`) — sans effet dans les autres vues |
@@ -281,6 +323,8 @@ Le bouton « Historique » de l'en-tête (ou la touche `H`) ouvre un panneau lat
 - `?display=week&date=2026-10-08` — vue Hebdo contenant cette date
 - `?display=reservations` — Plan Accueil du jour
 - `?display=stats` — Statistiques
+- `?display=tableau&date=2026-10-08` — vue Tableau annuelle, focus sur la date
+- `?display=configuration` — Configuration (anciennement vue Import / Export : l'ancien paramètre reste accepté)
 - Sans paramètre : vue Jour, aujourd'hui
 
 ---

@@ -77,8 +77,10 @@ The single most important piece of information on a slot, displayed on the
 weekly view. Mutually exclusive states computed by
 `getSlotPlanningStatus()` in priority order:
 - **Unassigned** (❌, hatched red): no mediator on the slot
-- **Dispo issue** (🚫, red): no assigned mediator is available (absence
-  or overlap) — availability is evaluated BEFORE competence
+- **Dispo issue** (🚫, red): no assigned mediator is available — absence,
+  assignment OUTSIDE the mediator's worked period (non-worked day of the
+  cycle or hours outside the worked range, decision 2026-10-04), or
+  overlap. Availability is evaluated BEFORE competence
 - **Incompetent** (⚠️, amber): available mediators hold no competence for
   the offer
 - **Learning** (📚, pale yellow): no confirmed mediator, but a learning one
@@ -86,6 +88,15 @@ weekly view. Mutually exclusive states computed by
 
 The weekly view shows a per-status count badge (toolbar), a legend below
 the grid, and slot details in a native tooltip.
+
+**Slot-level vs mediator-level wording**: the slot-level status is
+« Indisponibilité » (no assigned mediator is available — covers any cause,
+including overlap). The MEDIATOR-level state is « Absent » for ANY
+unavailability cause (recorded absence, non-worked day, outside hours) —
+harmonized 2026-10-04; the exact cause rides in tooltips and pill labels
+(e.g. « Absent (hors période travaillée) »). In the daily view, every
+conflict shows an explicit badge on the slot block: « 🚫 Absent » or
+« ⚠️ Conflit horaire ».
 
 ### Slot (Créneau)
 An instance of an offer assigned to a date, time, and one or more
@@ -121,6 +132,21 @@ annual view context menu it appears as « Souhait » / « demande en attente ».
 rendered as a green cell in the annual view. Offered among the free-text
 suggestions of the annual grid context menu.
 
+### Annual View (Tableau de fonctionnement)
+The yearly view (French nav « Tableau », shortcut 8, route
+`?display=tableau`): one row per day of the year, one column per active
+mediator, morning/afternoon half-days. Each cell shows, by precedence:
+a same-day absence entry > a covering absence range > the presence
+derived from the mediator's work cycle. Wishes (leave_request) render
+blue, distinct from confirmed leaves. Features: cell context menu
+(absence codes, wish, free text, paint mode, clear), Saturday counters,
+quarterly quota balance for mediators with an arrangement, ISO week
+column (→ weekly view), day label (→ daily view), year switcher,
+inactive-mediator toggle (hidden by default), Excel export of the whole
+table (SheetJS). Editing paints CellEntry records stored per
+mediator/date/half-day; « Effacer » reverts the cell to the derived
+state.
+
 ### Work Cycle (Cycle de travail)
 A mediator's recurring weekly schedule pattern. A mediator has one
 active cycle at a time; a cycle consists of 1 to N named weeks
@@ -135,7 +161,10 @@ New mediators default to a single cycle week:
 Monday–Friday, 09:30–18:00.
 
 Assigning a slot outside a mediator's working amplitude is ALLOWED and
-triggers a light warning.
+triggers a light warning — and, since 2026-10-04, surfaces as an
+availability conflict: the slot is « Indisponibilité » on the weekly view
+and the mediator reads « Absent » in the daily view and slot modal
+(non-blocking; the coordinator can keep the exception).
 
 Cycle definitions can be COPIED as JSON (clipboard) and PASTED into
 another mediator (or the same one), to reuse cycle patterns across

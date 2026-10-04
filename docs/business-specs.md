@@ -23,32 +23,46 @@ Excel export or paper printout).
   assigned as supplemental or exceptionally lead)
 - `active`: boolean (active mediator or not)
 - `notes`: free-form notes (optional)
-- `workCycleId`: reference to the active work cycle (optional)
+- `color`: display color (dot ● everywhere)
+- `activeCycleId`: reference to the mediator's active work cycle
+  (optional — no cycle = no cycle constraint)
+- `contractType`: employment type (temps plein, mi-temps, stagiaire…),
+  free text with predefined suggestions (optional)
+- `arrangement`: working-time arrangement (aménagement du temps de
+  travail: mi-temps, 80%, temps partiel…), free text (optional). When
+  set, the mediator's quarterly hour quota is tracked (QuarterlyQuota)
 
 ### Work Cycle
 
 - `id`: unique identifier
 - `mediatorId`: reference to the mediator
-- `name`: cycle name (e.g. "S1", "S2", "S3")
-- `weeks`: list of cycle weeks (1 to N)
-- `active`: boolean — one active cycle per mediator at a time
+- `weeks`: ordered list of cycle weeks (1 to N); the rotation walks them
+  in order, then loops — one cycle week per ISO week
+- `anchorIsoWeek`: ISO week (`YYYY-Www`) where the rotation starts —
+  `weeks[0]` is active during the anchor week; dates before the anchor
+  follow the rotation backwards
+- `forcedWeeks`: manual overrides, ISO week key → cycle week name;
+  absolute precedence over the rotation
 
 ### Cycle Week
 
 - `id`: unique identifier
-- `cycleId`: reference to the work cycle
-- `weekNumber`: position in the cycle (1, 2, 3, ...)
-- `label`: display name (e.g. "S1", "S2")
-- `days`: list of { dayOfWeek, startTime, endTime } for each working day
-  (dayOfWeek: 1=Monday .. 7=Sunday)
+- `name`: display name (e.g. "S1", "S2")
+- `days`: list of per-day entries for dayOfWeek 1 (Monday) to 7 (Sunday);
+  a day entry with `startTime`/`endTime` is WORKED (weekends can be
+  worked), a day entry without hours is not worked
 
-### Cycle Override
+### Quarterly Quota
 
 - `id`: unique identifier
 - `mediatorId`: reference to the mediator
-- `weekStartDate`: ISO date of the Monday of the overridden week
-- `cycleWeekId`: reference to the cycle week used instead of the rotated one
-- `notes`: reason for override (optional)
+- `year`: calendar year of the quarter
+- `quarter`: 1 (Jan-Mar) .. 4 (Oct-Dec)
+- `hours`: the quarterly hour quota for mediators with an arrangement
+- `effectiveFrom`: the date the quota became effective — only slots ON OR
+  AFTER that date consume it (mid-quarter arrangement changes don't
+  retroactively count earlier slots). Edited in the MediatorModal;
+  the balance (reliquat/déficit) is displayed in the annual view.
 
 ### Mediation Offer
 
@@ -153,13 +167,19 @@ teardown AFTER it — this geometry is derived at display time
 - Manage work cycle (create, edit, activate)
 
 ### Work Cycle Management
-- Create a cycle with 1 to N named weeks
+- Create a cycle with 1 to N named weeks (edited in a modal from the
+  Mediators view — CycleChainModal)
 - Define working days and hours per week (10-minute granularity)
 - One active cycle per mediator at a time
-- Cycles rotate in sequence (S1 → S2 → S3 → S1)
-- Override specific weeks manually
-- Cycles view: grid with one mediator per row, columns showing week
-  numbers and date ranges
+- Cycles rotate in sequence (S1 → S2 → S3 → S1), anchored on an ISO week
+- Force specific ISO weeks manually (per-week override)
+- Copy/paste cycle definitions as JSON between mediators
+- Worked-period availability (decision 2026-10-04): assigning a slot
+  OUTSIDE the mediator's worked period (non-worked day of the cycle, or
+  hours outside the worked range) is allowed but surfaces as an
+  availability conflict — « Indisponibilité » slot status on the weekly
+  view, « Absent » badge on the daily-view block and in the slot modal
+  (cause in the tooltip/pill)
 
 ### Mediation Offer Management
 - List, add, edit, delete an offer
@@ -213,6 +233,12 @@ teardown AFTER it — this geometry is derived at display time
   (multi-mediator assignment, not independent copy)
 - Slot overlap on same mediator: red hatching and/or red highlight,
   warning confirmation required
+- Conflicts visible on the blocks (2026-10-04): every conflict shows an
+  explicit badge on the slot block — « 🚫 Absent » (mediator unavailable:
+  recorded absence, non-worked day of the cycle, or outside the worked
+  hours range; cause in the tooltip) or « ⚠️ Conflit horaire » (overlap,
+  on both overlapping blocks) — with a red dashed outline;
+  non-blocking
 - Navigation: prev/next/today buttons to change the selected day
 - Toggle between day / week views
 - Slot assignment: can assign mediators from the slot modal (multi-select)
@@ -300,6 +326,26 @@ Editability rules:
 - Locked, imported slot (or mediator-only mode): only mediator
   assignment, setup and teardown remain editable; all booking details
   stay visible but read-only; deletion is disabled
+
+### Annual View (Tableau de fonctionnement)
+The yearly view (nav « Tableau », shortcut 8, `?display=tableau`):
+- Grid: one row per day of the year (morning/afternoon half-days), one
+  column per ACTIVE mediator (inactive mediators behind a toggle,
+  hidden by default), ISO week in its own leftmost column
+- Cell precedence: same-day absence entry > covering absence range >
+  presence derived from the work cycle; wishes (leave_request) render
+  blue, distinct from confirmed leaves
+- Cell context menu: absence code chips (CA, RHS, AM, TELE…), wish,
+  free text (non-blocking green), « Peindre ce code » (paint mode over
+  hovered cells; exit via Esc, outside click or the banner button —
+  side-effect-free), « Effacer (retour au dérivé) », ✕ close button
+- Saturday counters per mediator (worked Saturdays, valorisation
+  threshold)
+- Quarterly quota balance (reliquat/déficit) for mediators with an
+  arrangement
+- Navigation: ISO week → weekly view, day label → daily view, year
+  switcher, route date focuses the row
+- Excel export of the whole table (SheetJS, styled cells, full texts)
 
 ### Secutix Import (Synchronization)
 
