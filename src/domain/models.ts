@@ -13,6 +13,7 @@ import type {
   AbsenceHalfDay,
   AbsenceType,
 } from './types';
+import { isMediatorOnWorkedPeriod } from './cycle-display';
 
 let idCounter = 0;
 
@@ -522,9 +523,13 @@ export function getSlotPlanningStatus(
 
   if (mediators.length === 0) return 'unassigned';
 
-  // Availability: absence or overlapping slot (exclude the slot itself)
+  // Availability: absence, overlapping slot (exclude the slot itself) or
+  // assignment OUTSIDE the mediator's worked period (decision 2026-10-04:
+  // non-worked day of the cycle, or hours outside the worked range —
+  // displayed « Indisponible » like absence/overlap conflicts).
   const available = mediators.filter((m) =>
     isMediatorAvailable(m.id, slot.date, slot.startTime, slot.endTime, data.absences, data.halfDayConfig) &&
+    isMediatorOnWorkedPeriod(m, data.cycles, parseLocalDate(slot.date), slot.startTime, slot.endTime) &&
     !hasMediatorOverlap(m.id, slot.date, slot.startTime, slot.endTime, data.slots, slot.id)
   );
   if (available.length === 0) return 'dispo_issue';

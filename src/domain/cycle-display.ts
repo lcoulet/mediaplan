@@ -133,3 +133,33 @@ export function slotCycleWarning(
   }
   return '';
 }
+
+// ---- Worked-period availability (decision 2026-10-04) -----------------------
+
+/**
+ * True when the mediator's work cycle covers the WHOLE slot: the date is a
+ * worked day AND the slot's [start, end] fits inside the worked hours range
+ * of the cycle week rotated to that date. A mediator WITHOUT a cycle has no
+ * cycle constraint (true — other availability causes still apply).
+ *
+ * Feeds the slot availability model: assigning a mediator outside their
+ * worked period surfaces as « Indisponible » in the day and weekly views,
+ * like absence and overlap conflicts (decision 2026-10-04).
+ */
+export function isMediatorOnWorkedPeriod(
+  mediator: Mediator,
+  cycles: WorkCycle[],
+  date: Date,
+  slotStart: string,
+  slotEnd: string
+): boolean {
+  const cycle = activeCycleOf(mediator, cycles);
+  if (!cycle) return true; // no cycle = no cycle constraint
+  const hours = getWorkedHoursForDate(cycle, date);
+  if (!hours.worked) return false; // non-worked day of the cycle
+  const start = timeToMinutes(hours.startTime);
+  const end = timeToMinutes(hours.endTime);
+  const slotStartMin = timeToMinutes(slotStart);
+  const slotEndMin = timeToMinutes(slotEnd);
+  return slotStartMin >= start && slotEndMin <= end;
+}

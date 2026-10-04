@@ -7,7 +7,11 @@ import {
   getISOWeekNumber,
   getSlotPlanningStatus,
   toLocalDateString,
+  hasMediatorOverlap,
+  isMediatorAvailable,
+  parseLocalDate,
 } from '../domain/models';
+import { isMediatorOnWorkedPeriod } from '../domain/cycle-display';
 import type { SlotPlanningStatus } from '../domain/models';
 import type { Slot, Absence } from '../domain/types';
 import { useViewportPxPerHour } from './useElementWidth';
@@ -406,8 +410,24 @@ export default function WeeklyView() {
                           return m ? `${m.firstName} ${m.lastName}` : id;
                         })
                         .join(', ');
-                      if (planningStatus === 'dispo_issue')
-                        return `Médiateur(s) indisponible(s) : ${medNames}`;
+                      if (planningStatus === 'dispo_issue') {
+                        // Name the CAUSE per mediator: absence, overlap or
+                        // assignment outside the worked period (decision
+                        // 2026-10-04: « hors période travaillée »).
+                        const causes = slot.mediatorIds.map((id) => {
+                          const m = data.mediators.find((mm) => mm.id === id);
+                          if (!m) return '';
+                          const name = `${m.firstName} ${m.lastName}`;
+                          const overlap = hasMediatorOverlap(id, slot.date, slot.startTime, slot.endTime, data.slots, slot.id);
+                          if (overlap) return `${name} (conflit horaire)`;
+                          const absent = !isMediatorAvailable(id, slot.date, slot.startTime, slot.endTime, data.absences, data.halfDayConfig);
+                          if (absent) return `${name} (absent)`;
+                          const offCycle = !isMediatorOnWorkedPeriod(m, data.cycles, parseLocalDate(slot.date), slot.startTime, slot.endTime);
+                          if (offCycle) return `${name} (hors période travaillée)`;
+                          return name;
+                        }).filter(Boolean).join(', ');
+                        return `Médiateur(s) indisponible(s) : ${causes || medNames}`;
+                      }
                       if (planningStatus === 'learning')
                         return `En formation : ${medNames}`;
                       if (planningStatus === 'incompetent')

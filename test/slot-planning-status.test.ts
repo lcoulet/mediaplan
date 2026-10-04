@@ -125,6 +125,76 @@ describe('getSlotPlanningStatus', () => {
     const s = slot(['m1', 'm2']);
     expect(getSlotPlanningStatus(s, data([s], [], [m1, m2]))).toBe('ok');
   });
+
+  // ---- Worked-period availability (decision 2026-10-04) ------------------
+  // A slot assigned outside the mediator's worked period (non-worked day of
+  // the cycle, or hours outside the worked range) is an availability
+  // conflict: DISPO_ISSUE — displayed « Indisponible » like absence/overlap.
+
+  it('is DISPO_ISSUE when the slot is on a NON-WORKED day of the cycle', () => {
+    const m = mediator('m1', [{ offerId: 'o1', status: 'confirmed' }]);
+    m.activeCycleId = 'cyc1';
+    const s = slot(['m1']); // 2026-09-15 = Tuesday
+    const d = data([s], [], [m]);
+    // Cycle works Monday only -> Tuesday is a non-worked day
+    d.cycles = [{
+      id: 'cyc1', mediatorId: 'm1', anchorIsoWeek: '2026-W38',
+      forcedWeeks: {},
+      weeks: [{
+        id: 'w1', name: 'S1',
+        days: [
+          { day: 1, startTime: '09:00', endTime: '18:00' },
+          { day: 2 }, { day: 3 }, { day: 4 }, { day: 5 }, { day: 6 }, { day: 7 },
+        ],
+      }],
+    }];
+    expect(getSlotPlanningStatus(s, d)).toBe('dispo_issue');
+  });
+
+  it('is DISPO_ISSUE when the slot falls OUTSIDE the worked hours range', () => {
+    const m = mediator('m1', [{ offerId: 'o1', status: 'confirmed' }]);
+    m.activeCycleId = 'cyc1';
+    const s = slot(['m1'], { startTime: '18:30', endTime: '19:30' }); // after 18:00
+    const d = data([s], [], [m]);
+    // Cycle works Tue 09:00-18:00
+    d.cycles = [{
+      id: 'cyc1', mediatorId: 'm1', anchorIsoWeek: '2026-W38',
+      forcedWeeks: {},
+      weeks: [{
+        id: 'w1', name: 'S1',
+        days: [
+          { day: 1 }, { day: 2, startTime: '09:00', endTime: '18:00' },
+          { day: 3 }, { day: 4 }, { day: 5 }, { day: 6 }, { day: 7 },
+        ],
+      }],
+    }];
+    expect(getSlotPlanningStatus(s, d)).toBe('dispo_issue');
+  });
+
+  it('is OK when the slot is INSIDE the worked period of the cycle', () => {
+    const m = mediator('m1', [{ offerId: 'o1', status: 'confirmed' }]);
+    m.activeCycleId = 'cyc1';
+    const s = slot(['m1']); // Tue 10:00-11:00
+    const d = data([s], [], [m]);
+    d.cycles = [{
+      id: 'cyc1', mediatorId: 'm1', anchorIsoWeek: '2026-W38',
+      forcedWeeks: {},
+      weeks: [{
+        id: 'w1', name: 'S1',
+        days: [
+          { day: 1 }, { day: 2, startTime: '09:00', endTime: '18:00' },
+          { day: 3 }, { day: 4 }, { day: 5 }, { day: 6 }, { day: 7 },
+        ],
+      }],
+    }];
+    expect(getSlotPlanningStatus(s, d)).toBe('ok');
+  });
+
+  it('a mediator without a cycle has no cycle constraint (OK when confirmed)', () => {
+    const m = mediator('m1', [{ offerId: 'o1', status: 'confirmed' }]);
+    const s = slot(['m1']);
+    expect(getSlotPlanningStatus(s, data([s], [], [m]))).toBe('ok');
+  });
 });
 
 describe('isFreeVisitOffer', () => {

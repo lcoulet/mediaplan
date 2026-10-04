@@ -279,4 +279,116 @@ describe('WeeklyView', () => {
     expect(children[1].className).toContain('slot-mediator-glyph');
     expect(children[1].textContent).toBe('●');
   });
+
+  // ---- Worked-period availability (decision 2026-10-04) -------------------
+  // A slot assigned outside the mediator's worked period (non-worked day of
+  // the cycle, or hours outside the worked range) is DISPO_ISSUE: red
+  // « Indispo. » badge, and the tooltip names the cause.
+
+  it('marks a slot outside the worked period as Indisponible (dispo_issue)', () => {
+    // s1: Tue 2026-09-15 10:00-12:00 assigned to m1 (competent, no absence).
+    // m1's cycle works Wednesday only → Tuesday is a non-worked day.
+    const withCycle: AppData = {
+      ...mockData,
+      mediators: mockData.mediators.map((m) =>
+        m.id === 'm1'
+          ? { ...m, activeCycleId: 'cyc1', competences: [{ offerId: 'o1', status: 'confirmed' as const }] }
+          : m
+      ),
+      cycles: [{
+        id: 'cyc1', mediatorId: 'm1', anchorIsoWeek: '2026-W37', forcedWeeks: {},
+        weeks: [{
+          id: 'w1', name: 'S1',
+          days: [
+            { day: 1 }, { day: 2 }, { day: 3, startTime: '09:00', endTime: '18:00' },
+            { day: 4 }, { day: 5 }, { day: 6 }, { day: 7 },
+          ],
+        }],
+      }],
+    };
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(withCycle)),
+      setItem: vi.fn(),
+    });
+    const { container } = render(
+      <DataProvider>
+        <WeeklyView />
+      </DataProvider>
+    );
+    const slotEl = container.querySelector('.cal-slot') as HTMLElement;
+    expect(slotEl).toBeTruthy();
+    expect(slotEl.className).toContain('pstatus-dispo_issue');
+    expect(slotEl.textContent).toContain('Indispo.');
+    // The tooltip names the cause
+    const title = slotEl.getAttribute('title') || '';
+    expect(title).toContain('Indisponibilité');
+    expect(title).toContain('hors période travaillée');
+  });
+
+  it('marks a slot OUTSIDE the worked hours range as Indisponible too', () => {
+    // s1: Tue 10:00-12:00; m1's cycle works Tuesday 13:00-18:00 → hours outside
+    const withCycle: AppData = {
+      ...mockData,
+      mediators: mockData.mediators.map((m) =>
+        m.id === 'm1'
+          ? { ...m, activeCycleId: 'cyc1', competences: [{ offerId: 'o1', status: 'confirmed' as const }] }
+          : m
+      ),
+      cycles: [{
+        id: 'cyc1', mediatorId: 'm1', anchorIsoWeek: '2026-W37', forcedWeeks: {},
+        weeks: [{
+          id: 'w1', name: 'S1',
+          days: [
+            { day: 1 }, { day: 2, startTime: '13:00', endTime: '18:00' }, { day: 3 },
+            { day: 4 }, { day: 5 }, { day: 6 }, { day: 7 },
+          ],
+        }],
+      }],
+    };
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(withCycle)),
+      setItem: vi.fn(),
+    });
+    const { container } = render(
+      <DataProvider>
+        <WeeklyView />
+      </DataProvider>
+    );
+    const slotEl = container.querySelector('.cal-slot') as HTMLElement;
+    expect(slotEl).toBeTruthy();
+    expect(slotEl.className).toContain('pstatus-dispo_issue');
+  });
+
+  it('an assigned slot INSIDE the worked period stays OK', () => {
+    const withCycle: AppData = {
+      ...mockData,
+      mediators: mockData.mediators.map((m) =>
+        m.id === 'm1'
+          ? { ...m, activeCycleId: 'cyc1', competences: [{ offerId: 'o1', status: 'confirmed' as const }] }
+          : m
+      ),
+      cycles: [{
+        id: 'cyc1', mediatorId: 'm1', anchorIsoWeek: '2026-W37', forcedWeeks: {},
+        weeks: [{
+          id: 'w1', name: 'S1',
+          days: [
+            { day: 1 }, { day: 2, startTime: '09:00', endTime: '18:00' }, { day: 3 },
+            { day: 4 }, { day: 5 }, { day: 6 }, { day: 7 },
+          ],
+        }],
+      }],
+    };
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(withCycle)),
+      setItem: vi.fn(),
+    });
+    const { container } = render(
+      <DataProvider>
+        <WeeklyView />
+      </DataProvider>
+    );
+    const slotEl = container.querySelector('.cal-slot') as HTMLElement;
+    expect(slotEl).toBeTruthy();
+    expect(slotEl.className).toContain('pstatus-ok');
+  });
 });

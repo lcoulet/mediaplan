@@ -3,7 +3,7 @@
 // Spec: test/features/cycles/cycle-model.feature (display + warning scenarios)
 // and test/features/cycles/contract-type.feature (pill scenarios).
 import { describe, it, expect } from 'vitest';
-import { getPillsForMediator, hatchingForDate, slotCycleWarning } from '../src/domain/cycle-display';
+import { getPillsForMediator, hatchingForDate, slotCycleWarning, isMediatorOnWorkedPeriod } from '../src/domain/cycle-display';
 import { parseLocalDate } from '../src/domain/models';
 import type { CycleWeek, CycleWeekDay, Mediator, WorkCycle } from '../src/domain/types';
 
@@ -211,5 +211,53 @@ describe('slotCycleWarning', () => {
 
   it('returns no warning for a slot on a worked day at the exact range bounds', () => {
     expect(slotCycleWarning(med(), [workedTuesday()], TUE_W41, '09:30', '18:00')).toBe('');
+  });
+});
+
+// ---- isMediatorOnWorkedPeriod (availability cause: cycle period) -------------
+// Decision 2026-10-04: assigning a mediator OUTSIDE their worked period must
+// surface as an availability conflict (like absence/overlap) in the day and
+// weekly views — status « Indisponible ». Both cycle cases count: the day is
+// not a worked day, or the slot's hours fall outside the worked range.
+describe('isMediatorOnWorkedPeriod', () => {
+  const workedTuesday = () => mkCycle([mkWeek('w1', 'S1', { 2: ['09:30', '18:00'] })]);
+  const med = () => mkMediator({ activeCycleId: 'cyc_1' });
+
+  it('returns true for a slot inside the worked range on a worked day', () => {
+    expect(isMediatorOnWorkedPeriod(med(), [workedTuesday()], TUE_W41, '10:00', '12:00')).toBe(true);
+  });
+
+  it('returns true at the exact worked-range bounds', () => {
+    expect(isMediatorOnWorkedPeriod(med(), [workedTuesday()], TUE_W41, '09:30', '18:00')).toBe(true);
+  });
+
+  it('returns false when the slot starts before the worked range', () => {
+    expect(isMediatorOnWorkedPeriod(med(), [workedTuesday()], TUE_W41, '08:00', '09:00')).toBe(false);
+  });
+
+  it('returns false when the slot ends after the worked range', () => {
+    expect(isMediatorOnWorkedPeriod(med(), [workedTuesday()], TUE_W41, '17:00', '19:00')).toBe(false);
+  });
+
+  it('returns false when the slot straddles the end of the worked range', () => {
+    expect(isMediatorOnWorkedPeriod(med(), [workedTuesday()], TUE_W41, '17:30', '18:30')).toBe(false);
+  });
+
+  it('returns false on a non-worked day even inside usual hours', () => {
+    expect(isMediatorOnWorkedPeriod(med(), [workedTuesday()], WED_W41, '10:00', '12:00')).toBe(false);
+  });
+
+  it('returns true for a mediator without a cycle (no cycle = no constraint)', () => {
+    expect(isMediatorOnWorkedPeriod(mkMediator(), [], TUE_W41, '08:00', '09:00')).toBe(true);
+  });
+
+  it('respects the rotated cycle week (W41 → S2 hours)', () => {
+    const cycle = mkCycle([
+      mkWeek('w1', 'S1', { 2: ['09:30', '18:00'] }),
+      mkWeek('w2', 'S2', { 2: ['10:00', '18:30'] }),
+    ]);
+    // S2 starts at 10:00 — a 09:00 slot on W41 is outside the rotated range
+    expect(isMediatorOnWorkedPeriod(med(), [cycle], TUE_W41, '09:00', '10:00')).toBe(false);
+    expect(isMediatorOnWorkedPeriod(med(), [cycle], TUE_W41, '10:00', '12:00')).toBe(true);
   });
 });

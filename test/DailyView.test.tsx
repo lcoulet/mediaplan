@@ -1013,4 +1013,77 @@ describe('DailyView', () => {
     fireEvent.change(input, { target: { value: '2026-10-08' } });
     expect(screen.getAllByText(/jeudi 8 octobre/i).length).toBeGreaterThan(0);
   });
+
+  // ---- Worked-period conflict marker (decision 2026-10-04) ---------------
+  // A slot assigned outside the mediator's worked period (non-worked day of
+  // the cycle, or hours outside the worked range) shows the « Indisponible »
+  // badge + the conflict outline, like an absence/overlap conflict.
+
+  it('marks a slot OUTSIDE the worked range with the Indisponible badge', () => {
+    const withCycle: AppData = {
+      ...mockData,
+      cycles: [{
+        id: 'cyc1', mediatorId: 'm1', anchorIsoWeek: '2026-W38', forcedWeeks: {},
+        weeks: [{
+          id: 'w1', name: 'S1',
+          days: [
+            { day: 1 }, { day: 2 }, { day: 3 }, { day: 4 }, { day: 5 },
+            { day: 6, startTime: '10:00', endTime: '11:00' }, // Saturday 10:00-11:00
+            { day: 7 },
+          ],
+        }],
+      }],
+    };
+    // m1 gets an active cycle; slot s1 is 10:00-12:00 on Saturday 2026-09-19
+    // -> 12:00 ends AFTER the worked range 10:00-11:00 → conflict
+    withCycle.mediators = withCycle.mediators.map((m) => (m.id === 'm1' ? { ...m, activeCycleId: 'cyc1' } : m));
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(withCycle)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+    const slotEl = container.querySelector('.daily-slot.assigned')!;
+    expect(slotEl).toBeTruthy();
+    expect(slotEl.className).toContain('slot-conflict');
+    expect(slotEl.textContent).toContain('Indisponible');
+  });
+
+  it('does NOT mark a slot inside the worked range', () => {
+    const withCycle: AppData = {
+      ...mockData,
+      cycles: [{
+        id: 'cyc1', mediatorId: 'm1', anchorIsoWeek: '2026-W38', forcedWeeks: {},
+        weeks: [{
+          id: 'w1', name: 'S1',
+          days: [
+            { day: 1 }, { day: 2 }, { day: 3 }, { day: 4 }, { day: 5 },
+            { day: 6, startTime: '09:00', endTime: '18:00' }, // covers s1 10:00-12:00
+            { day: 7 },
+          ],
+        }],
+      }],
+    };
+    withCycle.mediators = withCycle.mediators.map((m) => (m.id === 'm1' ? { ...m, activeCycleId: 'cyc1' } : m));
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(withCycle)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+    const slotEl = container.querySelector('.daily-slot.assigned')!;
+    expect(slotEl).toBeTruthy();
+    expect(slotEl.className).not.toContain('slot-conflict');
+    expect(slotEl.textContent).not.toContain('Indisponible');
+  });
 });

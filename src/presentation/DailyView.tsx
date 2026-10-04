@@ -10,8 +10,9 @@ import { useElementWidth, pxPerHourFromWidth } from './useElementWidth';
 import { computeParallelLanes } from '../domain/parallel-lanes';
 import { getDynamicMasking, setDynamicMasking } from '../infrastructure/ui-settings';
 import { mediatorsForPrint } from '../domain/print-selection';
-import { getPillsForMediator, hatchingForDate } from '../domain/cycle-display';
+import { getPillsForMediator, hatchingForDate, isMediatorOnWorkedPeriod } from '../domain/cycle-display';
 import { getWorkedHoursForDate } from '../domain/cycles';
+import { parseLocalDate } from '../domain/models';
 import { spaceForSlot, blockTextColor, legendSpacesForDay } from '../domain/space-display';
 import { offerShortLabel } from '../domain/spaces';
 import { SECUTIX_SPACE_COLOR } from '../domain/spaces';
@@ -899,6 +900,21 @@ export default function DailyView() {
                     const isImported = slot.origin === 'imported';
                     const space = spaceStyleFor(slot, offer);
 
+                    // Worked-period conflict (decision 2026-10-04): the slot
+                    // is assigned outside the mediator's worked period
+                    // (non-worked day of the cycle, or hours outside the
+                    // worked range) — same visual severity as an absence or
+                    // overlap conflict, non-blocking (the coordinator can
+                    // keep the exception).
+                    const offWorkedPeriod = !isMediatorOnWorkedPeriod(
+                      mediator, data.cycles, parseLocalDate(slot.date), slot.startTime, slot.endTime
+                    );
+                    const overlapConflict = data.slots.some(s =>
+                      s.id !== slot.id && s.date === slot.date &&
+                      s.mediatorIds.includes(mediator.id) &&
+                      slot.startTime < s.endTime && s.startTime < slot.endTime
+                    );
+
                     // Total block = setup + booking + teardown.
                     // Durations: slot values override offer values (per-slot editable)
                     const total = getSlotTotalRange(slot, offer);
@@ -919,7 +935,7 @@ export default function DailyView() {
                     return (
                       <div
                         key={slot.id}
-                        className={`daily-slot assigned${space.spaceClass}${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}`}
+                        className={`daily-slot assigned${space.spaceClass}${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}${offWorkedPeriod || overlapConflict ? ' slot-conflict' : ''}`}
                         style={{
                           left: `${totalLeft}px`,
                           width: `${totalWidth}px`,
@@ -933,7 +949,7 @@ export default function DailyView() {
                         draggable
                         onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
                         onDragEnd={handleDragEnd}
-                        title={`${formatSlotBookingSummary(slot, offer)}`}
+                        title={`${formatSlotBookingSummary(slot, offer)}${offWorkedPeriod ? '\n🚫 Indisponible : hors période travaillée du cycle' : ''}${overlapConflict ? '\n⚠️ Conflit horaire' : ''}`}
                       >
                         {hasSetup && (
                           <div
@@ -943,6 +959,9 @@ export default function DailyView() {
                         )}
                         <div className="slot-time">{slot.startTime} – {slot.endTime}</div>
                         {renderBlockLabel(offer)}
+                        {offWorkedPeriod && (
+                          <span className="slot-conflict-badge" title="Hors période travaillée du cycle (jour non travaillé ou hors plage horaire)">🚫 Indisponible</span>
+                        )}
                         {hasTeardown && (
                           <div
                             className="slot-boundary teardown-boundary"

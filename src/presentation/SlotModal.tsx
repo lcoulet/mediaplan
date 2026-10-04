@@ -13,7 +13,7 @@ import {
   mediatorLearningOffer,
 } from '../domain/models';
 import { canAssignSlotOnDate } from '../domain/hours';
-import { slotCycleWarning } from '../domain/cycle-display';
+import { slotCycleWarning, isMediatorOnWorkedPeriod } from '../domain/cycle-display';
 import { parseLocalDate } from '../domain/models';
 import type { Slot } from '../domain/types';
 import Modal from './Modal';
@@ -178,6 +178,9 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
     return state.data.mediators.map((m) => {
       const overlap = hasMediatorOverlap(m.id, form.date, form.startTime, form.endTime, state.data.slots, form.id);
       const absent = !isMediatorAvailable(m.id, form.date, form.startTime, form.endTime, state.data.absences, state.data.halfDayConfig);
+      // Worked-period conflict (decision 2026-10-04): outside the cycle's
+      // worked period (non-worked day or hours outside the worked range).
+      const offWorkedPeriod = !isMediatorOnWorkedPeriod(m, state.data.cycles, parseLocalDate(form.date), form.startTime, form.endTime);
       const confirmed = mediatorConfirmedForOffer(m, offerId);
       const learning = mediatorLearningOffer(m, offerId);
 
@@ -194,6 +197,7 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
       if (museumClosed) label += ` — 🚫 ${museumClosed}`;
       else if (overlap) label += ' — Conflit horaire';
       else if (absent) label += ' — Absent';
+      else if (offWorkedPeriod) label += ' — Indisponible (hors période travaillée)';
 
       const competenceRank = confirmed ? 0 : learning ? 1 : 2;
 
