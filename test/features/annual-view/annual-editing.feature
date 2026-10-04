@@ -7,8 +7,12 @@
 #   test/features/cycles/cycle-model.feature (présence dérivée du cycle).
 # Décisions design arrêtées le 2026-10-03 :
 #   1. Un clic sur une cellule de demi-journée ouvre un MENU CONTEXTUEL
-#      avec tous les codes (CA, RHS, AM, TELE, amgt, Réf. WE, CEX, TPT,
-#      texte libre, effacer / retour au dérivé).
+#      avec tous les codes (CA, RHS, AM, TELE, amgt, Souhait, Réf. WE,
+#      CEX, TPT, texte libre, effacer / retour au dérivé). « Souhait »
+#      (demande de congé en attente, type leave_request) s'affiche en
+#      BLEU dans la cellule, distinct du congé confirmé en jaune ; les
+#      couleurs sont celles de la palette mixte Excel + AA (décision
+#      palette 2026-10-03 : rose TELE, violet amgt, vert JDM).
 #   2. MODE PEINTURE : une valeur choisie une fois, puis chaque clic sur
 #      une autre cellule duplique la valeur (clic par clic, PAS de
 #      glisser-déposer) ; chaque cellule doit être cliquée individuellement.
@@ -39,7 +43,7 @@ Fonctionnalité: Tableau de fonctionnement — édition de la grille annuelle
   Scénario: Un clic sur une cellule ouvre le menu contextuel des codes
     Quand le coordinateur clique sur la cellule du matin du mardi 9 juin 2026 d'Alice
     Alors un menu contextuel s'ouvre pour cette demi-journée
-    Et le menu propose les codes « CA », « RHS », « AM », « TELE », « amgt », « Réf. WE », « CEX » et « TPT »
+    Et le menu propose les codes « CA », « RHS », « AM », « TELE », « amgt », « Souhait », « Réf. WE », « CEX » et « TPT »
     Et le menu propose une saisie de texte libre
     Et le menu propose l'effacement « retour au dérivé »
 
@@ -60,7 +64,13 @@ Fonctionnalité: Tableau de fonctionnement — édition de la grille annuelle
   Scénario: Télétravail depuis le menu contextuel
     Quand le coordinateur clique sur la cellule du matin du mardi 9 juin 2026 d'Alice
     Et il choisit « TELE » dans le menu contextuel
-    Alors la cellule est grise et affiche « TELE »
+    Alors la cellule est rose et affiche « TELE »
+
+  Scénario: Souhait de congé depuis le menu contextuel
+    Quand le coordinateur clique sur la cellule du matin du mardi 9 juin 2026 d'Alice
+    Et il choisit « Souhait » dans le menu contextuel
+    Alors la cellule est bleue et affiche « souhait CA »
+    Et le souhait est enregistré avec le type existant « leave_request », distinct du congé confirmé en jaune
 
   Scénario: Éditer une cellule de l'après-midi est indépendant du matin
     Quand le coordinateur choisit « AM » pour l'après-midi du mardi 9 juin 2026 d'Alice
@@ -141,7 +151,7 @@ Fonctionnalité: Tableau de fonctionnement — édition de la grille annuelle
   Scénario: Le mode peinture prend le pas sur le menu contextuel
     Etant donné le mode peinture actif avec la valeur « TELE »
     Quand le coordinateur clique sur la cellule du matin du mercredi 10 juin 2026 d'Alice
-    Alors la cellule reçoit « TELE » en gris
+    Alors la cellule reçoit « TELE » en rose
     Et le menu contextuel ne s'ouvre pas, le mode peinture étant actif
 
   Scénario: La touche Échap quitte le mode peinture

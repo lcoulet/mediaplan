@@ -210,6 +210,31 @@ import/export mode (shared JSON.gz files) until tenant access is sorted.
   labels (commit 45a3475)
 - [x] Unassigned count is shown in the daily view lane label (commit 5c7ac6d)
 
+**Cell palette (decided 2026-10-03, mixed Excel + accessibility):**
+- [x] REAL EXCEL COLORS ASSAYED (2026-10-03, from the confidential
+      reference file, analyzed locally): violet #CC99FF = "amgt JJ/MM"
+      (punctual working-day arrangement), blue #99CCFF = souhait
+      CA/RHS/RTT (pending leave requests), pink #FF8080 = TELE
+      (télétravail), green #00FF00/#99CC00 = JDM ("Jardins du muséum"),
+      orange #FF9900 = missions/events + Saturday counters,
+      red = grève/syndicat, yellow = absences, black = TP/CA legacy
+- [x] MIX DECIDED (2026-10-03, with Loic): keep the Excel HUES, adjust
+      until WCAG AA (1.4.3 text ≥ 4.5:1 with white text; 1.4.11 fill vs
+      white cells ≥ 3:1). Final palette (contrasts computed by
+      contrast_palette_mix.py): violet amgt #7B5AA0 = 5.51, blue souhait
+      #4178AB = 4.67, pink TELE #B85555 = 4.70, green JDM #2F7A4A = 5.25;
+      kept from the previous pass: orange derived #C67A33 (3.37,
+      1.4.11), yellow absence #F9A825 + #2b2b2b (7.18), orange mission
+      #d68c45 + #3a2408 (5.36), red grève/syndicat #c0392b + white (5.44),
+      museum-closed hatch (3.17, 1.4.11)
+- [x] SOUHAIT = a distinct STATUS, not a new absence type: it reuses the
+      existing AbsenceType `leave_request` (src/domain/types.ts) and
+      appears in the annual view context menu as « Souhait » (wish /
+      pending leave request), visually BLUE, distinct from confirmed
+      absences (yellow)
+- [x] JDM = a MISSION (Jardins du muséum), rendered GREEN — not an
+      absence; offered in the annual context-menu free-text suggestions
+
 **Work cycles (decided 2026-09-25, refined 2026-09-26):**
 - [x] A mediator = ONE TO SEVERAL cycle weeks (S1, S2... rotating)
 - [x] Cycle copy/paste: a button copies a cycle definition as JSON to the

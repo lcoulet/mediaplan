@@ -128,8 +128,11 @@ tr.closed .date { background: #fdecea; }
 .c { width: 30px; min-width: 30px; max-width: 30px; height: 28px; padding: 1px 2px; border-left: 1px solid var(--color-border-light); font-size: 10px; font-weight: 700; text-align: center; vertical-align: middle; position: relative; overflow: hidden; white-space: nowrap; }
 .c.p { background: #C67A33; }
 .c.y { background: #F9A825; color: #2b2b2b; }
-.c.g { background: #6b6b6b; color: #fff; }
+.c.g { background: #B85555; color: #fff; }
 .c.m { background: #d68c45; color: #3a2408; font-size: 9px; }
+.c.v { background: #7B5AA0; color: #fff; }
+.c.s { background: #4178AB; color: #fff; }
+.c.j { background: #2F7A4A; color: #fff; }
 .c.r { background: #c0392b; color: #fff; }
 .c.n { background: #fff; }
 .c.cl { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #8a8a8a 5px 7px); }
@@ -155,6 +158,9 @@ body.paintmode .c.y { background: #F9A825; }
   font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px; cursor: pointer; font-family: inherit;
 }
 .code-chip:hover, .code-chip:focus-visible { border-color: var(--color-primary); background: #eef5f1; }
+/* « Souhait » chip: blue (pending leave request, leave_request) — WCAG 4.67 with white text */
+.code-chip.chip-souhait { background: #4178AB; border-color: #4178AB; color: #fff; }
+.code-chip.chip-souhait:hover, .code-chip.chip-souhait:focus-visible { border-color: #2c5d8a; background: #356694; }
 .menu-free { padding: 8px 10px; border-bottom: 1px solid var(--color-border-light); }
 .menu-free label { display: block; font-size: 11px; color: var(--color-text-muted); margin-bottom: 3px; }
 .free-input { display: flex; gap: 5px; }
@@ -355,6 +361,7 @@ body.paintmode .c.y { background: #F9A825; }
           <button class="code-chip" type="button" role="menuitem">AM</button>
           <button class="code-chip" type="button" role="menuitem">TELE</button>
           <button class="code-chip" type="button" role="menuitem">amgt</button>
+          <button class="code-chip chip-souhait" type="button" role="menuitem" title="Souhait de congé en attente (leave_request) — distinct du congé confirmé en jaune">Souhait</button>
           <button class="code-chip" type="button" role="menuitem">Réf. WE</button>
           <button class="code-chip" type="button" role="menuitem">CEX</button>
           <button class="code-chip" type="button" role="menuitem">TPT</button>
@@ -371,6 +378,7 @@ body.paintmode .c.y { background: #F9A825; }
             <button class="code-chip" type="button" title="Arrêt maladie">AM</button>
             <button class="code-chip" type="button" title="Congé exceptionnel">CEX</button>
             <button class="code-chip" type="button" title="Aménagement">amgt</button>
+            <button class="code-chip" type="button" title="Mission Jardins du muséum">JDM</button>
           </div>
         </div>
         <div class="menu-foot">
@@ -391,6 +399,7 @@ body.paintmode .c.y { background: #F9A825; }
           <button class="code-chip" type="button" role="menuitem">AM</button>
           <button class="code-chip" type="button" role="menuitem">TELE</button>
           <button class="code-chip" type="button" role="menuitem">amgt</button>
+          <button class="code-chip chip-souhait" type="button" role="menuitem" title="Souhait de congé en attente (leave_request) — distinct du congé confirmé en jaune">Souhait</button>
           <button class="code-chip" type="button" role="menuitem">Réf. WE</button>
           <button class="code-chip" type="button" role="menuitem">CEX</button>
           <button class="code-chip" type="button" role="menuitem">TPT</button>
@@ -405,12 +414,12 @@ body.paintmode .c.y { background: #F9A825; }
 
   <!-- Paint-mode annotation context -->
   <div class="mockup-caption" aria-hidden="true">
-    <div class="annotation"><strong>(1) Menu contextuel :</strong> un clic sur une cellule de demi-journée ouvre le menu — tous les codes (CA, RHS, AM, TELE, amgt, Réf. WE, CEX, TPT), texte libre avec codes décodés en suggestions (« Stop Motion » s'afficherait en orange de mission), « Effacer (retour au dérivé) » rétablit la présence dérivée, « Peindre ce code » active le mode peinture. Items focalisables (Tab / Maj+Tab), Échap ferme le menu (ou un clic hors du menu). Abréviations dans les cellules — le survol (title) affiche le texte complet.</div>
+    <div class="annotation"><strong>(1) Menu contextuel :</strong> un clic sur une cellule de demi-journée ouvre le menu — tous les codes (CA, RHS, AM, TELE, amgt, Souhait, Réf. WE, CEX, TPT), texte libre avec codes décodés en suggestions (« Stop Motion » s'afficherait en orange de mission), « Effacer (retour au dérivé) » rétablit la présence dérivée, « Peindre ce code » active le mode peinture. « Souhait » (demande de congé en attente — type leave_request) s'affiche en BLEU dans la cellule, distinct du congé confirmé en jaune ; l'aménagement « amgt JJ/MM » s'affiche en VIOLET ; JDM (mission Jardins du muséum) est proposé dans les suggestions du texte libre et s'affiche en VERT. Items focalisables (Tab / Maj+Tab), Échap ferme le menu (ou un clic hors du menu). Abréviations dans les cellules — le survol (title) affiche le texte complet.</div>
     <div class="annotation"><strong>(2) Mode peinture :</strong> bannière « Peinture : CA — cliquez les cellules à remplir, Échap pour quitter » ; curseur pinceau sur les cellules, menu contextuel désactivé. Chaque clic peint UNE cellule, sans glisser-déposer ; le 09/06 et le 10/06 matins + après-midi d'Alice sont peints CA. Peindre fonctionne aussi sur les autres médiateurs (Bob sans cycle inclus) ; chaque cellule peinte = UNE opération annulable. Un clic hors de la grille quitte aussi le mode peinture.</div>
     <div class="annotation"><strong>(3) Jour de fermeture :</strong> alerte ambre NON BLOQUANTE « Le musée est fermé ce jour-là » dans le menu (25/12, 01/01, 01/05) — la saisie reste possible.</div>
     <div class="annotation"><strong>(4) Fériés :</strong> panneau « Fériés 2026 » — liste française par défaut en puces ; + Ajouter une date (ex. 10/08), ✕ retire (ex. 14 juillet barré), dérogations propres à l'année sélectionnée.</div>
     <div class="annotation"><strong>(5) Annuler / rétablir :</strong> ↶ actif après chaque saisie ou cellule peinte (une opération par cellule), ↷ rétablit ; le changement d'année ne touche jamais les données des autres années (absences stockées par date et par demi-journée).</div>
-    <div class="annotation"><strong>Contrastes (WCAG 1.4.3 / 1.4.11) :</strong> bannière peinture #d68c45/#3a2408 = 5,36 ; alerte ambre #fef5e7/#8a4d10 = 6,17 ; jaune #F9A825/#2b2b2b = 7,18 ; gris #6b6b6b/blanc = 5,33 ; rouge #c0392b/blanc = 5,44 ; orange dérivée #C67A33/blanc = 3,37 (1.4.11) ; hachures #8a8a8a/#f5f5f5 = 3,17 (1.4.11) ; férié retiré #5f5f5f/#fafafa = 6,12.</div>
+    <div class="annotation"><strong>Contrastes (WCAG 1.4.3 / 1.4.11, palette mixte Excel + AA, décision 2026-10-03) :</strong> bannière peinture #d68c45/#3a2408 = 5,36 ; alerte ambre #fef5e7/#8a4d10 = 6,17 ; jaune #F9A825/#2b2b2b = 7,18 ; rose TELE #B85555/blanc = 4,70 ; violet amgt #7B5AA0/blanc = 5,51 ; bleu souhait #4178AB/blanc = 4,67 ; vert JDM #2F7A4A/blanc = 5,25 ; rouge #c0392b/blanc = 5,44 ; orange dérivée #C67A33/blanc = 3,37 (1.4.11) ; hachures #8a8a8a/#f5f5f5 = 3,17 (1.4.11) ; férié retiré #5f5f5f/#fafafa = 6,12. Couleurs assayed du fichier Excel de référence, ajustées AA — calculs dans contrast_palette_mix.py.</div>
   </div>
 </main>
 

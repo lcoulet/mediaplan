@@ -26,11 +26,15 @@
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
   --header-h: 56px;
-  /* Cell palette (contrast computed WCAG 1.4.3 / 1.4.11):
+  /* Cell palette (mixed Excel + AA, decision 2026-10-03; contrasts computed
+     by contrast_palette_mix.py — WCAG 1.4.3 text / 1.4.11 non-text):
      orange derived #C67A33 / #ffffff = 3.37 (≥3:1, WCAG 1.4.11 vs cellule neutre #ffffff et #fafafa = 3.23) — border-only cell, no text
      hatch stripe    #8a8a8a / #f5f5f5 = 3.17 (≥3:1, WCAG 1.4.11) — musée fermé
      yellow absence  #F9A825 / #2b2b2b = 7.18
-     gray TELE       #6b6b6b / #ffffff = 5.33
+     pink TELE       #B85555 / #ffffff = 4.70 — rose (couleur Excel #FF8080, ajustée AA)
+     violet amgt     #7B5AA0 / #ffffff = 5.51 — violet (couleur Excel #CC99FF, ajustée AA)
+     blue souhait    #4178AB / #ffffff = 4.67 — bleu (couleur Excel #99CCFF, ajustée AA)
+     green JDM       #2F7A4A / #ffffff = 5.25 — vert (couleur Excel #99CC00, ajustée AA)
      orange mission  #d68c45 / #3a2408 = 5.36
      red work-abs.   #c0392b / #ffffff = 5.44
      sat badge       #e3efe8 / #1e5536 = 7.38 ; valued #2c6e49 / #fff = 6.12
@@ -85,8 +89,11 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .sw { display: inline-block; width: 26px; height: 14px; border-radius: 3px; border: 1px solid var(--color-border-light); flex-shrink: 0; }
 .sw.p { background: #C67A33; }
 .sw.y { background: #F9A825; }
-.sw.g { background: #6b6b6b; }
+.sw.g { background: #B85555; }
 .sw.m { background: #d68c45; }
+.sw.v { background: #7B5AA0; }
+.sw.s { background: #4178AB; }
+.sw.j { background: #2F7A4A; }
 .sw.r { background: #c0392b; }
 .sw.n { background: #fff; }
 .sw.cl { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #8a8a8a 5px 7px); }
@@ -142,8 +149,11 @@ tr.closed .date { background: #fdecea; }
 }
 .c.p { background: #C67A33; }               /* présence dérivée du cycle — vide (3.37 vs blanc, WCAG 1.4.11) */
 .c.y { background: #F9A825; color: #2b2b2b; } /* absence + code (7.18) */
-.c.g { background: #6b6b6b; color: #fff; }    /* télétravail TELE (5.33) */
+.c.g { background: #B85555; color: #fff; }    /* télétravail TELE — rose (4.70) */
 .c.m { background: #d68c45; color: #3a2408; font-size: 9px; } /* mission / spécial (5.36) */
+.c.v { background: #7B5AA0; color: #fff; }    /* aménagement amgt JJ/MM — violet (5.51) */
+.c.s { background: #4178AB; color: #fff; }    /* souhait CA/RHS/RTT en attente — bleu (4.67) */
+.c.j { background: #2F7A4A; color: #fff; }    /* mission JDM (Jardins du muséum) — vert (5.25) */
 .c.r { background: #c0392b; color: #fff; }    /* grève / syndicat / formation (5.44) */
 .c.n { background: #fff; }                   /* neutre : sans cycle ou jour non travaillé */
 .c.cl { background: repeating-linear-gradient(45deg, #f5f5f5 0 5px, #8a8a8a 5px 7px); } /* musée fermé (3.17, WCAG 1.4.11) */
@@ -235,8 +245,11 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
     <div class="legend-body">
       <span class="lg"><span class="sw p"></span>Orange vide = présence dérivée du cycle (calculée, jamais stockée)</span>
       <span class="lg"><span class="sw y"></span>Jaune + code = absence (CA, RHS, RTT, AM, CET, CEX, TPT, congé parental / maternité / naissance, dispo)</span>
-      <span class="lg"><span class="sw g"></span>Gris + TELE = télétravail</span>
-      <span class="lg"><span class="sw m"></span>Orange + texte = mission / spécial (Réf. WE, amgt JJ/MM, événements)</span>
+      <span class="lg"><span class="sw g"></span>Rose + TELE = télétravail</span>
+      <span class="lg"><span class="sw v"></span>Violet + amgt JJ/MM = aménagement d'un jour travaillé (exception au cycle)</span>
+      <span class="lg"><span class="sw s"></span>Bleu + code = souhait en attente (CA, RHS, RTT — demande non confirmée, distinct du congé posé en jaune)</span>
+      <span class="lg"><span class="sw m"></span>Orange + texte = mission / événement (Réf. WE, stop motion, offre anniv, privatisation)</span>
+      <span class="lg"><span class="sw j"></span>Vert + JDM = mission aux Jardins du muséum (mission, pas une absence)</span>
       <span class="lg"><span class="sw r"></span>Rouge + code = absence liée au travail (grève, syndicat, formation)</span>
       <span class="lg"><span class="sw n"></span>Blanc = neutre (jour non travaillé ou médiateur sans cycle)</span>
       <span class="lg"><span class="sw cl"></span>Hachures = musée fermé (25/12, 01/01, 01/05) — édition en alerte non bloquante</span>
@@ -306,7 +319,7 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
             <td class="c p"></td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
             <td class="c p"></td><td class="c p"></td>
-            <td class="c p"></td><td class="c p"></td>
+            <td class="c s" style="font-size: 9px;" title="Souhait de congé annuel (CA) — demande en attente (leave_request)">souhait CA</td><td class="c p"></td>
           </tr>
           <tr>
             <th class="date" scope="row"><span class="d-day">jeu. 01/10</span></th>
@@ -320,8 +333,8 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
           <tr>
             <th class="date" scope="row"><span class="d-day">ven. 02/10</span></th>
             <td class="c p"></td><td class="c p"></td>
-            <td class="c m" title="Aménagement 02/10">amgt 02/10</td><td class="c p"></td>
-            <td class="c p"></td><td class="c p"></td>
+            <td class="c v" title="Aménagement 02/10 (exception au cycle)">amgt 02/10</td><td class="c p"></td>
+            <td class="c j" title="Mission Jardins du muséum (JDM)">JDM</td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c y" title="Congé exceptionnel (CEX)">CEX</td><td class="c p"></td>
@@ -475,7 +488,7 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
           <tr>
             <th class="date" scope="row"><span class="d-day">jeu. 07/01/27</span></th>
             <td class="c p"></td><td class="c p"></td>
-            <td class="c m" title="Aménagement 07/01">amgt 07/01</td><td class="c p"></td>
+            <td class="c v" title="Aménagement 07/01 (exception au cycle)">amgt 07/01</td><td class="c p"></td>
             <td class="c p"></td><td class="c p"></td>
             <td class="c n"></td><td class="c n"></td>
             <td class="c p"></td><td class="c p"></td>
@@ -532,7 +545,7 @@ body.nocycle .agrid th:nth-child(5) { box-shadow: inset 0 0 0 2px var(--color-pr
     <div class="annotation"><strong>Présence dérivée :</strong> l'orange vide est CALCULÉ depuis le cycle (jamais stocké) ; effacer une cellule revient à l'état dérivé. Bob (sans cycle) : cellules neutres, aucune pilule de cycle. La semaine de cycle (S1, S2…) est affichée une fois par semaine ISO, dans la zone de la cellule du lundi, valable pour toute la semaine.</div>
     <div class="annotation"><strong>Compteur de samedis :</strong> calculé automatiquement (samedis de l'année avec créneaux), affiché sur les lignes de samedi, remis à zéro chaque année ; il alimente le seuil des samedis valorisés (ex. ×10 vert = 10e samedi valorisé, valuedSaturdayThreshold). Aucune colonne de comptage (ratio, totaux) — décision du 2026-10-03.</div>
     <div class="annotation"><strong>Solde trimestriel :</strong> badge « reliquat / déficit » pour les médiateurs avec un aménagement (Karim, temps partiel) ; aucun solde pour les autres. Fériés : liste française par défaut, modifiable par dérogation et par année (voir la maquette d'édition). Export Excel au format exact de la table de référence ; pas d'impression/PDF en v1.</div>
-    <div class="annotation"><strong>Contrastes (WCAG 1.4.3 / 1.4.11) :</strong> jaune #F9A825/#2b2b2b = 7,18 ; orange mission #d68c45/#3a2408 = 5,36 ; gris #6b6b6b/blanc = 5,33 ; rouge #c0392b/blanc = 5,44 ; badges #e3efe8/#1e5536 = 7,38 et #fdecea/#c0392b = 4,76 ; alerte ambre #fef5e7/#8a4d10 = 6,17 ; orange dérivée #C67A33/blanc = 3,37 (1.4.11 vs cellule neutre) ; hachures #8a8a8a/#f5f5f5 = 3,17 (1.4.11).</div>
+    <div class="annotation"><strong>Contrastes (WCAG 1.4.3 / 1.4.11, palette mixte Excel + AA, décision 2026-10-03) :</strong> jaune #F9A825/#2b2b2b = 7,18 ; violet amgt #7B5AA0/blanc = 5,51 ; bleu souhait #4178AB/blanc = 4,67 ; rose TELE #B85555/blanc = 4,70 ; vert JDM #2F7A4A/blanc = 5,25 ; orange mission #d68c45/#3a2408 = 5,36 ; rouge #c0392b/blanc = 5,44 ; badges #e3efe8/#1e5536 = 7,38 et #fdecea/#c0392b = 4,76 ; alerte ambre #fef5e7/#8a4d10 = 6,17 ; orange dérivée #C67A33/blanc = 3,37 (1.4.11 vs cellule neutre) ; hachures #8a8a8a/#f5f5f5 = 3,17 (1.4.11). Couleurs assayed du fichier Excel de référence (violet #CC99FF = amgt, bleu #99CCFF = souhaits, rose #FF8080 = TELE, vert #99CC00 = JDM), ajustées pour l'accessibilité — calculs dans contrast_palette_mix.py.</div>
   </div>
 </main>
 

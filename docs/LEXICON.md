@@ -106,8 +106,20 @@ is not needed. Tracks:
 
 ### Absence
 A mediator's unavailability. Has: type (leave, mission, training, sick,
-other), date range, and period (full-day, morning, afternoon).
+other, leave_request), date range, and period (full-day, morning, afternoon).
 Absences are non-interactive on the calendar (display only).
+
+### Souhait (pending leave request)
+A wished-for but not-yet-confirmed leave (CA, RHS, RTT...), recorded in the
+annual view ("tableau de fonctionnement") as a distinct blue cell, visually
+separate from the confirmed leave (yellow). Reuses the existing AbsenceType
+`leave_request` (src/domain/types.ts) — no new type is introduced. In the
+annual view context menu it appears as « Souhait » / « demande en attente ».
+
+### JDM (Jardins du muséum)
+"Jardins du muséum" — a MISSION (not an absence) at the museum gardens,
+rendered as a green cell in the annual view. Offered among the free-text
+suggestions of the annual grid context menu.
 
 ### Work Cycle (Cycle de travail)
 A mediator's recurring weekly schedule pattern. A mediator has one

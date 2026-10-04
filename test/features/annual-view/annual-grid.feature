@@ -17,11 +17,20 @@
 #      semaine ISO.
 #   4. La présence orange est DÉRIVÉE du cycle (calculée, jamais stockée —
 #      src/domain/cycles.ts) ; effacer une cellule revient à l'état dérivé.
-#   5. Couleurs : orange vide = présence dérivée du cycle ; jaune + code
+#   5. Couleurs (palette mixte Excel + AA, décision 2026-10-03) : orange
+#      vide = présence dérivée du cycle ; jaune + code
 #      (CA, RHS, RTT, AM, CET, CEX, congé parental/maternité/naissance,
-#      dispo, TPT) = absence ; gris + TELE = télétravail ; orange + texte
-#      (Réf. WE, missions, événements, amgt JJ/MM) = mission / spécial ;
+#      dispo, TPT) = absence ; rose + TELE = télétravail ; violet + amgt
+#      JJ/MM = aménagement d'un jour travaillé ; bleu + code = souhait en
+#      attente (CA/RHS/RTT — type leave_request, distinct du congé
+#      confirmé en jaune) ; vert + JDM = mission Jardins du muséum ;
+#      orange + texte (Réf. WE, missions, événements) = mission / spécial ;
 #      rouge + code (grève, syndicat, formation) = absence liée au travail.
+#      Les teintes viennent du fichier Excel de référence (violet #CC99FF =
+#      amgt, bleu #99CCFF = souhaits, rose #FF8080 = TELE, vert #99CC00 =
+#      JDM), assombries pour la conformité WCAG (contrastes calculés dans
+#      contrast_palette_mix.py : violet #7B5AA0 = 5,51 ; bleu #4178AB =
+#      4,67 ; rose #B85555 = 4,70 ; vert #2F7A4A = 5,25).
 #   6. Jours de fermeture du musée (25/12, 01/01, 01/05) surlignés.
 #   7. Compteur de samedis travaillés CALCULÉ automatiquement (samedis de
 #      l'année avec créneaux), affiché dans les lignes de samedi, remis à
@@ -119,14 +128,29 @@ Fonctionnalité: Tableau de fonctionnement — grille annuelle des médiateurs
     Alors la cellule du 10 juin 2026 matin d'Alice est jaune et affiche « CA »
     Et la cellule de l'après-midi du même jour reste à la présence dérivée
 
-  Scénario: Télétravail gris avec « TELE »
+  Scénario: Télétravail rose avec « TELE »
     Etant donné un télétravail posé sur le matin du 11 juin 2026 pour Alice
-    Alors la cellule du 11 juin 2026 matin d'Alice est grise et affiche « TELE »
+    Alors la cellule du 11 juin 2026 matin d'Alice est rose et affiche « TELE »
 
   Scénario: Mission ou spécial orange avec texte
     Etant donné la mention « Réf. WE » posée sur le samedi 13 juin 2026 pour Alice
     Alors la cellule du 13 juin 2026 matin d'Alice est orange et affiche « Réf. WE »
-    Et une mention « amgt 21/06 » s'affiche en orange avec son texte dans la cellule concernée
+
+  Scénario: Aménagement violet avec « amgt JJ/MM »
+    Etant donné un aménagement « amgt 21/06 » posé sur le matin du 21 juin 2026 pour Alice
+    Alors la cellule du 21 juin 2026 matin d'Alice est violette et affiche « amgt 21/06 »
+    Et la couleur violette est distincte de l'orange des missions et de l'orange de présence dérivée
+
+  Scénario: Souhait de congé bleu, distinct du congé confirmé en jaune
+    Etant donné un souhait « CA » en attente posé sur le matin du 16 juin 2026 pour Alice
+    Alors la cellule du 16 juin 2026 matin d'Alice est bleue et affiche « souhait CA »
+    Et la cellule se distingue du congé confirmé, qui s'affiche en jaune
+    Et le souhait est enregistré avec le type existant « leave_request »
+
+  Scénario: Mission JDM verte aux Jardins du muséum
+    Etant donné la mission « JDM » posée sur le matin du 18 juin 2026 pour Alice
+    Alors la cellule du 18 juin 2026 matin d'Alice est verte et affiche « JDM »
+    Et JDM est une mission aux Jardins du muséum, pas une absence
 
   Scénario: Absence liée au travail rouge avec code
     Etant donné une formation posée sur le matin du 9 juin 2026 pour Alice
