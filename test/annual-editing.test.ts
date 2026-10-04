@@ -12,6 +12,7 @@ import {
   annualHolidayState,
   deriveAnnualCell,
   halfDayOfAbsence,
+  annualCodeCatalog,
 } from '../src/domain/annual-view';
 import {
   setHalfDayException,
@@ -20,6 +21,8 @@ import {
   addHolidayDerogation,
   removeHolidayDerogation,
   resetHolidayDerogation,
+  annualMenuChoice,
+  annualFreeTextEntry,
 } from '../src/domain/annual-editing';
 
 // ---- Test helpers ------------------------------------------------------
@@ -335,5 +338,65 @@ describe('half-day ops integrate with the slice-1 cell derivation', () => {
     expect(deriveAnnualCell('med_bob', d('2026-06-09'), 'morning', { absences })?.state).toBe('absence');
     absences = clearHalfDayException(absences, 'med_bob', '2026-06-09', 'morning');
     expect(deriveAnnualCell('med_bob', d('2026-06-09'), 'morning', { absences })).toBeNull();
+  });
+});
+
+// ---- Context menu choice mapping (slice 4: cell editing UI) -----------------
+//
+// The context menu picks a code chip or free text; the domain maps that
+// choice onto the stored absence fields (type + notes) so the write op and
+// the paint value share ONE mapping (spec: annual-editing.feature, menu
+// contextuel + mode peinture scenarios).
+
+describe('annualMenuChoice', () => {
+  it('maps every catalog code onto its absence type and code notes', () => {
+    const catalog = annualCodeCatalog();
+    for (const entry of catalog) {
+      const choice = annualMenuChoice(entry.code);
+      expect(choice, entry.code).not.toBeNull();
+      expect(choice!.type, entry.code).toBe(entry.absenceType);
+      expect(choice!.notes, entry.code).toBe(entry.code);
+    }
+  });
+
+  it('maps the « Souhait » chip onto the pending leave_request type (distinct from confirmed leave)', () => {
+    const choice = annualMenuChoice('Souhait');
+    expect(choice).toEqual({ type: 'leave_request', notes: 'souhait CA' });
+  });
+
+  it('returns null for an unknown code — the UI must not invent a mapping', () => {
+    expect(annualMenuChoice('INCONNU')).toBeNull();
+  });
+});
+
+describe('annualFreeTextEntry', () => {
+  it('stores known codes as themselves (decoded suggestion picked as free text)', () => {
+    expect(annualFreeTextEntry('CA')).toEqual({ type: 'leave', notes: 'CA' });
+    expect(annualFreeTextEntry('JDM')).toEqual({ type: 'mission', notes: 'JDM' });
+  });
+
+  it('stores arbitrary text as a mission with the text as notes', () => {
+    expect(annualFreeTextEntry('Stop Motion')).toEqual({ type: 'mission', notes: 'Stop Motion' });
+  });
+
+  it('trims the text and refuses empty input (null)', () => {
+    expect(annualFreeTextEntry('  ')).toBeNull();
+    expect(annualFreeTextEntry(' CA ')).toEqual({ type: 'leave', notes: 'CA' });
+  });
+});
+
+// Same-day cell exceptions must visually shadow a covering multi-day range:
+// the cell write op never touches ranges, so the READ side must prefer the
+// exception (spec: presence model — cell edits REPLACE the derived display).
+describe('deriveAnnualCell prefers the same-day cell exception over a covering range', () => {
+  it('shows the cell exception (CA) even when a multi-day range covers the date', () => {
+    const range = mkAbsence({ startDate: '2026-06-08', endDate: '2026-06-12', type: 'sick', notes: 'AM' });
+    const cellEntry = mkAbsence({ id: 'abs_cell', startDate: '2026-06-10', endDate: '2026-06-10', halfDay: 'morning', type: 'leave', notes: 'CA' });
+    const cell = deriveAnnualCell('med_alice', d('2026-06-10'), 'morning', { cycle: aliceCycle(), absences: [range, cellEntry] });
+    expect(cell?.state).toBe('absence');
+    expect(cell?.code).toBe('CA');
+    // The afternoon still shows the range
+    const pm = deriveAnnualCell('med_alice', d('2026-06-10'), 'afternoon', { cycle: aliceCycle(), absences: [range, cellEntry] });
+    expect(pm?.code).toBe('AM');
   });
 });

@@ -370,18 +370,36 @@ export function deriveAnnualCell(
   halfDay: 'morning' | 'afternoon',
   inputs: AnnualCellInputs
 ): AnnualCell | null {
-  // Overlay: a stored absence covering this mediator + date + half-day wins
+  // Overlay: a stored absence covering this mediator + date + half-day wins.
+  // A same-day exception (cell-editing scope) takes PRECEDENCE over a
+  // covering multi-day range: cell edits replace the display without ever
+  // rewriting the range itself (the write ops never touch ranges).
+  let range: Absence | null = null;
   for (const absence of inputs.absences) {
     if (absence.mediatorId !== mediatorId) continue;
     const coverage = halfDayOfAbsence(absence, date);
     if (coverage === null) continue;
     if (coverage === 'none' || coverage === halfDay) {
-      return { state: stateForEntry(absence), code: codeForAbsence(absence), absence };
+      // Same-day entries (cell-editing scope) win immediately; a covering
+      // multi-day range is kept as fallback (first match, loop order).
+      if (isSameDayEntry(absence, date)) {
+        return { state: stateForEntry(absence), code: codeForAbsence(absence), absence };
+      }
+      range = absence;
     }
+  }
+  if (range) {
+    return { state: stateForEntry(range), code: codeForAbsence(range), absence: range };
   }
   // Derived presence: the mediator's cycle works this date
   if (inputs.cycle && getWorkedHoursForDate(inputs.cycle, date).worked) {
     return { state: 'presence' };
   }
   return null;
+}
+
+/** True when the absence spans exactly the given date (single-day entry). */
+function isSameDayEntry(absence: Absence, date: Date): boolean {
+  const iso = toIsoDate(date);
+  return absence.startDate === iso && absence.endDate === iso;
 }

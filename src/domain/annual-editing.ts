@@ -1,8 +1,13 @@
-// annual-editing.ts — Annual view (\"tableau de fonctionnement\") domain slice 2:
+// annual-editing.ts — Annual view ("tableau de fonctionnement") domain slices:
 // IMMUTABLE editing operations on the persisted model. Pure functions, no
 // browser APIs; every op returns a new value and never mutates its inputs.
 // Spec: test/features/annual-view/annual-editing.feature (edition + fériés
 // dérogation scenarios). Read-side logic lives in annual-view.ts (slice 1).
+//
+// Slice 4 (cell editing UI) adds the context-menu CHOICE mapping:
+//  - annualMenuChoice: a code chip -> the stored absence fields (type+notes);
+//  - annualFreeTextEntry: free text -> mission fields, exact catalog codes
+//    keep their own type (decoded suggestions);
 //
 // Half-day exception ops write plain Absence records — the same entity the
 // Absences view edits — but always scoped to ONE half-day cell:
@@ -17,6 +22,7 @@
 import type { Absence, AbsenceHalfDay, AbsenceType } from './types';
 import { generateId } from './models';
 import type { AnnualHolidayOverrides } from './annual-view';
+import { annualCodeCatalog } from './annual-view';
 
 // ---- Half-day exceptions ---------------------------------------------------
 
@@ -137,6 +143,45 @@ export function findHalfDayException(
     }
   }
   return range;
+}
+
+// ---- Context menu choice mapping -------------------------------------------
+
+/** Stored absence fields of one cell value: type + displayed notes/code. */
+export interface CellEntry {
+  /** AbsenceType backing the value. */
+  type: AbsenceType;
+  /** Displayed code / free text stored in the absence notes. */
+  notes: string;
+}
+
+/**
+ * Map a context-menu code chip onto its stored absence fields (slice 4).
+ * The menu's « Souhait » chip stores the pending leave request as
+ * « souhait CA » (type leave_request, blue cell — distinct from the
+ * confirmed leave); every other chip maps straight onto its catalog entry.
+ * Returns null for an unknown code — the UI must not invent a mapping.
+ */
+export function annualMenuChoice(code: string): CellEntry | null {
+  if (code === 'Souhait') return { type: 'leave_request', notes: 'souhait CA' };
+  const entry = annualCodeCatalog().find((c) => c.code === code);
+  if (!entry || !entry.absenceType) return null;
+  return { type: entry.absenceType, notes: entry.code };
+}
+
+/**
+ * Map the free-text input onto its stored fields: a trimmed input that
+ * EXACTLY matches a catalog code stores that code's type (a decoded
+ * suggestion picked as text — « JDM » stays the green mission code); any
+ * other text is a mission displayed as-is (orange, decision 2026-10-03:
+ * free text is non-blocking). Returns null for blank input.
+ */
+export function annualFreeTextEntry(text: string): CellEntry | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const entry = annualCodeCatalog().find((c) => c.code === trimmed);
+  if (entry && entry.absenceType) return { type: entry.absenceType, notes: entry.code };
+  return { type: 'mission', notes: trimmed };
 }
 
 // ---- Holiday dérogations ---------------------------------------------------
