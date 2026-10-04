@@ -179,6 +179,9 @@ import/export mode (shared JSON.gz files) until tenant access is sorted.
 ## Mediator Annual Planning View (vue planning médiateurs)
 
 **Navigation & route binding (decided 2026-10-04):**
+- [x] INACTIVE MEDIATORS (decided 2026-10-04): a toggle « Médiateurs
+      désactivés » shows/hides inactive mediators' columns in the annual
+      view — HIDDEN BY DEFAULT (inactive = Mediator.active === false)
 - [x] ROUTE SYNC: the annual view follows the date in the route
       (?date=...) — opening it focuses/scrolls to the requested date's
       row (and changing the date from elsewhere lands on the same
