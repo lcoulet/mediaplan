@@ -186,18 +186,26 @@ export default function SlotModal({ slot, mediatorOnly, defaultDate, onClose }: 
 
       let label = `${m.firstName} ${m.lastName}`;
 
-      if (confirmed) {
+      // Competence mark and conflict label must not be glued together:
+      // « Alice ✅ — Indisponible » reads as if the ✅ validated the
+      // conflict. On conflict, the conflict label comes alone (the
+      // competence rank still drives the sort).
+      const conflict =
+        museumClosed ? `🚫 ${museumClosed}` :
+        overlap ? 'Conflit horaire' :
+        absent ? 'Absent' :
+        offWorkedPeriod ? 'Indisponible (hors période travaillée)' :
+        null;
+
+      if (conflict) {
+        label += ` — ${conflict}`;
+      } else if (confirmed) {
         label += ' ✅';
       } else if (learning) {
         label += ' 📚';
       } else if (offerId) {
         label += ' ⚠️ Incompétent';
       }
-
-      if (museumClosed) label += ` — 🚫 ${museumClosed}`;
-      else if (overlap) label += ' — Conflit horaire';
-      else if (absent) label += ' — Absent';
-      else if (offWorkedPeriod) label += ' — Indisponible (hors période travaillée)';
 
       const competenceRank = confirmed ? 0 : learning ? 1 : 2;
 

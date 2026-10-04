@@ -1086,4 +1086,62 @@ describe('DailyView', () => {
     expect(slotEl.className).not.toContain('slot-conflict');
     expect(slotEl.textContent).not.toContain('Indisponible');
   });
+
+  // ---- All conflicts visible on the day-view slot blocks (decision
+  // 2026-10-04 follow-up): an absence or an overlap must ALSO show a badge
+  // on the slot block — a red outline alone is not explicit enough.
+
+  it('shows an « Absent » badge on a slot overlapping a mediator absence', () => {
+    const withAbsence: AppData = {
+      ...mockData,
+      absences: [{
+        id: 'a1', mediatorId: 'm1', startDate: '2026-09-19', endDate: '2026-09-19',
+        halfDay: 'none', type: 'leave', notes: '',
+      }],
+    };
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(withAbsence)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+    const slotEl = container.querySelector('.daily-slot.assigned')!;
+    expect(slotEl).toBeTruthy();
+    expect(slotEl.className).toContain('slot-conflict');
+    expect(slotEl.textContent).toContain('Absent');
+  });
+
+  it('shows a « Conflit horaire » badge on overlapping slots of the same mediator', () => {
+    const s1 = mockData.slots[0];
+    const withOverlap: AppData = {
+      ...mockData,
+      slots: [
+        s1,
+        { ...s1, id: 's2', startTime: '10:30', endTime: '11:30' },
+      ],
+    };
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => JSON.stringify(withOverlap)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
+    const { container } = render(
+      <DataProvider>
+        <DailyView />
+      </DataProvider>
+    );
+    const slots = container.querySelectorAll('.daily-slot.assigned');
+    expect(slots.length).toBe(2);
+    // Both overlapping slots carry the conflict marker and badge
+    slots.forEach((el) => {
+      expect(el.className).toContain('slot-conflict');
+      expect(el.textContent).toContain('Conflit horaire');
+    });
+  });
 });

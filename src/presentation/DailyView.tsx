@@ -4,7 +4,7 @@
 import { useState, useMemo } from 'react';
 import { useData, useCRUD } from './DataContext';
 import type { Slot, Mediator, Absence, AbsenceType, Offer } from '../domain/types';
-import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString, getSlotTotalRange, formatSlotBookingSummary, getISOWeekNumber, isFreeVisitOffer } from '../domain/models';
+import { mediatorConfirmedForOffer, mediatorLearningOffer, getAbsenceTimeRange, getDefaultHalfDayConfig, toLocalDateString, getSlotTotalRange, formatSlotBookingSummary, getISOWeekNumber, isFreeVisitOffer, isMediatorAvailable } from '../domain/models';
 import { ABSENCE_TYPE_LABELS } from '../domain/models';
 import { useElementWidth, pxPerHourFromWidth } from './useElementWidth';
 import { computeParallelLanes } from '../domain/parallel-lanes';
@@ -914,6 +914,20 @@ export default function DailyView() {
                       s.mediatorIds.includes(mediator.id) &&
                       slot.startTime < s.endTime && s.startTime < slot.endTime
                     );
+                    const absentConflict = !isMediatorAvailable(
+                      slot.mediatorIds.length > 0 ? mediator.id : '',
+                      slot.date, slot.startTime, slot.endTime, data.absences, data.halfDayConfig
+                    );
+                    // Exactly one explicit badge per conflict cause —
+                    // every conflict must be readable ON the block, not
+                    // just from the outline (decision 2026-10-04 follow-up).
+                    const conflictBadge = offWorkedPeriod
+                      ? { label: '🚫 Indisponible', title: 'Hors période travaillée du cycle (jour non travaillé ou hors plage horaire)' }
+                      : overlapConflict
+                        ? { label: '⚠️ Conflit horaire', title: 'Chevauchement avec un autre créneau du même médiateur' }
+                        : absentConflict
+                          ? { label: '🚫 Absent', title: 'Le médiateur est absent sur ce créneau' }
+                          : null;
 
                     // Total block = setup + booking + teardown.
                     // Durations: slot values override offer values (per-slot editable)
@@ -935,7 +949,7 @@ export default function DailyView() {
                     return (
                       <div
                         key={slot.id}
-                        className={`daily-slot assigned${space.spaceClass}${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}${offWorkedPeriod || overlapConflict ? ' slot-conflict' : ''}`}
+                        className={`daily-slot assigned${space.spaceClass}${isSelected ? ' selected' : ''}${isImported ? ' imported' : ''}${conflictBadge ? ' slot-conflict' : ''}`}
                         style={{
                           left: `${totalLeft}px`,
                           width: `${totalWidth}px`,
@@ -949,7 +963,7 @@ export default function DailyView() {
                         draggable
                         onDragStart={(e) => handleDragStart(e, 'slot', slot.id)}
                         onDragEnd={handleDragEnd}
-                        title={`${formatSlotBookingSummary(slot, offer)}${offWorkedPeriod ? '\n🚫 Indisponible : hors période travaillée du cycle' : ''}${overlapConflict ? '\n⚠️ Conflit horaire' : ''}`}
+                        title={`${formatSlotBookingSummary(slot, offer)}${conflictBadge ? `\n${conflictBadge.label} : ${conflictBadge.title}` : ''}`}
                       >
                         {hasSetup && (
                           <div
@@ -959,8 +973,8 @@ export default function DailyView() {
                         )}
                         <div className="slot-time">{slot.startTime} – {slot.endTime}</div>
                         {renderBlockLabel(offer)}
-                        {offWorkedPeriod && (
-                          <span className="slot-conflict-badge" title="Hors période travaillée du cycle (jour non travaillé ou hors plage horaire)">🚫 Indisponible</span>
+                        {conflictBadge && (
+                          <span className="slot-conflict-badge" title={conflictBadge.title}>{conflictBadge.label}</span>
                         )}
                         {hasTeardown && (
                           <div

@@ -750,24 +750,33 @@ body.edit-mode .cal-day-col:hover {
 
 /* Conflict marker (decision 2026-10-04): slot assigned outside the
    mediator's worked period (non-worked day of the cycle or hours outside
-   the worked range), or with an overlap — red dashed outline like the
-   weekly view's « Indisponibilité ». Non-blocking: the coordinator can
-   keep legitimate exceptions. */
+   the worked range), with an overlap, or during an absence — red dashed
+   outline like the weekly view's « Indisponibilité ». Non-blocking: the
+   coordinator can keep legitimate exceptions. */
 .daily-slot.slot-conflict {
   outline: 1.5px dashed #c0392b;
   outline-offset: -1.5px;
 }
 
+/* Explicit badge on the block (every conflict must be readable ON the
+   slot, not just from the outline). Absolutely positioned so it stays
+   visible even on short blocks where the flow content overflows
+   (the block has overflow: hidden and can be as short as 30px). */
 .slot-conflict-badge {
-  display: inline-block;
-  margin-left: 4px;
-  padding: 0 5px;
-  border-radius: 9px;
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  max-width: calc(100% - 4px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 4px;
+  border-radius: 8px;
   background: #f8d7da;
   color: #721c24;
   font-size: 9px;
   font-weight: 700;
-  white-space: nowrap;
+  line-height: 13px;
 }
 
 .daily-slot .slot-time {
