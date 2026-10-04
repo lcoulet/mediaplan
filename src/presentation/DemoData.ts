@@ -510,6 +510,15 @@ export function seedDemoData(data: AppData): void {
   med3.activeCycleId = cycles[cycles.length - 1].id;
   med3.arrangement = 'mi-temps thérapeutique';
 
+  // Every other mediator gets the DEFAULT cycle (decision 2026-09-25:
+  // new mediators default to a single Mon-Fri 09:30-18:00 week) so the
+  // annual view shows derived presence for the whole team.
+  for (let i = 4; i < mediators.length; i++) {
+    const med = mediators[i];
+    cycles.push(mkCycle(med.id, 'S1', { 1: ['09:30', '18:00'], 2: ['09:30', '18:00'], 3: ['09:30', '18:00'], 4: ['09:30', '18:00'], 5: ['09:30', '18:00'] }, currentWeek));
+    med.activeCycleId = cycles[cycles.length - 1].id;
+  }
+
   data.cycles = cycles;
 
   // --- Quarterly hour quotas (demo) ---

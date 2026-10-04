@@ -1526,6 +1526,9 @@ td .offer-pill + .offer-pill { margin-left: 4px; }
 /* Grid card */
 .annual-card { background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
 .annual-card .grid-wrap { overflow-x: auto; position: relative; max-height: 70vh; }
+/* Frozen header row: thead stays visible while scrolling the 365 day-rows */
+.agrid thead th { position: sticky; top: 0; }
+.agrid thead tr.thead-row .wkcol { z-index: 5; }
 .agrid { border-collapse: separate; border-spacing: 0; table-layout: fixed; }
 .agrid th, .agrid td { border-bottom: 1px solid var(--color-border-light); }
 /* Week column (leftmost, own column — decision 2026-10-04): sticky with
