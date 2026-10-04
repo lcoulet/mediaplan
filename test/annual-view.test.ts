@@ -3,7 +3,7 @@
 // Spec: test/features/annual-view/annual-grid.feature (domain scenarios).
 import { describe, it, expect } from 'vitest';
 import { parseLocalDate } from '../src/domain/models';
-import type { Absence, Slot } from '../src/domain/types';
+import type { Absence, Slot, WorkCycle } from '../src/domain/types';
 import {
   ANNUAL_PALETTE,
   annualCodeCatalog,
@@ -13,6 +13,7 @@ import {
   annualWeekLabel,
   annualWeekLabelsForYear,
   annualHolidayState,
+  deriveAnnualCell,
 } from '../src/domain/annual-view';
 
 const d = parseLocalDate;
@@ -316,5 +317,88 @@ describe('annualHolidayState', () => {
     const overrides = { '2026': { added: ['2026-08-10'], removed: [] } };
     expect(annualHolidayState(d('2027-08-10'), overrides)).toBeNull();
     expect(annualHolidayState(d('2027-07-14'), overrides)).toBe('holiday');
+  });
+});
+
+// ---- Cell derivation --------------------------------------------------------
+
+/** Alice's cycle: one week S1, Mon-Fri 09:30-18:00, anchored 2026-W01. */
+function aliceCycle(): WorkCycle {
+  const days = [];
+  for (let day = 1; day <= 7; day++) {
+    if (day <= 5) days.push({ day, startTime: '09:30', endTime: '18:00' });
+    else days.push({ day });
+  }
+  return { id: 'cyc_a', mediatorId: 'med_alice', weeks: [{ id: 'cw1', name: 'S1', days }], anchorIsoWeek: '2026-W01', forcedWeeks: {} };
+}
+
+describe('deriveAnnualCell', () => {
+  // Tue 9 June 2026 is a worked day of S1
+  it('derives orange presence on both half-days of a worked cycle day', () => {
+    expect(deriveAnnualCell('med_alice', d('2026-06-09'), 'morning', { cycle: aliceCycle(), absences: [] })).toEqual({ state: 'presence' });
+    expect(deriveAnnualCell('med_alice', d('2026-06-09'), 'afternoon', { cycle: aliceCycle(), absences: [] })).toEqual({ state: 'presence' });
+  });
+
+  it('derives null (neutral) on non-worked days and without a cycle', () => {
+    // Saturday 13 June 2026: not worked in S1
+    expect(deriveAnnualCell('med_alice', d('2026-06-13'), 'morning', { cycle: aliceCycle(), absences: [] })).toBeNull();
+    // Bob has no cycle
+    expect(deriveAnnualCell('med_bob', d('2026-06-09'), 'morning', { absences: [] })).toBeNull();
+  });
+
+  it('overlays a stored absence over the derived presence, with its palette state and code', () => {
+    const absences = [mkAbsence({ mediatorId: 'med_alice', startDate: '2026-06-09', endDate: '2026-06-09', halfDay: 'morning', type: 'leave', notes: 'CA' })];
+    const cell = deriveAnnualCell('med_alice', d('2026-06-09'), 'morning', { cycle: aliceCycle(), absences });
+    expect(cell?.state).toBe('absence');
+    expect(cell?.code).toBe('CA');
+    expect(cell?.absence).toBe(absences[0]);
+    // the other half-day stays derived
+    expect(deriveAnnualCell('med_alice', d('2026-06-09'), 'afternoon', { cycle: aliceCycle(), absences })).toEqual({ state: 'presence' });
+  });
+
+  it('shows an absence even on a non-worked day (overlay wins over the cycle)', () => {
+    const absences = [mkAbsence({ mediatorId: 'med_alice', startDate: '2026-06-13', endDate: '2026-06-13', halfDay: 'morning', type: 'leave', notes: 'CA' })];
+    const cell = deriveAnnualCell('med_alice', d('2026-06-13'), 'morning', { cycle: aliceCycle(), absences });
+    expect(cell?.state).toBe('absence');
+    expect(cell?.code).toBe('CA');
+  });
+
+  it('covers both half-days with a full-day absence', () => {
+    const absences = [mkAbsence({ mediatorId: 'med_alice', startDate: '2026-06-09', endDate: '2026-06-10', halfDay: 'none', type: 'leave', notes: 'CA' })];
+    for (const half of ['morning', 'afternoon'] as const) {
+      const cell = deriveAnnualCell('med_alice', d('2026-06-10'), half, { cycle: aliceCycle(), absences });
+      expect(cell?.state).toBe('absence');
+      expect(cell?.code).toBe('CA');
+    }
+  });
+
+  it('maps each stored entry onto its palette state via the code catalog', () => {
+    const cases: { abs: Absence; state: string; code: string }[] = [
+      { abs: mkAbsence({ type: 'leave_request', notes: 'CA' }), state: 'leaveRequest', code: 'souhait CA' },
+      { abs: mkAbsence({ type: 'other', notes: 'TELE' }), state: 'remote', code: 'TELE' },
+      { abs: mkAbsence({ type: 'other', notes: 'amgt 21/06' }), state: 'arrangement', code: 'amgt 21/06' },
+      { abs: mkAbsence({ type: 'mission', notes: 'JDM' }), state: 'jdm', code: 'JDM' },
+      { abs: mkAbsence({ type: 'mission', notes: 'Stop Motion' }), state: 'mission', code: 'Stop Motion' },
+      { abs: mkAbsence({ type: 'training', notes: 'formation' }), state: 'workAbsence', code: 'formation' },
+      { abs: mkAbsence({ type: 'sick', notes: '' }), state: 'absence', code: 'AM' },
+    ];
+    for (const c of cases) {
+      const absences = [mkAbsence({ ...c.abs, mediatorId: 'med_alice', startDate: '2026-06-09', endDate: '2026-06-09', halfDay: 'morning' })];
+      const cell = deriveAnnualCell('med_alice', d('2026-06-09'), 'morning', { cycle: aliceCycle(), absences });
+      expect(cell?.state).toBe(c.state);
+      expect(cell?.code).toBe(c.code);
+    }
+  });
+
+  it('ignores other mediators\' absences', () => {
+    const absences = [mkAbsence({ mediatorId: 'med_bob', startDate: '2026-06-09', endDate: '2026-06-09', type: 'leave', notes: 'CA' })];
+    expect(deriveAnnualCell('med_alice', d('2026-06-09'), 'morning', { cycle: aliceCycle(), absences })).toEqual({ state: 'presence' });
+  });
+
+  it('falls back to the absence type palette when the code is not in the catalog', () => {
+    const absences = [mkAbsence({ mediatorId: 'med_alice', startDate: '2026-06-09', endDate: '2026-06-09', halfDay: 'morning', type: 'leave', notes: 'congé parental' })];
+    const cell = deriveAnnualCell('med_alice', d('2026-06-09'), 'morning', { cycle: aliceCycle(), absences });
+    expect(cell?.state).toBe('absence');
+    expect(cell?.code).toBe('congé parental');
   });
 });

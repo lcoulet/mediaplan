@@ -4,8 +4,8 @@
 // Spec: test/features/annual-view/annual-grid.feature (domain scenarios).
 // Palette: Excel hues accessibility-adjusted (decision 2026-10-03, contrasts
 // computed in contrast_palette_mix.py — see docs/OPEN-QUESTIONS.md).
-import type { Absence, AbsenceType, Slot } from './types';
-import { isoWeekKey } from './cycles';
+import type { Absence, AbsenceType, Slot, WorkCycle } from './types';
+import { isoWeekKey, getWorkedHoursForDate } from './cycles';
 import { isMuseumClosed, isPublicHoliday } from './hours';
 
 // ---- Cell palette --------------------------------------------------------
@@ -267,5 +267,76 @@ export function annualHolidayState(
     if (derogation.added.includes(iso)) return 'holiday';
   }
   if (isPublicHoliday(date)) return 'holiday';
+  return null;
+}
+
+// ---- Cell derivation ---------------------------------------------------------
+
+/** The derived content of one half-day cell of the annual grid. */
+export interface AnnualCell {
+  /** Palette state (key into ANNUAL_PALETTE). */
+  state: string;
+  /** Displayed code/text; absent for the derived presence (empty cell). */
+  code?: string;
+  /** The stored absence backing the cell, when one exists. */
+  absence?: Absence;
+}
+
+/** Inputs of the derivation: the mediator's cycle and stored absences. */
+export interface AnnualCellInputs {
+  /** The mediator's active work cycle (optional: no cycle = neutral cells). */
+  cycle?: WorkCycle;
+  /** All stored absences (filtered by mediator inside). */
+  absences: Absence[];
+}
+
+/** Map each existing AbsenceType onto its palette state. */
+const TYPE_STATE: Record<AbsenceType, string> = {
+  leave: 'absence',
+  mission: 'mission',
+  training: 'workAbsence',
+  sick: 'absence',
+  other: 'absence',
+  leave_request: 'leaveRequest',
+};
+
+/** Palette state of a stored entry: catalog code first, type fallback.
+ *  « amgt » is matched by prefix: the stored entry carries the arrangement
+ *  date (« amgt 21/06 »), still a violet arrangement cell. */
+function stateForEntry(absence: Absence): string {
+  const code = codeForAbsence(absence);
+  const catalog = annualCodeCatalog().find(
+    (c) => c.code === code || (c.code === 'amgt' && code.startsWith('amgt'))
+  );
+  if (catalog) return catalog.state;
+  return TYPE_STATE[absence.type];
+}
+
+/**
+ * Derive one half-day cell of the annual grid (presence model, decision
+ * 2026-10-03): the orange presence is COMPUTED from the mediator's cycle
+ * (never stored); absences/missions placed on top REPLACE the derived
+ * presence visually; clearing reverts to the derived state. Returns null
+ * for a neutral cell (non-worked day, or no cycle at all).
+ */
+export function deriveAnnualCell(
+  mediatorId: string,
+  date: Date,
+  halfDay: 'morning' | 'afternoon',
+  inputs: AnnualCellInputs
+): AnnualCell | null {
+  // Overlay: a stored absence covering this mediator + date + half-day wins
+  for (const absence of inputs.absences) {
+    if (absence.mediatorId !== mediatorId) continue;
+    const coverage = halfDayOfAbsence(absence, date);
+    if (coverage === null) continue;
+    if (coverage === 'none' || coverage === halfDay) {
+      return { state: stateForEntry(absence), code: codeForAbsence(absence), absence };
+    }
+  }
+  // Derived presence: the mediator's cycle works this date
+  if (inputs.cycle && getWorkedHoursForDate(inputs.cycle, date).worked) {
+    return { state: 'presence' };
+  }
   return null;
 }
