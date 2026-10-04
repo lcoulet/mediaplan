@@ -50,6 +50,19 @@
 #      cellules, couleurs de remplissage). PAS d'impression/PDF en v1.
 #   12. Les absences sont stockées PAR DATE et PAR DEMI-JOURNÉE : changer
 #      d'année ne touche jamais aux données d'une autre année.
+#  Décisions export Excel arrêtées le 2026-10-04 (détail ci-dessous) :
+#  18. TEXTE COMPLET : les missions en texte libre (« Réf. WE »,
+#      « Stop Motion »...) sont exportées en TEXTE COMPLET, jamais en
+#      abréviation — la contrainte des 30px est purement écran.
+#  19. COMPTEURS SAMEDI INCLUS : les compteurs ×N des samedis travaillés
+#      sont exportés dans les cellules des samedis, comme dans le
+#      fichier Excel de référence.
+#  20. MASQUÉS = ABSENTS DE L'EXPORT : les médiateurs désactivés
+#      masqués ne sont PAS exportés (l'état de la case à cocher au
+#      moment de l'export fait foi) ; les afficher d'abord pour les
+#      exporter.
+#  21. PAS D'IMPORT en v1 : l'import du fichier Excel de référence est
+#      reporté (voir OPEN-QUESTIONS, « Mediator Annual Planning View »).
 # Décisions navigation arrêtées le 2026-10-04 (OPEN-QUESTIONS,
 #   « Navigation & route binding ») :
 #   13. SYNCHRO ROUTE : la vue suit la date globale de l'application
@@ -265,6 +278,100 @@ Fonctionnalité: Tableau de fonctionnement — grille annuelle des médiateurs
     Et le fichier comporte un groupe de colonnes par médiateur avec les cellules Matin et Après-midi
     Et les codes sont écrits dans les cellules avec les couleurs de remplissage de la légende de l'application
     Et aucune fonction d'impression ou d'export PDF n'est proposée pour cette vue en v1
+
+  Scénario: Structure d'en-tête du fichier exporté
+    Quand le coordinateur clique sur le bouton « Exporter Excel »
+    Alors la première ligne du fichier comporte un en-tête fusionné sur 2 colonnes par médiateur
+    Et chaque en-tête fusionné affiche le nom du médiateur suivi du texte de sa pilule de type de contrat
+    Et la deuxième ligne du fichier comporte les sous-en-têtes « Matin » et « Après-midi » pour chaque médiateur
+    Et la colonne « Sem. » (numéro de semaine ISO) est la première colonne du fichier, à gauche de la colonne des dates
+    Et la colonne des dates affiche le jour de la semaine et la date de chaque jour de l'année
+    Et aucune colonne de comptage (ratio, totaux de présence) n'est exportée
+    Et cette structure d'en-tête reflète la maquette de la grille
+
+  Scénario: Cellules de présence dérivée exportées vides avec fond orange
+    Quand le coordinateur clique sur le bouton « Exporter Excel »
+    Alors les cellules des demi-journées de présence dérivée d'Alice sont exportées VIDES
+    Et ces cellules vides portent le remplissage orange de la présence dérivée de la légende
+    Et le remplissage orange porte à lui seul la sémantique de présence, sans aucun texte dans la cellule
+
+  Scénario: Absences et missions exportées avec code et couleur
+    Etant donné une absence « CA » posée sur le matin du 10 juin 2026 pour Alice
+    Et la mention « Réf. WE » posée sur le samedi 13 juin 2026 pour Alice
+    Quand le coordinateur clique sur le bouton « Exporter Excel »
+    Alors la cellule du 10 juin 2026 matin d'Alice contient « CA » avec le remplissage jaune
+    Et la cellule du 13 juin 2026 matin d'Alice contient « Réf. WE » avec le remplissage orange des missions
+    Et chaque code exporté garde la couleur de remplissage de la légende de l'application
+
+  Scénario: Compteurs de samedis exportés dans les cellules de samedi
+    Etant donné des créneaux posés pour Alice sur 3 samedis de 2026
+    Quand le coordinateur clique sur le bouton « Exporter Excel »
+    Alors les cellules des samedis avec créneaux d'Alice contiennent son compteur 1, 2, 3
+    Et les compteurs sont exportés dans les cellules des lignes de samedi, comme dans le fichier Excel de référence (décision 2026-10-04)
+
+  Scénario: Jours fériés marqués dans le fichier exporté
+    Etant donné le 14 juillet 2026 marqué férié
+    Quand le coordinateur clique sur le bouton « Exporter Excel »
+    Alors la cellule de date du 14 juillet 2026 porte le remplissage ambre des fériés
+    Et la cellule de date affiche le texte « Férié » à côté du jour et de la date
+
+  Scénario: Jours de fermeture du musée exportés sans hachures
+    Quand le coordinateur clique sur le bouton « Exporter Excel »
+    Alors la cellule de date du 25 décembre 2026 porte un remplissage gris distinct des fériés et des cellules ordinaires
+    Et la cellule de date affiche le texte « Fermé » à côté du jour et de la date
+    Et le hachurage écran n'est pas exporté : le remplissage gris et le texte « Fermé » le remplacent dans le fichier Excel (décision 2026-10-04)
+
+  Scénario: L'export porte sur l'année affichée
+    Quand le coordinateur sélectionne l'année 2027 dans le sélecteur d'année
+    Et le coordinateur clique sur le bouton « Exporter Excel »
+    Alors le fichier exporté comporte les jours de l'année 2027 uniquement
+    Et aucune donnée d'une autre année n'apparaît dans le fichier
+
+  Scénario: Les médiateurs désactivés masqués ne sont pas exportés
+    Etant donné Alice active et Bob désactivé (Mediator.active === false)
+    Et la case « Médiateurs désactivés » décochée
+    Quand le coordinateur clique sur le bouton « Exporter Excel »
+    Alors le fichier exporté comporte le groupe de colonnes d'Alice
+    Et le fichier exporté ne comporte pas de groupe de colonnes pour Bob
+    Et l'export respecte l'état de la case à l'instant du clic
+
+  Scénario: Afficher les médiateurs désactivés pour les exporter
+    Etant donné Alice active et Bob désactivé (Mediator.active === false)
+    Et la case « Médiateurs désactivés » cochée
+    Quand le coordinateur clique sur le bouton « Exporter Excel »
+    Alors le fichier exporté comporte les groupes de colonnes d'Alice et de Bob
+    Et le coordinateur qui veut exporter un médiateur désactivé l'affiche d'abord (décision 2026-10-04)
+
+  Scénario: Missions en texte libre exportées en texte complet
+    Etant donné la mission « Stop Motion » posée sur le matin du 17 juin 2026 pour Alice
+    Et la cellule affichant « Stop Motion » tronquée à l'écran par la contrainte des 30px
+    Quand le coordinateur clique sur le bouton « Exporter Excel »
+    Alors la cellule exportée du 17 juin 2026 matin contient le texte complet « Stop Motion »
+    Et aucune abréviation n'est utilisée dans le fichier exporté (décision 2026-10-04 : la contrainte des 30px est purement écran)
+    Et la cellule exportée porte le remplissage orange des missions
+
+  Scénario: Semaines de cycle exportées sur les lignes de lundi
+    Etant donné le cycle de travail d'Alice composé des semaines « S1 » et « S2 »
+    Quand le coordinateur clique sur le bouton « Exporter Excel »
+    Alors la cellule du lundi de chaque semaine ISO d'Alice comporte sa semaine de cycle « S1 » ou « S2 »
+    Et les lignes de mardi à dimanche ne répètent pas la semaine de cycle
+    Et les semaines de cycle sont exportées comme dans le fichier Excel de référence (décision 2026-10-04)
+
+  Scénario: Nom du fichier exporté horodaté et millésimé
+    Quand le coordinateur clique sur le bouton « Exporter Excel » le 4 octobre 2026 à 14h30
+    Alors le fichier téléchargé s'appelle « tableau-fonctionnement-2026-20261004-1430.xlsx »
+    Et le nom suit les conventions de generateExportFilename : l'année affichée, puis la date, puis l'heure
+
+  Scénario: Export d'une année sans données
+    Quand le coordinateur sélectionne l'année 2027 sans aucune donnée saisie
+    Et le coordinateur clique sur le bouton « Exporter Excel »
+    Alors le fichier exporté comporte les lignes d'en-tête des médiateurs, Matin et Après-midi
+    Et les lignes de jours de l'année 2027 sont exportées avec des cellules vides sans remplissage
+
+  Scénario: Export entièrement côté client
+    Quand le coordinateur clique sur le bouton « Exporter Excel »
+    Alors le fichier est généré intégralement dans le navigateur via SheetJS
+    Et aucune requête réseau n'est émise pour générer ou envoyer le fichier
 
   # ------------------------------------------------------------------
   # Navigation (décisions 2026-10-04 — route, semaine, jour)

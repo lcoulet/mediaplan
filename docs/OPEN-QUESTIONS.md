@@ -384,6 +384,37 @@ import/export mode (shared JSON.gz files) until tenant access is sorted.
       one column group per mediator with Matin/Après-midi cells, codes
       in cells, cell fill colors matching the app's legend) — v1 has
       NO print/PDF for this view
+- [x] DETAILED EXPORT (decided 2026-10-04):
+  - Header structure mirrors the mockup grid: row 1 = one merged
+    2-column header per mediator (name + contract-type pill text),
+    row 2 = Matin/Après-midi sub-headers; leftmost « Sem. » column
+    (ISO week number), then the date + weekday columns
+  - Derived presence = EMPTY cells with the derived-orange fill (the
+    fill carries the semantic); absences/missions = code/text + their
+    legend fill color
+  - Saturday worked-day counters ×N exported IN the Saturday cells,
+    like the reference Excel
+  - Férié rows: amber fill on the date cell + « Férié » text;
+    museum-closed days: the on-screen HATCHING is not exportable —
+    gray fill + « Fermé » text instead
+  - Scope = the DISPLAYED year only; inactive mediators are NOT
+    exported while hidden (toggle state at export time is law — show
+    them first to export them)
+  - Free-text missions (« Stop Motion », « Réf. WE ») exported as FULL
+    text with the mission-orange fill — NO abbreviations (the 30px
+    constraint is screen-only)
+  - Cycle week pills (S1, S2) exported on the Monday rows, like the
+    reference Excel
+  - Filename follows generateExportFilename conventions, timestamped
+    and year-stamped: tableau-fonctionnement-2026-20261004-HHMM.xlsx
+  - An empty year exports headers only; the export runs fully
+    client-side (SheetJS, no network)
+- [x] IMPORT: DEFERRED — not in v1 (decided 2026-10-04). Potential
+      future work: migrate the reference Excel history (sheets 2023,
+      2025, 2026, 2027) into the app — mapping real names → app
+      mediators, parsing heterogeneous cells; only exceptions matter
+      (absences, missions, aménagements), since presence and Saturday
+      counters are derived/computed by the app
 - [ ] Which absence/mission types should the app model natively vs. free
       text? (current AbsenceType: leave, mission, training, sick, other,
       leave_request — the decoded codes map onto these: CA/RHS/CEX → leave,
