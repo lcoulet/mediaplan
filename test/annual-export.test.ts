@@ -55,18 +55,6 @@ function mkData(overrides: Partial<AppData> = {}): AppData {
   };
 }
 
-// A worked Saturday slot for Alice (Saturday 2026-06-13)
-function satSlot(date: string) {
-  return {
-    id: `s_${date}`, scheduleId: '', date, startTime: '10:00', endTime: '12:00',
-    offerId: 'o1', mediatorIds: ['m_alice'], status: 'planned' as const,
-    origin: 'manual' as const, participantCount: 0, notes: '', importSource: '',
-    importedAt: '', modifiedAfterImport: false, groupName: '', guide: '',
-    location: '', groupNature: '', contactName: '', contactPhone: '',
-    contactEmail: '',
-  };
-}
-
 // ---- Filename ----------------------------------------------------------
 
 describe('annualExportFilename', () => {
@@ -260,23 +248,37 @@ describe('buildAnnualExportModel — cells', () => {
     expect(cell.state).toBe('mission');
   });
 
-  it('worked-Saturday counters are exported IN the Saturday cells (decision 19)', () => {
+  it('worked-Saturday counters are exported IN the Saturday cells (spec fix 2026-10-04: grid presence)', () => {
+    // Alice's cycle works Saturdays (Mon-Sat) → every Saturday of the year
+    // is worked; the counter counts presence cells, not slots.
     const data = mkData({
-      slots: [satSlot('2026-01-10'), satSlot('2026-02-14'), satSlot('2026-06-13')],
+      cycles: [mkCycle('m_alice', [{ name: 'S1', workedDays: [1, 2, 3, 4, 5, 6] }])],
+      absences: [
+        // Full-day leave on 2026-01-03 (first Saturday) → not worked
+        { id: 'a1', mediatorId: 'm_alice', startDate: '2026-01-03', endDate: '2026-01-03', halfDay: 'none' as const, type: 'leave' as const, notes: '' },
+        // Morning-only leave on 2026-01-10 (second Saturday) → afternoon worked → counts (any half-day)
+        { id: 'a2', mediatorId: 'm_alice', startDate: '2026-01-10', endDate: '2026-01-10', halfDay: 'morning' as const, type: 'leave' as const, notes: '' },
+      ],
     });
     const model = buildAnnualExportModel(data, 2026);
-    const first = model.dayRows.find((r) => r.iso === '2026-01-10')!;
-    expect(first.cells.find((c) => c.mediatorId === 'm_alice' && c.halfDay === 'morning')!.value).toBe('1');
-    const second = model.dayRows.find((r) => r.iso === '2026-02-14')!;
-    expect(second.cells.find((c) => c.mediatorId === 'm_alice' && c.halfDay === 'morning')!.value).toBe('2');
-    const third = model.dayRows.find((r) => r.iso === '2026-06-13')!;
-    expect(third.cells.find((c) => c.mediatorId === 'm_alice' && c.halfDay === 'morning')!.value).toBe('3');
+    // First Saturday (2026-01-03) is covered by a full-day leave: the cell
+    // exports the ABSENCE CODE (leave wins over the counter, like the
+    // reference Excel) — and the Saturday does not count.
+    const first = model.dayRows.find((r) => r.iso === '2026-01-03')!;
+    expect(first.cells.find((c) => c.mediatorId === 'm_alice' && c.halfDay === 'morning')!.value).toBe('CA');
+    // Second Saturday (2026-01-10): morning on leave (cell exports the
+    // absence code), afternoon worked -> the Saturday counts (any
+    // half-day) -> the counter is visible from the NEXT Saturday cell
+    const second = model.dayRows.find((r) => r.iso === '2026-01-10')!;
+    expect(second.cells.find((c) => c.mediatorId === 'm_alice' && c.halfDay === 'morning')!.value).toBe('CA');
+    const third = model.dayRows.find((r) => r.iso === '2026-01-17')!;
+    expect(third.cells.find((c) => c.mediatorId === 'm_alice' && c.halfDay === 'morning')!.value).toBe('2');
     // The Saturday afternoon cell carries no counter
     expect(third.cells.find((c) => c.mediatorId === 'm_alice' && c.halfDay === 'afternoon')!.value).toBe('');
     // Non-Saturday rows never carry a counter
     const wednesday = model.dayRows.find((r) => r.iso === '2026-06-10')!;
     expect(wednesday.cells.every((c) => c.value === '' || c.state !== null)).toBe(true);
-    // Mediator without Saturday slots: counter 0 on Saturday rows
+    // Mediator without a Saturday-worked cycle: counter 0 on Saturday rows
     const bobSat = third.cells.find((c) => c.mediatorId === 'm_bob' && c.halfDay === 'morning')!;
     expect(bobSat.value).toBe('0');
   });

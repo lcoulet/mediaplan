@@ -22,6 +22,17 @@ function mkCycle(mediatorId: string): WorkCycle {
   return cycle;
 }
 
+/** Cycle working Monday to SATURDAY — for worked-Saturday counter tests. */
+function mkCycleSat(mediatorId: string): WorkCycle {
+  const cycle = createDefaultCycle(mediatorId, '2026-W06');
+  const days: CycleWeekDay[] = [1, 2, 3, 4, 5, 6, 7].map((day) =>
+    day <= 6 ? { day, startTime: '09:30', endTime: '18:00' } : { day }
+  );
+  cycle.weeks = [{ id: 'cweek_alice', name: 'S1', days }];
+  cycle.id = 'cyc_alice';
+  return cycle;
+}
+
 const alice: Mediator = {
   id: 'm_alice', firstName: 'Alice', lastName: 'Dupont', email: '', phone: '',
   notes: '', color: '#FF0000', active: true, competences: [],
@@ -52,6 +63,7 @@ function satSlot(date: string) {
     contactEmail: '',
   };
 }
+void satSlot; // legacy slot-based counter helper — kept for reference
 
 // Generate the file bytes from test data
 function generate(overrides: Partial<AppData> = {}) {
@@ -127,13 +139,16 @@ describe('writeAnnualExcel — values', () => {
     expect(typeof ws['C163'].v).toBe('string');
   });
 
-  it('writes worked-Saturday counters in Saturday cells', () => {
+  it('writes worked-Saturday counters in Saturday cells (grid presence, spec fix 2026-10-04)', () => {
+    // Alice's cycle works Saturdays (Mon-Sat) — the counter counts presence
+    // cells, not slots; the number on 2026-06-13 = all her worked Saturdays
+    // of the year so far (Jan 3 → Jun 13 = 24 Saturdays).
     const { wb } = generate({
-      slots: [satSlot('2026-06-13')],
+      cycles: [mkCycleSat('m_alice')],
     });
     const ws: any = wb.Sheets[wb.SheetNames[0]];
     // June 13 = day 164 => row 166, Alice Matin = C — a native NUMBER
-    expect(ws['C166'].v).toBe(1);
+    expect(ws['C166'].v).toBe(24);
     expect(ws['C166'].t).toBe('n');
   });
 });

@@ -468,21 +468,23 @@ export default function AnnualView() {
   }, [columns, overlayByMediator, workedByMediator, days]);
 
   // saturdayCounters: worked-Saturday counter per mediator per Saturday of
-  // the year — workedSaturdayCounter re-scans ALL slots for each rendered
-  // Saturday cell; computed once here instead.
+  // the year (spec fix 2026-10-04: counts WORKED Saturdays as displayed in
+  // the grid — presence cells, not slots; strategy: any worked half-day
+  // counts for one, SaturdayCountStrategy makes the rule switchable).
   const saturdayCounters = useMemo(() => {
     const map = new Map<string, number>();
     for (const m of columns) {
       if (!m.active) continue;
+      const inputs = { cycle: cycleByMediator.get(m.id), absences: data.absences };
       for (const d of days) {
         if (d.getDay() !== 6) continue;
         const iso = toLocalDateString(d);
-        const n = workedSaturdayCounter(m.id, data.slots, d);
+        const n = workedSaturdayCounter(m.id, inputs, d);
         if (n !== null) map.set(`${m.id}|${iso}`, n);
       }
     }
     return map;
-  }, [columns, data.slots, days]);
+  }, [columns, data.absences, cycleByMediator, days]);
 
   // cycleWeekNameByMediator: the cycle pill (S1, S2…) shown on Monday
   // morning cells — cycleWeekForDate recomputes the ISO-week rotation for
@@ -826,7 +828,7 @@ export default function AnnualView() {
           <span className="lg"><span className="sw sw-presence"></span>Orange vide = présence dérivée du cycle (calculée, jamais stockée)</span>
           <span className="lg"><span className="sw sw-absence"></span>Jaune + code = absence (CA, RHS, RTT, AM, CET, CEX, TPT, congé parental / maternité / naissance, dispo)</span>
           <span className="lg"><span className="sw sw-remote"></span>Rose + TELE = télétravail</span>
-          <span className="lg"><span className="sw sw-arrangement"></span>Violet + amgt JJ/MM = aménagement d'un jour travaillé (exception au cycle)</span>
+          <span className="lg"><span className="sw sw-arrangement"></span>Violet + Amgt.T / Amgt.NT = aménagement (demi-journée travaillée / chômée, exception au cycle)</span>
           <span className="lg"><span className="sw sw-leaveRequest"></span>Bleu + code = souhait en attente (CA, RHS, RTT — demande non confirmée, distinct du congé posé en jaune)</span>
           <span className="lg"><span className="sw sw-mission"></span>Orange + texte = mission / événement (Réf. WE, stop motion, offre anniv, privatisation)</span>
           <span className="lg"><span className="sw sw-jdm"></span>Vert + JDM = mission aux Jardins du muséum (mission, pas une absence)</span>

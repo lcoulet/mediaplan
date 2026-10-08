@@ -258,7 +258,7 @@ La vue **Tableau** (touche `8`) est la vue annuelle : une ligne par jour de l'an
 *Le menu contextuel d'une demi-journée : médiateur et date en tête (fermeture ✕), codes colorés d'absence, souhait de congés, texte libre, « Peindre ce code » et « Effacer (retour au dérivé) ».*
 
 - **Mode peinture** : « Peindre ce code » dans le menu applique le code sur toutes les cellules survolées — pour saisir une semaine de congés d'un geste ; sortie par Échap, clic hors grille ou le bouton « ✕ Quitter la peinture »
-- **Colonne de compteurs du samedi** : le décompte des samedis travaillés par médiateur (suivi du cycle)
+- **Colonne de compteurs du samedi** : le décompte des samedis travaillés par médiateur. Compte comme travail : la présence du cycle, les missions (Réf. WE, texte libre), le télétravail (TELE), JDM, les aménagements travaillés (Amgt.T) et les formations. Ne compte pas : congés (CA, CEX, AM, RHS, TPT), souhaits, aménagements chômés (Amgt.NT), grève et syndicat. Les jours fériés ne bloquent pas le comptage ; les jours de fermeture du musée (25/12, 01/01, 01/05) ne comptent jamais. Une demi-journée travaillée suffit ; la règle est commutable (stratégie any_half_day par défaut)
 - **Année** : segmenteur en haut de vue ; la colonne de gauche affiche la semaine ISO (cliquable → vue Hebdo), le jour de la ligne est cliquable (→ vue Jour)
 - **Suivi des quotas trimestriels** : pour les médiateurs en **aménagement** du temps de travail (mi-temps, 80%…), le quota d'heures par trimestre est suivi (valeur seuil, cellules valorisées au-delà)
 - **Médiateurs désactivés** : un toggle les affiche/masque — masqués par défaut

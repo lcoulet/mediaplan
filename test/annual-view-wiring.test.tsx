@@ -19,7 +19,9 @@ import { createDefaultCycle } from '../src/domain/cycles';
 function mkCycle(mediatorId: string): WorkCycle {
   const cycle = createDefaultCycle(mediatorId, '2026-W06');
   const days: CycleWeekDay[] = [1, 2, 3, 4, 5, 6, 7].map((day) =>
-    day <= 5 ? { day, startTime: '09:30', endTime: '18:00' } : { day }
+    // Monday to SATURDAY worked — so the worked-Saturday counter counts
+    // presence cells (spec fix 2026-10-04: grid presence, not slots)
+    day <= 6 ? { day, startTime: '09:30', endTime: '18:00' } : { day }
   );
   cycle.weeks = [{ id: 'cweek_alice', name: 'S1', days }];
   cycle.id = 'cyc_alice';
@@ -173,10 +175,14 @@ describe('AnnualView (Tableau de fonctionnement)', () => {
     expect(tueAlice[0].textContent).not.toContain('S1');
     // Bob has no cycle: neutral cells, no pill
     expect(tueAlice[2].className).toContain('st-neutral');
-    // Alice's Saturday/Sunday: no derived presence (cycle is Mon-Fri)
+    // Alice's Sunday: no derived presence (cycle is Mon-Sat); her Saturday
+    // IS worked now (cycle Mon-Sat — feeds the worked-Saturday counter)
     const saturday = container.querySelector('#annual-row-2026-06-13')!;
     const satAlice = saturday.querySelectorAll('td.c');
-    expect(satAlice[0].className).not.toContain('st-presence');
+    expect(satAlice[0].className).toContain('st-presence');
+    const sunday = container.querySelector('#annual-row-2026-06-14')!;
+    const sunAlice = sunday.querySelectorAll('td.c');
+    expect(sunAlice[0].className).not.toContain('st-presence');
   });
 
   it('displays stored absences over the derived presence with their palette state', () => {
@@ -195,24 +201,26 @@ describe('AnnualView (Tableau de fonctionnement)', () => {
     const { container } = renderAnnual();
     const saturday = container.querySelector('#annual-row-2026-06-13')!;
     const alice = saturday.querySelectorAll('td.c');
-    expect(alice[0].textContent).toContain('×1');
+    // Alice's cycle works Saturdays: by Jun 13 she has worked every Saturday
+    // of the year (Jan 3 → Jun 13 = 24) — the counter counts GRID PRESENCE
+    // (spec fix 2026-10-04), not slots.
+    expect(alice[0].textContent).toContain('×24');
     // The Wednesday row carries no counter
     const wednesday = container.querySelector('#annual-row-2026-06-10')!;
     expect(wednesday.querySelectorAll('.ct').length).toBe(0);
-    // Valued style from the threshold (default 12): ×1 is not valued
-    expect(alice[0].querySelector('.ct')!.className).not.toContain('valued');
   });
 
-  it('marks the counter valued from the configured threshold', () => {
+  it('marks the counter valued from the configured threshold (default 12)', () => {
     const { container } = renderAnnual();
-    // Threshold default 12; a Saturday with 12+ prior worked Saturdays is
-    // valued. Build via many slots is heavy — check the 12th+ worked
-    // Saturday of the demo slot pattern instead: only 1 slot exists, so no
-    // Saturday is valued; assert the zero-counter class on Bob instead.
+    // Alice's cycle works Saturdays — her 24 worked Saturdays exceed the
+    // default threshold 12 → the counter is VALUED on 2026-06-13.
     const saturday = container.querySelector('#annual-row-2026-06-13')!;
-    const bob = saturday.querySelectorAll('td.c');
-    expect(bob[2].textContent).toContain('×0');
-    expect(bob[2].querySelector('.ct')!.className).toContain('zero');
+    const alice = saturday.querySelectorAll('td.c');
+    expect(alice[0].textContent).toContain('×24');
+    expect(alice[0].querySelector('.ct')!.className).toContain('valued');
+    // Bob has no cycle: counter 0, not valued, zero class
+    expect(alice[2].textContent).toContain('×0');
+    expect(alice[2].querySelector('.ct')!.className).toContain('zero');
   });
 
   // ---- Férié rows + panel ----

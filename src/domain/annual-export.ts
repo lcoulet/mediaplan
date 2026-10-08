@@ -214,12 +214,17 @@ export function buildAnnualExportModel(
         let value = '';
         let state: string | null = null;
 
-        // Worked-Saturday counter (decision #19): exported IN the morning
-        // cell of Saturday rows, like the reference Excel — the on-screen
-        // grid shows the pill on the morning cell only, the export matches.
+        // Worked-Saturday counter (spec fix 2026-10-04): counts WORKED
+        // Saturdays as displayed in the grid (presence cells, not slots).
+        // Exported IN the morning cell of Saturday rows, like the reference
+        // Excel — the on-screen grid shows the pill on the morning cell only.
         const counter =
           d.getDay() === 6 && halfDay === 'morning'
-            ? workedSaturdayCounter(m.id, data.slots, d)
+            ? workedSaturdayCounter(
+                m.id,
+                { cycle: cycleByMediator.get(m.id), absences: data.absences },
+                d
+              )
             : null;
         if (counter !== null) {
           value = String(counter);

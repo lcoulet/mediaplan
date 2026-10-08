@@ -39,9 +39,9 @@ describe('AnnualCellMenu (context menu)', () => {
     expect(menu.getAttribute('aria-label')).toContain('Matin');
   });
 
-  it('offers every catalog code chip (CA, RHS, AM, TELE, amgt, Réf. WE, CEX, TPT)', () => {
+  it('offers every catalog code chip (CA, RHS, AM, TELE, Amgt.T, Amgt.NT, Réf. WE, CEX, TPT)', () => {
     renderMenu();
-    for (const code of ['CA', 'RHS', 'AM', 'TELE', 'amgt', 'Réf. WE', 'CEX', 'TPT']) {
+    for (const code of ['CA', 'RHS', 'AM', 'TELE', 'Amgt.T', 'Amgt.NT', 'Réf. WE', 'CEX', 'TPT']) {
       expect(screen.getByRole('menuitem', { name: code }), code).toBeTruthy();
     }
   });

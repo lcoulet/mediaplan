@@ -4,7 +4,7 @@
 // Spec: test/features/annual-view/annual-grid.feature (domain scenarios).
 // Palette: Excel hues accessibility-adjusted (decision 2026-10-03, contrasts
 // computed in contrast_palette_mix.py — see docs/OPEN-QUESTIONS.md).
-import type { Absence, AbsenceType, Slot, WorkCycle } from './types';
+import type { Absence, AbsenceType, WorkCycle } from './types';
 import { isoWeekKey, getWorkedHoursForDate } from './cycles';
 import { isMuseumClosed, isPublicHoliday, frenchHolidays } from './hours';
 
@@ -91,7 +91,10 @@ export function annualCodeCatalog(): AnnualCode[] {
     { code: 'AM', state: 'absence', absenceType: 'sick' },
     { code: 'TPT', state: 'absence', absenceType: 'other' },
     { code: 'TELE', state: 'remote', absenceType: 'other' },
-    { code: 'amgt', state: 'arrangement', absenceType: 'other' },
+    // Aménagements come in PAIRS (decision 2026-10-05: days/half-days are
+    // exchanged T/NT) — two codes, same violet state, worked vs not.
+    { code: 'Amgt.T', state: 'arrangement', absenceType: 'other' },
+    { code: 'Amgt.NT', state: 'arrangement', absenceType: 'other' },
     { code: 'souhait CA', state: 'leaveRequest', absenceType: 'leave_request' },
     { code: 'JDM', state: 'jdm', absenceType: 'mission' },
     { code: 'grève', state: 'workAbsence', absenceType: 'other' },
@@ -144,28 +147,105 @@ export function halfDayOfAbsence(absence: Absence, date: Date): 'morning' | 'aft
 // ---- Worked-Saturday counter ----------------------------------------------
 
 /**
- * Worked-Saturday counter of a mediator at a date (decision 2026-10-03):
- * COMPUTED automatically — the number of Saturdays of the displayed year,
- * up to and including the given date, with at least one non-cancelled slot
- * assigned to the mediator. Displayed on Saturday rows only (null for any
- * other weekday); resets on year change because only the date's own year is
+ * How a Saturday counts as WORKED for the counter (spec fix 2026-10-04:
+ * the counter counts worked Saturdays as displayed in the annual grid —
+ * presence cells, NOT slots):
+ * - 'any_half_day' (DEFAULT, decision 2026-10-04): at least ONE half-day
+ *   of the Saturday shows presence (morning OR afternoon — a full day is
+ *   two presence halves and still counts for one)
+ * - 'full_day': BOTH half-days must show presence
+ * - 'morning': the MORNING half only
+ * Pluggable on purpose: switching the counting rule is a one-argument
+ * change at the call sites.
+ */
+export type SaturdayCountStrategy = 'any_half_day' | 'full_day' | 'morning';
+
+/**
+ * Classification congés/travail d'un état de cellule annuelle (decision with
+ * Loic 2026-10-05). WORKED:
+ *  - presence (cycle-derived), mission (Réf. WE, free text), remote (TELE),
+ *    jdm (mission Jardins du muséum)
+ *  - arrangement Amgt.T (aménagement travaillé)
+ *  - workAbsence 'formation' (training counts as work)
+ * NOT worked:
+ *  - absence (CA, CEX, AM, RHS, TPT — temps partiel thérapeutique is a
+ *    chômé day), leaveRequest (souhait)
+ *  - arrangement Amgt.NT and legacy bare 'amgt' (safe default: unknown
+ *    arrangement is not counted as work)
+ *  - workAbsence grève / syndicat (no effective public service)
+ *  - holiday / museumClosed row states, neutral cells
+ * The second argument is the cell CODE (how Amgt.T / Amgt.NT and
+ * formation / grève are told apart within the same visual state).
+ */
+export function isWorkedState(state: string | undefined, code?: string): boolean {
+  switch (state) {
+    case 'presence':
+    case 'mission':
+    case 'remote':
+    case 'jdm':
+      return true;
+    case 'arrangement':
+      return code === 'Amgt.T';
+    case 'workAbsence':
+      return code === 'formation';
+    default:
+      return false;
+  }
+}
+
+/** True when the Saturday is worked for the mediator under the strategy. */
+function saturdayIsWorked(
+  mediatorId: string,
+  date: Date,
+  inputs: { cycle?: WorkCycle; absences: Absence[] },
+  strategy: SaturdayCountStrategy
+): boolean {
+  // Museum-closure days are NEVER worked (decision 2026-10-05), whatever
+  // the cycle says. Public holidays ARE worked (they don't block).
+  if (isMuseumClosed(date)) return false;
+  const halves: ('morning' | 'afternoon')[] =
+    strategy === 'morning' ? ['morning'] : ['morning', 'afternoon'];
+  const need = strategy === 'full_day' ? 2 : 1;
+  let present = 0;
+  for (const half of halves) {
+    const cell = deriveAnnualCell(mediatorId, date, half, inputs);
+    if (isWorkedState(cell?.state, cell?.code)) present++;
+  }
+  return present >= need;
+}
+
+/**
+ * Worked-Saturday counter of a mediator at a date: the number of Saturdays
+ * of the displayed year, up to and including the given date, WORKED by the
+ * mediator — as shown in the annual grid (presence cells; a covering
+ * absence/wish prevents counting). Strategy decides what "worked" means
+ * (default any_half_day: one worked half-day suffices — decision
+ * 2026-10-04). Displayed on Saturday rows only (null for any other
+ * weekday); resets on year change because only the date's own year is
  * counted. Feeds the valued-Saturday threshold (valuedSaturdayThreshold).
  */
-export function workedSaturdayCounter(mediatorId: string, slots: Slot[], date: Date): number | null {
+export function workedSaturdayCounter(
+  mediatorId: string,
+  inputs: { cycle?: WorkCycle; absences: Absence[] },
+  date: Date,
+  strategy: SaturdayCountStrategy = 'any_half_day'
+): number | null {
   if (date.getDay() !== 6) return null; // Saturday rows only
   const year = date.getFullYear();
-  const dateIso = toIsoDate(date);
-  const workedSaturdays = new Set<string>();
-  for (const slot of slots) {
-    if (!slot.mediatorIds?.includes(mediatorId)) continue;
-    if (slot.status === 'cancelled') continue;
-    if (!slot.date || slot.date > dateIso) continue;
-    const slotDate = new Date(`${slot.date}T00:00:00`);
-    if (slotDate.getFullYear() !== year) continue; // per-year: resets on year change
-    if (slotDate.getDay() !== 6) continue;
-    workedSaturdays.add(slot.date);
+  const worked = new Set<string>();
+  // Walk the year's Saturdays up to the given date (inclusive)
+  const cursor = new Date(year, 0, 1);
+  while (cursor.getFullYear() === year && cursor <= date) {
+    if (cursor.getDay() === 6) {
+      if (saturdayIsWorked(mediatorId, cursor, inputs, strategy)) {
+        worked.add(toIsoDate(cursor));
+      }
+      cursor.setDate(cursor.getDate() + 7); // jump week-wise once on a Saturday
+    } else {
+      cursor.setDate(cursor.getDate() + 1);
+    }
   }
-  return workedSaturdays.size;
+  return worked.size;
 }
 
 /** ISO date (YYYY-MM-DD) of a local Date, without timezone drift. */
@@ -346,14 +426,18 @@ const TYPE_STATE: Record<AbsenceType, string> = {
 };
 
 /** Palette state of a stored entry: catalog code first, type fallback.
- *  « amgt » is matched by prefix: the stored entry carries the arrangement
- *  date (« amgt 21/06 »), still a violet arrangement cell.
+ *  Aménagements are matched by prefix: the stored entry carries the
+ *  arrangement date (« amgt 21/06 », « Amgt.T 21/06 »), still a violet
+ *  arrangement cell. Legacy bare « amgt » still matches (legacy data).
  *  Exported for the annual view's memoized per-year cell matrix (same
  *  precedence as deriveAnnualCell, computed once per data change). */
 export function stateForEntry(absence: Absence): string {
   const code = codeForAbsence(absence);
   const catalog = annualCodeCatalog().find(
-    (c) => c.code === code || (c.code === 'amgt' && code.startsWith('amgt'))
+    (c) =>
+      c.code === code ||
+      ((c.code === 'Amgt.T' || c.code === 'Amgt.NT' || c.code === 'amgt') &&
+        code.toLowerCase().startsWith('amgt'))
   );
   if (catalog) return catalog.state;
   return TYPE_STATE[absence.type];

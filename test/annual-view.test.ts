@@ -3,7 +3,7 @@
 // Spec: test/features/annual-view/annual-grid.feature (domain scenarios).
 import { describe, it, expect } from 'vitest';
 import { parseLocalDate } from '../src/domain/models';
-import type { Absence, Slot, WorkCycle } from '../src/domain/types';
+import type { Absence, WorkCycle } from '../src/domain/types';
 import {
   ANNUAL_PALETTE,
   annualCodeCatalog,
@@ -14,6 +14,7 @@ import {
   annualWeekLabelsForYear,
   annualHolidayState,
   deriveAnnualCell,
+  isWorkedState,
 } from '../src/domain/annual-view';
 
 const d = parseLocalDate;
@@ -97,8 +98,9 @@ describe('annualCodeCatalog', () => {
     expect(byCode.TPT.state).toBe('absence');
     // Remote work (pink)
     expect(byCode.TELE.state).toBe('remote');
-    // Arrangement (violet)
-    expect(byCode['amgt'].state).toBe('arrangement');
+    // Arrangements (violet) — two codes since 2026-10-05: worked vs not
+    expect(byCode['Amgt.T'].state).toBe('arrangement');
+    expect(byCode['Amgt.NT'].state).toBe('arrangement');
     // Pending leave request (blue) — existing type leave_request
     expect(byCode['souhait CA'].state).toBe('leaveRequest');
     expect(byCode['souhait CA'].absenceType).toBe('leave_request');
@@ -150,76 +152,221 @@ describe('halfDayOfAbsence', () => {
   });
 });
 
-// ---- Worked-Saturday counter ---------------------------------------------
+// ---- Worked-state classification (decision 2026-10-05) ---------------------
 
-function mkSlot(mediatorId: string, date: string, status: Slot['status'] = 'confirmed'): Slot {
+describe('isWorkedState', () => {
+  // Classification congés/travail, decided with Loic 2026-10-05:
+  //  - presence, mission (Réf. WE, free text), remote (TELE), jdm,
+  //    arrangement Amgt.T, workAbsence training (formation) => WORKED
+  //  - absence (CA/CEX/AM/RHS/TPT), leaveRequest, arrangement Amgt.NT,
+  //    workAbsence other (grève, syndicat, TPT is 'absence' state though)
+  //    => NOT worked
+  it('counts work: presence, mission, remote, jdm, Amgt.T, formation', () => {
+    expect(isWorkedState('presence')).toBe(true);
+    expect(isWorkedState('mission')).toBe(true);
+    expect(isWorkedState('remote')).toBe(true);
+    expect(isWorkedState('jdm')).toBe(true);
+    expect(isWorkedState('arrangement', 'Amgt.T')).toBe(true);
+    // Formation is a workAbsence with absenceType training — WORKED
+    expect(isWorkedState('workAbsence', 'formation')).toBe(true);
+  });
+
+  it('does not count: leave, sick, leave_request, Amgt.NT, grève/syndicat', () => {
+    expect(isWorkedState('absence')).toBe(false);
+    expect(isWorkedState('leaveRequest')).toBe(false);
+    expect(isWorkedState('arrangement', 'Amgt.NT')).toBe(false);
+    expect(isWorkedState('arrangement', 'amgt 21/06')).toBe(false);
+    // Legacy bare 'amgt' without T/NT marker: NOT worked (safe default)
+    expect(isWorkedState('arrangement', 'amgt')).toBe(false);
+    // grève/syndicat are workAbsence with absenceType 'other'
+    expect(isWorkedState('workAbsence', 'grève')).toBe(false);
+    expect(isWorkedState('workAbsence', 'syndicat')).toBe(false);
+    // Neutral / closed / holiday cells are not worked either
+    expect(isWorkedState(undefined)).toBe(false);
+    expect(isWorkedState('holiday')).toBe(false);
+    expect(isWorkedState('museumClosed')).toBe(false);
+  });
+});
+
+// ---- Worked-Saturday counter ---------------------------------------------
+// Spec fix (2026-10-04): the counter counts WORKED Saturdays as displayed
+// in the annual grid — NOT slot-based. A Saturday is worked when the grid
+// shows presence for the mediator (cycle-derived or worked half-day).
+// Strategy is pluggable (SaturdayCountStrategy): ANY_HALF_DAY (default,
+// per Loic's decision 2026-10-04: a half-day OR a full day counts for one),
+// FULL_DAY (both halves), MORNING (morning half only).
+
+function mkCycleWorksSaturdays(): WorkCycle {
   return {
-    id: `slot_${mediatorId}_${date}`,
-    scheduleId: 'sch_1',
-    offerId: 'off_1',
-    mediatorIds: [mediatorId],
-    date,
-    startTime: '10:00',
-    endTime: '12:00',
-    participantCount: 10,
-    status,
-    notes: '',
-    origin: 'manual',
-    importSource: '',
-    importedAt: '',
-    modifiedAfterImport: false,
-    groupName: '',
-    guide: '',
-    location: '',
-    groupNature: '',
-    contactName: '',
-    contactPhone: '',
-    contactEmail: '',
+    id: 'cyc_sat',
+    mediatorId: 'med_alice',
+    anchorIsoWeek: '2026-W01',
+    forcedWeeks: {},
+    weeks: [{
+      id: 'w1', name: 'S1',
+      days: [
+        { day: 1, startTime: '09:00', endTime: '18:00' },
+        { day: 2, startTime: '09:00', endTime: '18:00' },
+        { day: 3, startTime: '09:00', endTime: '18:00' },
+        { day: 4, startTime: '09:00', endTime: '18:00' },
+        { day: 5, startTime: '09:00', endTime: '18:00' },
+        { day: 6, startTime: '09:00', endTime: '18:00' }, // Saturday worked
+        { day: 7 },
+      ],
+    }],
   };
 }
 
 describe('workedSaturdayCounter', () => {
-  it('counts 1, 2, 3 on the mediator Saturdays WITH slots as the year goes', () => {
-    const slots = [
-      mkSlot('med_alice', '2026-01-10'),
-      mkSlot('med_alice', '2026-02-14'),
-      mkSlot('med_alice', '2026-03-14'),
+  // 2026: Jan 1 is a Thursday — the year's Saturdays run Jan 3 → Dec 26 (52)
+  it('counts worked Saturdays of the year cumulatively (grid presence)', () => {
+    const inputs = { cycle: mkCycleWorksSaturdays(), absences: [] };
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-03'))).toBe(1);
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-10'))).toBe(2);
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-12-26'))).toBe(52); // all 52 Saturdays of 2026
+  });
+
+  it('shows 0 on a non-worked Saturday, and null on any non-Saturday', () => {
+    // Cycle without Saturday work
+    const cycle: WorkCycle = {
+      ...mkCycleWorksSaturdays(),
+      weeks: [{
+        id: 'w1', name: 'S1',
+        days: [
+          { day: 1, startTime: '09:00', endTime: '18:00' }, { day: 2, startTime: '09:00', endTime: '18:00' },
+          { day: 3, startTime: '09:00', endTime: '18:00' }, { day: 4, startTime: '09:00', endTime: '18:00' },
+          { day: 5, startTime: '09:00', endTime: '18:00' }, { day: 6 }, { day: 7 },
+        ],
+      }],
+    };
+    expect(workedSaturdayCounter('med_alice', { cycle, absences: [] }, d('2026-01-03'))).toBe(0);
+    expect(workedSaturdayCounter('med_alice', { cycle, absences: [] }, d('2026-06-09'))).toBeNull();
+  });
+
+  it('a Saturday fully covered by an absence does NOT count; a half-day absence still counts (ANY_HALF_DAY)', () => {
+    const absences = [
+      // Full-day leave on 2026-01-03 (first Saturday) -> not worked
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-03', endDate: '2026-01-03', type: 'leave' }),
+      // Morning-only leave on 2026-01-10 (second Saturday) -> afternoon worked -> counts
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-10', endDate: '2026-01-10', type: 'leave', halfDay: 'morning' }),
     ];
-    expect(workedSaturdayCounter('med_alice', slots, d('2026-02-14'))).toBe(2);
-    expect(workedSaturdayCounter('med_alice', slots, d('2026-03-14'))).toBe(3);
-    expect(workedSaturdayCounter('med_alice', slots, d('2026-12-26'))).toBe(3);
+    const inputs = { cycle: mkCycleWorksSaturdays(), absences };
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-03'))).toBe(0);
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-10'))).toBe(1);
   });
 
-  it('shows 0 on a Saturday before the first worked Saturday, and null on any non-Saturday', () => {
-    const slots = [mkSlot('med_alice', '2026-02-14')];
-    expect(workedSaturdayCounter('med_alice', slots, d('2026-01-10'))).toBe(0);
-    expect(workedSaturdayCounter('med_alice', slots, d('2026-06-09'))).toBeNull();
-  });
-
-  it('ignores cancelled slots and other mediators\' slots', () => {
-    // Alice: her cancelled slot is ignored, Bob's slot is not hers -> 0
-    expect(workedSaturdayCounter('med_alice', [mkSlot('med_alice', '2026-01-10', 'cancelled'), mkSlot('med_bob', '2026-01-10')], d('2026-01-10'))).toBe(0);
-    // Alice: her own confirmed slot counts; Bob's does not inflate it
-    expect(workedSaturdayCounter('med_alice', [mkSlot('med_alice', '2026-01-10'), mkSlot('med_bob', '2026-01-10')], d('2026-01-10'))).toBe(1);
-    // Bob: his own slot counts for his counter
-    expect(workedSaturdayCounter('med_bob', [mkSlot('med_bob', '2026-01-10')], d('2026-01-10'))).toBe(1);
-  });
-
-  it('resets to 0 when the year changes', () => {
-    const slots = [
-      mkSlot('med_alice', '2026-02-14'),
-      mkSlot('med_alice', '2027-01-09'),
+  it('a wish (leave_request) covering a Saturday does not count as worked', () => {
+    const absences = [
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-03', endDate: '2026-01-03', type: 'leave_request' }),
     ];
-    expect(workedSaturdayCounter('med_alice', slots, d('2027-01-09'))).toBe(1);
-    expect(workedSaturdayCounter('med_alice', slots, d('2027-12-25'))).toBe(1);
+    const inputs = { cycle: mkCycleWorksSaturdays(), absences };
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-03'))).toBe(0);
   });
 
-  it('counts several slots on the same Saturday once', () => {
-    const slots = [
-      mkSlot('med_alice', '2026-01-10'),
-      mkSlot('med_alice', '2026-01-10'),
+  // ---- Worked states count even WITHOUT cycle presence (decision 2026-10-05)
+  it('mission / TELE / JDM / Amgt.T / formation entries on a Saturday count as worked', () => {
+    // Cycle does NOT work Saturdays — only stored entries make the work
+    const cycleNoSat: WorkCycle = {
+      ...mkCycleWorksSaturdays(),
+      weeks: [{
+        id: 'w1', name: 'S1',
+        days: [
+          { day: 1, startTime: '09:00', endTime: '18:00' }, { day: 2, startTime: '09:00', endTime: '18:00' },
+          { day: 3, startTime: '09:00', endTime: '18:00' }, { day: 4, startTime: '09:00', endTime: '18:00' },
+          { day: 5, startTime: '09:00', endTime: '18:00' }, { day: 6 }, { day: 7 },
+        ],
+      }],
+    };
+    const absences = [
+      // Réf. WE mission on 2026-01-03 (first Saturday)
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-03', endDate: '2026-01-03', type: 'mission', notes: 'Réf. WE' }),
+      // TELE remote on 2026-01-10
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-10', endDate: '2026-01-10', type: 'other', notes: 'TELE' }),
+      // JDM on 2026-01-17
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-17', endDate: '2026-01-17', type: 'mission', notes: 'JDM' }),
+      // Amgt.T on 2026-01-24
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-24', endDate: '2026-01-24', type: 'other', notes: 'Amgt.T' }),
+      // formation on 2026-01-31
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-31', endDate: '2026-01-31', type: 'training', notes: 'formation' }),
     ];
-    expect(workedSaturdayCounter('med_alice', slots, d('2026-01-10'))).toBe(1);
+    const inputs = { cycle: cycleNoSat, absences };
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-03'))).toBe(1);
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-10'))).toBe(2);
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-17'))).toBe(3);
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-24'))).toBe(4);
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-31'))).toBe(5);
+  });
+
+  it('Amgt.NT, grève, syndicat, TPT entries on a Saturday do NOT count', () => {
+    const cycleNoSat: WorkCycle = {
+      ...mkCycleWorksSaturdays(),
+      weeks: [{
+        id: 'w1', name: 'S1',
+        days: [
+          { day: 1, startTime: '09:00', endTime: '18:00' }, { day: 2, startTime: '09:00', endTime: '18:00' },
+          { day: 3, startTime: '09:00', endTime: '18:00' }, { day: 4, startTime: '09:00', endTime: '18:00' },
+          { day: 5, startTime: '09:00', endTime: '18:00' }, { day: 6 }, { day: 7 },
+        ],
+      }],
+    };
+    const absences = [
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-03', endDate: '2026-01-03', type: 'other', notes: 'Amgt.NT' }),
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-10', endDate: '2026-01-10', type: 'other', notes: 'grève' }),
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-17', endDate: '2026-01-17', type: 'other', notes: 'syndicat' }),
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-24', endDate: '2026-01-24', type: 'other', notes: 'TPT' }),
+    ];
+    const inputs = { cycle: cycleNoSat, absences };
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-03'))).toBe(0);
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-24'))).toBe(0);
+  });
+
+  // ---- Holidays are WORKED, museum-closure days are NOT (decision 2026-10-05)
+  it('a public-holiday Saturday counts as worked; a museum-closure Saturday never does', () => {
+    // 2026-08-15 (Assomption) is a public holiday AND a Saturday — the
+    // holiday does NOT block counting (only museum closure does).
+    // 2028-01-01 is a museum-closure day (01/01) AND a Saturday — never
+    // counted, whatever the cycle says.
+    const inputs = { cycle: mkCycleWorksSaturdays(), absences: [] };
+    // Ordinary Saturday 2026-12-26: the 52nd counted Saturday of 2026
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-12-26'))).toBe(52);
+    // 2027-01-02: first Saturday of 2027 (2027-01-01 is a Friday)
+    expect(workedSaturdayCounter('med_alice', inputs, d('2027-01-02'))).toBe(1);
+    // 2028-01-01: museum closure day on a Saturday — NOT counted
+    expect(workedSaturdayCounter('med_alice', inputs, d('2028-01-01'))).toBe(0);
+    expect(workedSaturdayCounter('med_alice', inputs, d('2028-01-08'))).toBe(1);
+  });
+
+  it('resets per calendar year', () => {
+    const inputs = { cycle: mkCycleWorksSaturdays(), absences: [] };
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-12-26'))).toBe(52);
+    expect(workedSaturdayCounter('med_alice', inputs, d('2027-01-02'))).toBe(1); // first Saturday of 2027
+  });
+
+  it('FULL_DAY strategy requires both halves presence', () => {
+    // First Saturday of 2026, morning on leave
+    const absences = [
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-03', endDate: '2026-01-03', type: 'leave', halfDay: 'morning' }),
+    ];
+    const inputs = { cycle: mkCycleWorksSaturdays(), absences };
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-03'), 'any_half_day')).toBe(1);
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-03'), 'full_day')).toBe(0);
+  });
+
+  it('MORNING strategy counts only when the morning half is presence', () => {
+    const absences = [
+      mkAbsence({ mediatorId: 'med_alice', startDate: '2026-01-03', endDate: '2026-01-03', type: 'leave', halfDay: 'morning' }),
+    ];
+    const inputs = { cycle: mkCycleWorksSaturdays(), absences };
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-03'), 'any_half_day')).toBe(1);
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-03'), 'morning')).toBe(0);
+  });
+
+  it('ignores other mediators\' absences (their Saturdays don\'t block mine)', () => {
+    const absences = [
+      mkAbsence({ mediatorId: 'med_bob', startDate: '2026-01-03', endDate: '2026-01-03', type: 'leave' }),
+    ];
+    const inputs = { cycle: mkCycleWorksSaturdays(), absences };
+    expect(workedSaturdayCounter('med_alice', inputs, d('2026-01-03'))).toBe(1);
   });
 });
 

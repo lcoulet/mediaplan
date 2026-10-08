@@ -450,6 +450,32 @@ export function seedDemoData(data: AppData): void {
     { mediator: 18, startDay: 65, duration: 2, halfDay: 'none' as const, type: 'leave' as const, notes: 'RTT cumulée' },
     { mediator: 19, startDay: 85, duration: 1, halfDay: 'afternoon' as const, type: 'sick' as const, notes: 'Rendez-vous médical' },
   ];
+  // Aménagements démo (decision 2026-10-05): pairs of EXCHANGED half-days —
+  // one Amgt.T (worked elsewhere) + one Amgt.NT (chômé in exchange), like
+  // real arrangements (two days or two half-days traded work/off). A pair
+  // every ~95 days per mediator across the seed span.
+  const arrangementMediators = [0, 3, 7, 12];
+  arrangementMediators.forEach((mi, pairIdx) => {
+    for (let rep = 0; rep * 95 < totalDays; rep++) {
+      const dayOffset = 25 + pairIdx * 37 + rep * 95 + (rep % 3) * 7;
+      if (dayOffset + 7 >= totalDays) break;
+      const iso = (off: number) => dayFromRef(dayOffset + off);
+      absences.push(
+        createAbsence({
+          mediatorId: mediators[mi].id,
+          startDate: iso(0), endDate: iso(0),
+          halfDay: 'morning', type: 'other',
+          notes: 'Amgt.T', startTime: '00:00', endTime: '13:00',
+        }),
+        createAbsence({
+          mediatorId: mediators[mi].id,
+          startDate: iso(7), endDate: iso(7),
+          halfDay: 'afternoon', type: 'other',
+          notes: 'Amgt.NT', startTime: '13:00', endTime: '23:59',
+        })
+      );
+    }
+  });
 
   absencePatterns.forEach((p) => {
     // Repeat each pattern every ~95 days across the whole seed span

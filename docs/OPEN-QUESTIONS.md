@@ -351,15 +351,35 @@ import/export mode (shared JSON.gz files) until tenant access is sorted.
 - [x] Museum CLOSED on 25/12, 01/01 and 01/05
 
 **Open questions:**
-- [x] NUMERIC CELLS (1-19 and beyond, RESOLVED 2026-10-03): they are
-      WORKED-SATURDAY COUNTERS — one per mediator, on Saturday rows only,
-      incrementing week after week through the year (observed 1..27,
+- [x] NUMERIC CELLS (1-19 and beyond, RESOLVED 2026-10-03, SPEC FIX 2026-10-04):
+      they are WORKED-SATURDAY COUNTERS — one per mediator, on Saturday rows
+      only, incrementing week after week through the year (observed 1..27,
       outliers 41/47 = probably mid-year hires with carry-over counts or
-      manual corrections), resetting to 1 on year change. They feed the
+      manual corrections), resetting on year change. They feed the
       VALUED-SATURDAY rule (10th/12th onwards ×1.5): the Excel counts by
-      hand. THE APP WILL COMPUTE THE COUNTER AUTOMATICALLY (count the
-      mediator's Saturdays with slots) instead of manual entry — feeding
-      the existing valuedSaturdayThreshold valorisation.
+      hand. THE APP COMPUTES THE COUNTER AUTOMATICALLY. Spec fix
+      2026-10-04 (Loic): the counter counts WORKED Saturdays as displayed
+      in the annual grid (presence cells), NOT slot-based Saturdays.
+      Classification congés/travel decided 2026-10-05 (Loic):
+      - WORKED: presence (cycle), mission (Réf. WE, free text), remote
+        (TELE), jdm (JDM), arrangement Amgt.T, workAbsence formation
+      - NOT worked: absence (CA, CEX, AM, RHS, TPT = temps partiel
+        thérapeutique, jour chômé), leaveRequest (souhait), arrangement
+        Amgt.NT (and legacy bare « amgt », safe default), workAbsence
+        grève / syndicat
+      - Jours fériés are WORKED (they don't block counting); museum
+        CLOSURE days (25/12, 01/01, 01/05) are NEVER counted
+      - One worked half-day (morning OR afternoon) counts the Saturday
+        (strategy any_half_day, default; full_day and morning available as
+        SaturdayCountStrategy — easily switchable)
+      Implementation: isWorkedState(state, code) in src/domain/annual-view.ts,
+      feeding the existing valuedSaturdayThreshold valorisation.
+- [x] AMÉNAGEMENTS Amgt.T / Amgt.NT (RESOLVED 2026-10-05): arrangements
+      come in PAIRS — days/half-days are exchanged work/chômé (« on
+      échange deux jours ou deux demi-journées travail/chômé »). Two
+      catalog codes replace the legacy bare « amgt »: Amgt.T (travaillé)
+      counts as work, Amgt.NT (chômé) does not. No production data to
+      migrate — the demo seed generates realistic pairs.
 - [x] "Réf. WE" (RESOLVED 2026-10-03): RÉFÉRENT WEEK-END — the mediator
       who is the referent for weekend activities that day. Not a code to
       model as an absence: candidate for a per-day/per-mediator marker

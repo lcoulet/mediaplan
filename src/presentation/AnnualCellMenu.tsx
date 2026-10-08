@@ -43,14 +43,17 @@ function headDateLabel(iso: string): string {
 
 // Menu code chips: the catalog codes plus the « Souhait » pending-request
 // chip (leave_request — stored via annualMenuChoice in the domain).
-const MENU_CODES = ['CA', 'RHS', 'AM', 'TELE', 'amgt', 'Réf. WE', 'CEX', 'TPT'];
-const SUGGESTION_CODES = ['CA', 'RHS', 'AM', 'CEX', 'amgt', 'JDM'];
+// Aménagements come in pairs (decision 2026-10-05): Amgt.T (travaillé)
+// and Amgt.NT (chômé) replace the legacy bare « amgt ».
+const MENU_CODES = ['CA', 'RHS', 'AM', 'TELE', 'Amgt.T', 'Amgt.NT', 'Réf. WE', 'CEX', 'TPT'];
+const SUGGESTION_CODES = ['CA', 'RHS', 'AM', 'CEX', 'Amgt.T', 'Amgt.NT', 'JDM'];
 const SUGGESTION_TITLES: Record<string, string> = {
   CA: 'Congé annuel',
   RHS: 'Récupération heures supplémentaires',
   AM: 'Arrêt maladie',
   CEX: 'Congé exceptionnel',
-  amgt: 'Aménagement',
+  'Amgt.T': 'Aménagement travaillé',
+  'Amgt.NT': 'Aménagement chômé',
   JDM: 'Mission Jardins du muséum',
 };
 
